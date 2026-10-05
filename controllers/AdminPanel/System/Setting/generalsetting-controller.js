@@ -64,8 +64,8 @@ const update_general_setting = async (req, res) => {
             );
         } else {
             // Create new setting if none exists
-            if (!softwarename || !copyright || !maintainedby || !version || !cityname || !statename || !countryname || !description || !phone || !email) {
-                return res.status(400).json({ message: "All fields are required" });
+            if (!softwarename || !copyright || !maintainedby || !version || !phone || !email) {
+                return res.status(400).json({ message: "Software name, copyright, maintained by, version, phone, and email are required" });
             }
 
             generalSetting = new GeneralSetting({
