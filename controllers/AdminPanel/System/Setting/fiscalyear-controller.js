@@ -1,20 +1,19 @@
-﻿const FiscalYear = require("../../../../models/AdminPanel/System/Setting/fiscalyear-model");
+const FiscalYear = require("../../../../models/AdminPanel/System/Setting/fiscalyear-model");
 
 const check_current_fiscalyear = async (req, res) => {
     try {
-        const FiscalYearModel = FiscalYear(req.db);
         const today = new Date().toISOString().split("T")[0];
 
-        let foundFiscalYear = await FiscalYearModel.findOne({
+        let foundFiscalYear = await FiscalYear.findOne({
             startdate: { $lte: today },
             enddate: { $gte: today }
         });
 
         if (!foundFiscalYear) {
-            const count = await FiscalYearModel.countDocuments();
+            const count = await FiscalYear.countDocuments();
             if (count === 0) {
                 const currentYear = new Date().getFullYear();
-                foundFiscalYear = await FiscalYearModel.create({
+                foundFiscalYear = await FiscalYear.create({
                     fiscalyearid: 1,
                     fiscalyear: `${currentYear}-${currentYear + 1}`,
                     startdate: `${currentYear}-04-01`,
@@ -40,12 +39,11 @@ const check_current_fiscalyear = async (req, res) => {
 
 const get_fiscalyear = async (req, res) => {
     try {
-        const FiscalYearModel = FiscalYear(req.db);
-        let fiscalyear = await FiscalYearModel.find().sort({ fiscalyearid: -1 });
+        let fiscalyear = await FiscalYear.find().sort({ fiscalyearid: -1 });
 
         if (!fiscalyear || fiscalyear.length === 0) {
             const currentYear = new Date().getFullYear();
-            const initial = await FiscalYearModel.create({
+            const initial = await FiscalYear.create({
                 fiscalyearid: 1,
                 fiscalyear: `${currentYear}-${currentYear + 1}`,
                 startdate: `${currentYear}-04-01`,
@@ -71,11 +69,10 @@ const add_fiscalyear = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const FiscalYearModel = FiscalYear(req.db);
-        const maxItem = await FiscalYearModel.findOne().sort({ fiscalyearid: -1 });
+        const maxItem = await FiscalYear.findOne().sort({ fiscalyearid: -1 });
         const nextId = maxItem ? maxItem.fiscalyearid + 1 : 1;
 
-        const newFiscalYear = new FiscalYearModel({
+        const newFiscalYear = new FiscalYear({
             fiscalyearid: nextId,
             fiscalyear,
             startdate,
@@ -96,8 +93,7 @@ const add_fiscalyear = async (req, res) => {
 const edit_fiscalyear = async (req, res) => {
     const { fiscalyearId } = req.params;
     try {
-        const FiscalYearModel = FiscalYear(req.db);
-        const fiscalyear = await FiscalYearModel.findById(fiscalyearId);
+        const fiscalyear = await FiscalYear.findById(fiscalyearId);
         if (!fiscalyear) return res.status(404).json({ message: "Fiscal year not found" });
         return res.status(200).json(fiscalyear);
     } catch (error) {
@@ -109,8 +105,7 @@ const update_fiscalyear = async (req, res) => {
     const { fiscalyearId } = req.params;
     const { fiscalyear, startdate, enddate, status } = req.body;
     try {
-        const FiscalYearModel = FiscalYear(req.db);
-        const updated = await FiscalYearModel.findByIdAndUpdate(
+        const updated = await FiscalYear.findByIdAndUpdate(
             fiscalyearId,
             { fiscalyear, startdate, enddate, status, updatedAt: new Date().toISOString() },
             { new: true }
@@ -125,8 +120,7 @@ const update_fiscalyear = async (req, res) => {
 const delete_fiscalyear = async (req, res) => {
     const { fiscalyearId } = req.params;
     try {
-        const FiscalYearModel = FiscalYear(req.db);
-        await FiscalYearModel.findByIdAndDelete(fiscalyearId);
+        await FiscalYear.findByIdAndDelete(fiscalyearId);
         return res.status(200).json({ message: "Fiscal year deleted successfully" });
     } catch (error) {
         return res.status(500).json({ message: "Server error" });

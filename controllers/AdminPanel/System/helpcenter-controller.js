@@ -25,12 +25,11 @@ const formatHelpCenterRecord = (record, dateTimeFormat, timezone) => ({
 
 const get_helpcenter = async (req, res) => {
     try {
-        const miscSetting = await MiscSetting(req.db).findOne();
+        const miscSetting = await MiscSetting.findOne();
         const adminTimezone = miscSetting ? miscSetting.timeZone : "UTC";
         const adminDateTimeFormat = getAdminDateTimeFormat(miscSetting);
 
-        const HelpCenterModel = HelpCenter(req.db);
-        const helpCenterList = await HelpCenterModel.find().sort({ updatedAt: -1 }).lean();
+        const helpCenterList = await HelpCenter.find().sort({ updatedAt: -1 }).lean();
         const formattedHelpCenterList = helpCenterList.map((record) =>
             formatHelpCenterRecord(record, adminDateTimeFormat, adminTimezone),
         );
@@ -47,12 +46,11 @@ const get_owner_helpcenter = async (req, res) => {
         const { ownerId } = req.params;
         if (!ownerId) return res.status(400).json({ message: "ownerId is required" });
 
-        const miscSetting = await MiscSetting(req.db).findOne();
+        const miscSetting = await MiscSetting.findOne();
         const adminTimezone = miscSetting ? miscSetting.timeZone : "UTC";
         const adminDateTimeFormat = getAdminDateTimeFormat(miscSetting);
 
-        const HelpCenterModel = HelpCenter(req.db);
-        const tickets = await HelpCenterModel.find({ ownerid: ownerId }).sort({ updatedAt: -1 }).lean();
+        const tickets = await HelpCenter.find({ ownerid: ownerId }).sort({ updatedAt: -1 }).lean();
         const formatted = tickets.map((t) => formatHelpCenterRecord(t, adminDateTimeFormat, adminTimezone));
 
         return res.status(200).json(formatted);
@@ -67,13 +65,12 @@ const get_helpcenter_by_id = async (req, res) => {
         const { helpCenterId } = req.params;
         if (!helpCenterId) return res.status(400).json({ message: "helpCenterId is required" });
 
-        const HelpCenterModel = HelpCenter(req.db);
-        let helpCenter = await HelpCenterModel.findOne({ _id: helpCenterId }).lean();
-        if (!helpCenter) helpCenter = await HelpCenterModel.findOne({ ticketid: helpCenterId }).lean();
+        let helpCenter = await HelpCenter.findOne({ _id: helpCenterId }).lean();
+        if (!helpCenter) helpCenter = await HelpCenter.findOne({ ticketid: helpCenterId }).lean();
 
         if (!helpCenter) return res.status(404).json({ message: "Help center ticket not found" });
 
-        const miscSetting = await MiscSetting(req.db).findOne();
+        const miscSetting = await MiscSetting.findOne();
         const adminTimezone = miscSetting ? miscSetting.timeZone : "UTC";
         const adminDateTimeFormat = getAdminDateTimeFormat(miscSetting);
 
@@ -90,13 +87,11 @@ const get_helpcenter_by_id = async (req, res) => {
 const resolve_helpcenter = async (req, res) => {
     try {
         const { helpCenterId } = req.params;
-        const { usertype } = req.body;
 
         if (!helpCenterId) return res.status(400).json({ message: "helpCenterId is required" });
 
-        const HelpCenterModel = HelpCenter(req.db);
-        let helpCenter = await HelpCenterModel.findOne({ _id: helpCenterId });
-        if (!helpCenter) helpCenter = await HelpCenterModel.findOne({ ticketid: helpCenterId });
+        let helpCenter = await HelpCenter.findOne({ _id: helpCenterId });
+        if (!helpCenter) helpCenter = await HelpCenter.findOne({ ticketid: helpCenterId });
 
         if (!helpCenter) return res.status(404).json({ message: "Help center ticket not found" });
 
@@ -112,7 +107,7 @@ const resolve_helpcenter = async (req, res) => {
         helpCenter.updatedAt = new Date().toISOString();
         await helpCenter.save();
 
-        const miscSetting = await MiscSetting(req.db).findOne();
+        const miscSetting = await MiscSetting.findOne();
         const adminTimezone = miscSetting ? miscSetting.timeZone : "UTC";
         const adminDateTimeFormat = getAdminDateTimeFormat(miscSetting);
 
@@ -134,9 +129,8 @@ const add_helpcenter_message = async (req, res) => {
         if (!helpCenterId) return res.status(400).json({ message: "helpCenterId is required" });
         if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
 
-        const HelpCenterModel = HelpCenter(req.db);
-        let helpCenter = await HelpCenterModel.findOne({ _id: helpCenterId });
-        if (!helpCenter) helpCenter = await HelpCenterModel.findOne({ ticketid: helpCenterId });
+        let helpCenter = await HelpCenter.findOne({ _id: helpCenterId });
+        if (!helpCenter) helpCenter = await HelpCenter.findOne({ ticketid: helpCenterId });
 
         if (!helpCenter) return res.status(404).json({ message: "Help center ticket not found" });
 
@@ -168,7 +162,7 @@ const add_helpcenter_message = async (req, res) => {
 
         await helpCenter.save();
 
-        const miscSetting = await MiscSetting(req.db).findOne();
+        const miscSetting = await MiscSetting.findOne();
         const adminTimezone = miscSetting ? miscSetting.timeZone : "UTC";
         const adminDateTimeFormat = getAdminDateTimeFormat(miscSetting);
 
@@ -191,13 +185,12 @@ const add_owner_helpcenter = async (req, res) => {
             return res.status(400).json({ message: "Issue name and description are required" });
         }
 
-        const HelpCenterModel = HelpCenter(req.db);
-        const maxTicket = await HelpCenterModel.findOne().sort({ ticketid: -1 }).lean();
+        const maxTicket = await HelpCenter.findOne().sort({ ticketid: -1 }).lean();
         const nextTicketId = maxTicket?.ticketid ? Number(maxTicket.ticketid) + 1 : 1;
 
         const nowIso = new Date().toISOString();
 
-        const newHelpCenter = new HelpCenterModel({
+        const newHelpCenter = new HelpCenter({
             ticketid: nextTicketId,
             ownerid: ownerId || 0,
             customerid: 0,

@@ -1,4 +1,4 @@
-﻿const Currency = require("../../../models/AdminPanel/System/currency-model");
+const Currency = require("../../../models/AdminPanel/System/currency-model");
 
 const DEFAULT_CURRENCIES = [
     { currencyid: 1, countryname: "India", currency: "INR", currencysymbol: "₹", currencyposition: "before", thousandseparator: ",", decimalseparator: ".", decimal: 2, status: true },
@@ -10,11 +10,10 @@ const DEFAULT_CURRENCIES = [
 
 const get_currency_with_statustrue = async (req, res) => {
     try {
-        const CurrencyModel = Currency(req.db);
-        let currency = await CurrencyModel.find({ status: true }).sort({ countryname: 1 });
+        let currency = await Currency.find({ status: true }).sort({ countryname: 1 });
         if (!currency || currency.length === 0) {
-            await CurrencyModel.insertMany(DEFAULT_CURRENCIES);
-            currency = await CurrencyModel.find({ status: true }).sort({ countryname: 1 });
+            await Currency.insertMany(DEFAULT_CURRENCIES);
+            currency = await Currency.find({ status: true }).sort({ countryname: 1 });
         }
         return res.status(200).json(currency);
     } catch (error) {
@@ -25,8 +24,7 @@ const get_currency_with_statustrue = async (req, res) => {
 
 const get_currency = async (req, res) => {
     try {
-        const CurrencyModel = Currency(req.db);
-        const currency = await CurrencyModel.find();
+        const currency = await Currency.find();
         return res.status(200).json(currency);
     } catch (error) {
         return res.status(500).json({ message: "Server error" });
@@ -36,11 +34,10 @@ const get_currency = async (req, res) => {
 const addCurrency = async (req, res) => {
     const { countryname, currencyName, currencySymbol, currencyPosition, decimalValue, thousandSeparator, decimalSeparator } = req.body;
     try {
-        const CurrencyModel = Currency(req.db);
-        const maxCurrencyId = await CurrencyModel.findOne().sort({ currencyid: -1 });
+        const maxCurrencyId = await Currency.findOne().sort({ currencyid: -1 });
         const nextCurrencyId = maxCurrencyId ? parseInt(maxCurrencyId.currencyid) + 1 : 1;
 
-        const newCurrency = new CurrencyModel({
+        const newCurrency = new Currency({
             currencyid: nextCurrencyId,
             countryname,
             currency: currencyName,
@@ -62,8 +59,7 @@ const addCurrency = async (req, res) => {
 const edit_currency = async (req, res) => {
     const { currencyid } = req.params;
     try {
-        const CurrencyModel = Currency(req.db);
-        const currency = await CurrencyModel.findById(currencyid);
+        const currency = await Currency.findById(currencyid);
         if (!currency) return res.status(404).json({ message: "Currency not found" });
         return res.status(200).json(currency);
     } catch (error) {
@@ -75,8 +71,7 @@ const updateCurrency_status = async (req, res) => {
     const { currencyid } = req.params;
     const { status } = req.body;
     try {
-        const CurrencyModel = Currency(req.db);
-        const updated = await CurrencyModel.findByIdAndUpdate(currencyid, { status }, { new: true });
+        const updated = await Currency.findByIdAndUpdate(currencyid, { status }, { new: true });
         return res.status(200).json(updated);
     } catch (error) {
         return res.status(500).json({ message: "Server error" });
@@ -86,8 +81,7 @@ const updateCurrency_status = async (req, res) => {
 const updateCurrency = async (req, res) => {
     const { currencyid } = req.params;
     try {
-        const CurrencyModel = Currency(req.db);
-        const updated = await CurrencyModel.findByIdAndUpdate(currencyid, req.body, { new: true });
+        const updated = await Currency.findByIdAndUpdate(currencyid, req.body, { new: true });
         return res.status(200).json(updated);
     } catch (error) {
         return res.status(500).json({ message: "Server error" });
@@ -97,8 +91,7 @@ const updateCurrency = async (req, res) => {
 const deletecurrency = async (req, res) => {
     const { currencyid } = req.params;
     try {
-        const CurrencyModel = Currency(req.db);
-        await CurrencyModel.findByIdAndDelete(currencyid);
+        await Currency.findByIdAndDelete(currencyid);
         return res.status(200).json({ message: "Currency deleted successfully" });
     } catch (error) {
         return res.status(500).json({ message: "Server error" });

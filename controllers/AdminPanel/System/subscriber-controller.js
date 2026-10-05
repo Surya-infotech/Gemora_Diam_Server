@@ -16,9 +16,7 @@ const subscribe_newsletter = async (req, res) => {
             return res.status(400).json({ message: "Please enter a valid email address." });
         }
 
-        const SubscriberModel = Subscriber(req.db);
-
-        const existingSubscriber = await SubscriberModel.findOne({ email: normalizedEmail });
+        const existingSubscriber = await Subscriber.findOne({ email: normalizedEmail });
 
         if (existingSubscriber) {
             if (existingSubscriber.status === "Subscribed") {
@@ -38,10 +36,10 @@ const subscribe_newsletter = async (req, res) => {
             }
         }
 
-        const maxSubscriber = await SubscriberModel.findOne().sort({ subscriberid: -1 });
+        const maxSubscriber = await Subscriber.findOne().sort({ subscriberid: -1 });
         const nextSubscriberId = maxSubscriber && maxSubscriber.subscriberid ? parseInt(maxSubscriber.subscriberid, 10) + 1 : 1;
 
-        const newSubscriber = new SubscriberModel({
+        const newSubscriber = new Subscriber({
             subscriberid: nextSubscriberId,
             email: normalizedEmail,
             status: "Subscribed",
@@ -64,8 +62,7 @@ const subscribe_newsletter = async (req, res) => {
 
 const get_subscribers = async (req, res) => {
     try {
-        const SubscriberModel = Subscriber(req.db);
-        const subscribers = await SubscriberModel.find().sort({ subscriberid: -1 }).lean();
+        const subscribers = await Subscriber.find().sort({ subscriberid: -1 }).lean();
         return res.status(200).json(subscribers);
     } catch (error) {
         console.error("Error fetching subscribers:", error);

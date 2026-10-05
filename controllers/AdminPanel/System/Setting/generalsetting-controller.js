@@ -1,25 +1,12 @@
-﻿const GeneralSetting = require("../../../../models/AdminPanel/System/Setting/generalsetting-model");
+const GeneralSetting = require("../../../../models/AdminPanel/System/Setting/generalsetting-model");
+const SocialMedia = require("../../../../models/AdminPanel/System/Setting/socialmedia-model");
 
 const get_general_setting = async (req, res) => {
     try {
-        const GeneralSettingModel = GeneralSetting(req.db);
-        let generalSetting = await GeneralSettingModel.findOne();
+        const generalSetting = await GeneralSetting.findOne();
 
         if (!generalSetting) {
-            generalSetting = await GeneralSettingModel.create({
-                softwarename: "Gemora Diam",
-                copyright: "© 2026 Gemora Diam. All rights reserved.",
-                maintainedby: "Gemora Diam",
-                version: "1.0.0",
-                phone: "+919876543210",
-                email: "info@gemoradiam.com",
-                countryname: "India",
-                statename: "Gujarat",
-                cityname: "Surat",
-                postalcode: "395006",
-                address: "Mini Bazar, Varachha, Surat",
-                description: "Gemora Diam - Premium Certified Lab-Grown & Natural Diamonds Management Panel."
-            });
+            return res.status(404).json({ message: "General setting not found" });
         }
 
         return res.status(200).json(generalSetting);
@@ -31,15 +18,21 @@ const get_general_setting = async (req, res) => {
 
 const get_general_setting_for_landingpage = async (req, res) => {
     try {
-        const GeneralSettingModel = GeneralSetting(req.db);
-        const generalSetting = await GeneralSettingModel.findOne();
+        const generalSetting = await GeneralSetting.findOne();
+        const socialMedia = await SocialMedia.findOne();
 
         if (!generalSetting) {
             return res.status(404).json({ message: "General setting not found" });
         }
 
-        return res.status(200).json({ generalSetting });
+        // Prepare response with general settings and social media details
+        const response = {
+            generalSetting: generalSetting,
+            socialMedia: socialMedia ? socialMedia.socialmedia : []
+        };
+        return res.status(200).json(response);
     } catch (error) {
+        console.log("Error retrieving general setting for landing page:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -47,11 +40,12 @@ const get_general_setting_for_landingpage = async (req, res) => {
 const update_general_setting = async (req, res) => {
     try {
         const { softwarename, copyright, maintainedby, version, address, cityname, statename, countryname, postalcode, description, phone, email } = req.body;
-        const GeneralSettingModel = GeneralSetting(req.db);
 
-        let generalSetting = await GeneralSettingModel.findOne();
+        // Find existing general setting or create new one
+        let generalSetting = await GeneralSetting.findOne();
 
         if (generalSetting) {
+            // Update existing setting
             const updateData = {};
             if (softwarename !== undefined) updateData.softwarename = softwarename;
             if (copyright !== undefined) updateData.copyright = copyright;
@@ -66,16 +60,37 @@ const update_general_setting = async (req, res) => {
             if (phone !== undefined) updateData.phone = phone;
             if (email !== undefined) updateData.email = email;
 
-            generalSetting = await GeneralSettingModel.findOneAndUpdate(
+            generalSetting = await GeneralSetting.findOneAndUpdate(
                 { _id: generalSetting._id },
                 updateData,
                 { new: true }
             );
         } else {
-            generalSetting = new GeneralSettingModel({
-                softwarename, copyright, maintainedby, version, address, cityname, statename, countryname, postalcode, description, phone, email
+            // Create new setting if none exists
+            if (!softwarename || !copyright || !maintainedby || !version || !cityname || !statename || !countryname || !description || !phone || !email) {
+                return res.status(400).json({ message: "All fields are required" });
+            }
+
+            generalSetting = new GeneralSetting({
+                softwarename,
+                copyright,
+                maintainedby,
+                version,
+                address,
+                cityname,
+                statename,
+                countryname,
+                postalcode,
+                description,
+                phone,
+                email
             });
+
             await generalSetting.save();
+        }
+
+        if (!generalSetting) {
+            return res.status(404).json({ message: "General setting not found" });
         }
 
         return res.status(200).json(generalSetting);

@@ -4,17 +4,13 @@ const Currency = require("../../../models/AdminPanel/System/currency-model");
 
 const get_taxes = async (req, res) => {
     try {
-        const TaxModel = Tax(req.db);
-        const MiscSettingModel = MiscSetting(req.db);
-        const CurrencyModel = Currency(req.db);
+        const taxes = await Tax.find().sort({ updatedAt: -1 });
 
-        const taxes = await TaxModel.find().sort({ updatedAt: -1 });
-
-        const miscSetting = await MiscSettingModel.findOne();
+        const miscSetting = await MiscSetting.findOne();
         let currencyDetails = null;
 
         if (miscSetting && miscSetting.currencyid) {
-            currencyDetails = await CurrencyModel.findOne({ currencyid: miscSetting.currencyid });
+            currencyDetails = await Currency.findOne({ currencyid: miscSetting.currencyid });
         }
 
         const response = {
@@ -39,8 +35,7 @@ const get_taxes = async (req, res) => {
 
 const get_active_taxes = async (req, res) => {
     try {
-        const TaxModel = Tax(req.db);
-        const activeTaxes = await TaxModel.find({ status: true }).sort({ updatedAt: -1 });
+        const activeTaxes = await Tax.find({ status: true }).sort({ updatedAt: -1 });
         return res.status(200).json(activeTaxes);
     } catch (error) {
         console.log("Error fetching active taxes:", error);
@@ -56,17 +51,15 @@ const add_tax = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const TaxModel = Tax(req.db);
-
-        const existingTax = await TaxModel.findOne({ taxname });
+        const existingTax = await Tax.findOne({ taxname });
         if (existingTax) return res.status(400).json({ message: "Tax Name Already Exists" });
 
-        const maxTaxId = await TaxModel.findOne().sort({ taxid: -1 });
+        const maxTaxId = await Tax.findOne().sort({ taxid: -1 });
         const nextTaxId = maxTaxId ? parseInt(maxTaxId.taxid) + 1 : 1;
 
         let currencyDetails = null;
         if (country && country.toLowerCase() !== "all") {
-            const currencyObj = await Currency(req.db).findOne({
+            const currencyObj = await Currency.findOne({
                 countryname: { $regex: new RegExp(`^${country.trim()}$`, "i") }
             });
             if (currencyObj) {
@@ -82,7 +75,7 @@ const add_tax = async (req, res) => {
             }
         }
 
-        const newTax = new TaxModel({
+        const newTax = new Tax({
             taxid: nextTaxId,
             taxname,
             taxtype,
@@ -115,10 +108,8 @@ const edit_tax = async (req, res) => {
 
         if (!taxId) return res.status(400).json({ message: "Tax ID is required" });
 
-        const TaxModel = Tax(req.db);
-
-        let tax = await TaxModel.findOne({ _id: taxId });
-        if (!tax) tax = await TaxModel.findOne({ taxid: taxId });
+        let tax = await Tax.findOne({ _id: taxId });
+        if (!tax) tax = await Tax.findOne({ taxid: taxId });
         if (!tax) return res.status(404).json({ message: "Tax not found" });
 
         return res.status(200).json(tax);
@@ -135,10 +126,8 @@ const update_tax_status = async (req, res) => {
 
         if (!taxId) return res.status(400).json({ message: "Tax ID is required" });
 
-        const TaxModel = Tax(req.db);
-
-        let tax = await TaxModel.findOne({ _id: taxId });
-        if (!tax) tax = await TaxModel.findOne({ taxid: taxId });
+        let tax = await Tax.findOne({ _id: taxId });
+        if (!tax) tax = await Tax.findOne({ taxid: taxId });
         if (!tax) return res.status(404).json({ message: "Tax not found" });
 
         tax.status = status;
@@ -160,13 +149,11 @@ const update_tax = async (req, res) => {
         if (!taxId) return res.status(400).json({ message: "Tax ID is required" });
         if (!taxname || !taxtype || price == null || !country) return res.status(400).json({ message: "All fields are required" });
 
-        const TaxModel = Tax(req.db);
-
-        let tax = await TaxModel.findOne({ _id: taxId });
-        if (!tax) tax = await TaxModel.findOne({ taxid: taxId });
+        let tax = await Tax.findOne({ _id: taxId });
+        if (!tax) tax = await Tax.findOne({ taxid: taxId });
         if (!tax) return res.status(404).json({ message: "Tax not found" });
 
-        const existingTax = await TaxModel.findOne({
+        const existingTax = await Tax.findOne({
             taxname,
             _id: { $ne: tax._id },
             taxid: { $ne: tax.taxid }
@@ -176,7 +163,7 @@ const update_tax = async (req, res) => {
 
         let currencyDetails = null;
         if (country && country.toLowerCase() !== "all") {
-            const currencyObj = await Currency(req.db).findOne({
+            const currencyObj = await Currency.findOne({
                 countryname: { $regex: new RegExp(`^${country.trim()}$`, "i") }
             });
             if (currencyObj) {
@@ -222,13 +209,11 @@ const delete_tax = async (req, res) => {
 
         if (!taxId) return res.status(400).json({ message: "Tax ID is required" });
 
-        const TaxModel = Tax(req.db);
-
-        let tax = await TaxModel.findOne({ _id: taxId });
-        if (!tax) tax = await TaxModel.findOne({ taxid: taxId });
+        let tax = await Tax.findOne({ _id: taxId });
+        if (!tax) tax = await Tax.findOne({ taxid: taxId });
         if (!tax) return res.status(404).json({ message: "Tax not found" });
 
-        await TaxModel.deleteOne({ _id: tax._id });
+        await Tax.deleteOne({ _id: tax._id });
         return res.status(200).json({ message: "Tax deleted successfully" });
     } catch (error) {
         console.log("Error deleting Tax:", error);
