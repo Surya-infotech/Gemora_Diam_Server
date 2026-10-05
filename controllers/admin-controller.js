@@ -3,6 +3,7 @@ const AdminLoginActivity = require("../models/loginactivity-model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const moment = require("moment-timezone");
+const { uploadToS3, deleteImageFromS3 } = require("../utils/s3Config-admin");
 
 // Verify Token (Used on page reload / app initialization)
 const verifyToken = async (req, res) => {
@@ -144,33 +145,43 @@ const updateAdmin = async (req, res) => {
             return res.status(404).json({ message: "Admin not found" });
         }
 
-        const updateData = req.body;
+        uploadToS3("profileimage")(req, res, async function (err) {
+            if (err) {
+                console.log("Error uploading profile image:", err);
+                return res.status(500).json({ message: "Error uploading profile image", error: err.message || err });
+            }
 
-        if (updateData.firstname || updateData.adminfirstname) {
-            admin.adminfirstname = updateData.firstname || updateData.adminfirstname;
-        }
-        if (updateData.lastname || updateData.adminlastname) {
-            admin.adminlastname = updateData.lastname || updateData.adminlastname;
-        }
-        if (updateData.email) admin.email = updateData.email;
-        if (updateData.phone) admin.phone = updateData.phone;
-        if (updateData.address) admin.address = updateData.address;
-        if (updateData.gender) admin.gender = updateData.gender;
-        if (updateData.countryname) admin.countryname = updateData.countryname;
-        if (updateData.statename) admin.statename = updateData.statename;
-        if (updateData.cityname) admin.cityname = updateData.cityname;
-        if (updateData.countryid) admin.countryid = updateData.countryid;
-        if (updateData.stateid) admin.stateid = updateData.stateid;
-        if (updateData.cityid) admin.cityid = updateData.cityid;
-        if (updateData.profileimage) admin.profileimage = updateData.profileimage;
+            const updateData = req.body;
 
-        admin.updatedAt = new Date().toISOString();
-        await admin.save();
+            if (req.file) {
+                if (admin.profileimage) {
+                    await deleteImageFromS3(admin.profileimage, "profileimage");
+                }
+                admin.profileimage = req.file.location;
+            }
 
-        const updatedAdmin = admin.toObject();
-        delete updatedAdmin.password;
+            // Update admin fields
+            admin.adminfirstname = updateData.firstname || admin.adminfirstname;
+            admin.adminlastname = updateData.lastname || admin.adminlastname;
+            admin.email = updateData.email || admin.email;
+            admin.phone = updateData.phone || admin.phone;
+            admin.address = updateData.address || admin.address;
+            admin.gender = updateData.gender || admin.gender;
+            admin.countryname = updateData.countryname || admin.countryname;
+            admin.statename = updateData.statename || admin.statename;
+            admin.cityname = updateData.cityname || admin.cityname;
+            admin.countryid = updateData.countryid || admin.countryid;
+            admin.stateid = updateData.stateid || admin.stateid;
+            admin.cityid = updateData.cityid || admin.cityid;
+            admin.updatedAt = new Date().toISOString();
 
-        return res.status(200).json({ message: "Admin details updated successfully", admin: updatedAdmin });
+            await admin.save();
+
+            const updatedAdmin = admin.toObject();
+            delete updatedAdmin.password;
+
+            return res.status(200).json({ message: "Admin details updated successfully", admin: updatedAdmin });
+        });
     } catch (error) {
         console.error("Error updating admin details:", error);
         return res.status(500).json({ message: "Server error" });
