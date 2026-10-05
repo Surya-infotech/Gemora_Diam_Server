@@ -7,12 +7,12 @@ const generalsettingSchema = new mongoose.Schema({
     version: { type: String, required: true },
     phone: { type: String, required: true },
     email: { type: String, required: true },
-    address: { type: String, required: true },
-    cityname: { type: String, required: true },
-    statename: { type: String, required: true },
-    countryname: { type: String, required: true },
-    postalcode: { type: String, required: true },
-    description: { type: String, required: true }
+    address: { type: String, default: "" },
+    cityname: { type: String, default: "" },
+    statename: { type: String, default: "" },
+    countryname: { type: String, default: "" },
+    postalcode: { type: String, default: "" },
+    description: { type: String, default: "" }
 });
 
 const GeneralSettingModel = mongoose.model("GeneralSetting", generalsettingSchema);

@@ -25,7 +25,6 @@ const get_general_setting_for_landingpage = async (req, res) => {
             return res.status(404).json({ message: "General setting not found" });
         }
 
-        // Prepare response with general settings and social media details
         const response = {
             generalSetting: generalSetting,
             socialMedia: socialMedia ? socialMedia.socialmedia : []
@@ -41,11 +40,9 @@ const update_general_setting = async (req, res) => {
     try {
         const { softwarename, copyright, maintainedby, version, address, cityname, statename, countryname, postalcode, description, phone, email } = req.body;
 
-        // Find existing general setting or create new one
         let generalSetting = await GeneralSetting.findOne();
 
         if (generalSetting) {
-            // Update existing setting
             const updateData = {};
             if (softwarename !== undefined) updateData.softwarename = softwarename;
             if (copyright !== undefined) updateData.copyright = copyright;
