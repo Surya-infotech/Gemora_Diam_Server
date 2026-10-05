@@ -1,8 +1,9 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./src/db");
 const adminRouter = require("./router/admin-router");
+const systemrouteradmin = require("./router/AdminPanel/system-router");
 
 const app = express();
 
@@ -11,7 +12,8 @@ const corsOptions = {
         const allowedOrigins = [
             "https://gemoradiam.com",
             "https://www.gemoradiam.com",
-            "http://localhost:5173"];
+            "http://localhost:5173"
+        ];
 
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
@@ -40,16 +42,17 @@ app.get("/Status", (req, res) => {
 });
 
 app.use("/admin", adminRouter);
+app.use("/System", systemrouteradmin);
 
 const PORT = process.env.PORT || 8081;
 
 connectDB().then(() => {
     app.listen(PORT, () => {
-        console.log(`🚀 Gemora Diam Server running on port ${PORT}`);
-        console.log(`📡 Health Check: http://localhost:${PORT}/Status`);
+        console.log(`Gemora Diam Server running on port ${PORT}`);
+        console.log(`Health Check: http://localhost:${PORT}/Status`);
     });
 }).catch((err) => {
-    console.error("❌ Failed to start server:", err);
+    console.error("Failed to start server:", err);
 });
 
 module.exports = app;

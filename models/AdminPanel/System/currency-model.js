@@ -1,0 +1,17 @@
+﻿const mongoose = require("mongoose");
+
+const currencySchema = new mongoose.Schema({
+    currencyid: { type: Number, required: true },
+    countryname: { type: String, required: true },
+    currency: { type: String, required: true },
+    currencysymbol: { type: String, required: true },
+    currencyposition: { type: String, required: true },
+    thousandseparator: { type: String, required: true },
+    decimalseparator: { type: String, required: true },
+    decimal: { type: Number, required: true },
+    status: { type: Boolean, default: true }
+});
+
+const CurrencyModel = mongoose.models.Currency || mongoose.model("Currency", currencySchema);
+const Currency = (db) => CurrencyModel;
+module.exports = Object.assign(Currency, CurrencyModel);
