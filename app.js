@@ -8,12 +8,22 @@ const app = express();
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        return callback(null, true);
+        const allowedOrigins = [
+            "https://gemoradiam.com",
+            "https://www.gemoradiam.com",
+            "http://localhost:5173"];
+
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
     },
     methods: "GET,POST,PUT,DELETE,PATCH,HEAD",
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
