@@ -4,14 +4,34 @@ const Currency = require("../../../models/AdminPanel/System/currency-model");
 
 const get_taxes = async (req, res) => {
     try {
-        const taxes = await Tax.find().sort({ updatedAt: -1 });
+        const rawTaxes = await Tax.find().sort({ updatedAt: -1 }).lean();
+        const currencies = await Currency.find().lean();
 
-        const miscSetting = await MiscSetting.findOne();
+        const miscSetting = await MiscSetting.findOne().lean();
         let currencyDetails = null;
 
         if (miscSetting && miscSetting.currencyid) {
-            currencyDetails = await Currency.findOne({ currencyid: miscSetting.currencyid });
+            currencyDetails = currencies.find(c => c.currencyid === miscSetting.currencyid) || await Currency.findOne({ currencyid: miscSetting.currencyid }).lean();
         }
+
+        const taxes = rawTaxes.map(tax => {
+            let matchedCurrency = null;
+            if (tax.country && tax.country.toLowerCase() !== "all") {
+                matchedCurrency = currencies.find(c =>
+                    c.countryname && c.countryname.trim().toLowerCase() === tax.country.trim().toLowerCase()
+                );
+            }
+            return {
+                ...tax,
+                currencyid: tax.currencyid || matchedCurrency?.currencyid || currencyDetails?.currencyid || null,
+                currency: tax.currency || matchedCurrency?.currency || currencyDetails?.currency || "",
+                currencysymbol: tax.currencysymbol || matchedCurrency?.currencysymbol || currencyDetails?.currencysymbol || "$",
+                currencyposition: tax.currencyposition || matchedCurrency?.currencyposition || currencyDetails?.currencyposition || "left",
+                thousandseparator: tax.thousandseparator !== undefined && tax.thousandseparator !== null ? tax.thousandseparator : (matchedCurrency?.thousandseparator ?? currencyDetails?.thousandseparator ?? ""),
+                decimalseparator: tax.decimalseparator !== undefined && tax.decimalseparator !== null ? tax.decimalseparator : (matchedCurrency?.decimalseparator ?? currencyDetails?.decimalseparator ?? "."),
+                decimal: tax.decimal !== undefined && tax.decimal !== null ? tax.decimal : (matchedCurrency?.decimal ?? currencyDetails?.decimal ?? 2)
+            };
+        });
 
         const response = {
             taxes: taxes,
