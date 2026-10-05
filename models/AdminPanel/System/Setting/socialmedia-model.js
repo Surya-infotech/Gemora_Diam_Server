@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const socialmediaSchema = new mongoose.Schema({
     socialmedia: [
@@ -9,6 +9,6 @@ const socialmediaSchema = new mongoose.Schema({
     ]
 });
 
-const SocialMediaModel = mongoose.models.SocialMedia || mongoose.model("SocialMedia", socialmediaSchema);
-const SocialMedia = (db) => SocialMediaModel;
-module.exports = Object.assign(SocialMedia, SocialMediaModel);
+const SocialMediaModel = mongoose.model("SocialMedia", socialmediaSchema);
+
+module.exports = SocialMediaModel;

@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const miscsettingSchema = new mongoose.Schema({
     currencyid: { type: Number, required: true },
@@ -10,6 +10,6 @@ const miscsettingSchema = new mongoose.Schema({
     yearlydiscounttype: { type: String, default: "percentage" }
 });
 
-const MiscSettingModel = mongoose.models.MiscSetting || mongoose.model("MiscSetting", miscsettingSchema);
-const MiscSetting = (db) => MiscSettingModel;
-module.exports = Object.assign(MiscSetting, MiscSettingModel);
+const MiscSettingModel = mongoose.model("MiscSetting", miscsettingSchema);
+
+module.exports = MiscSettingModel;

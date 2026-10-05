@@ -19,6 +19,6 @@ const taxSchema = new mongoose.Schema({
     updatedAt: { type: String, required: true }
 });
 
-const TaxModel = mongoose.models.Tax || mongoose.model("Tax", taxSchema);
-const Tax = (db) => TaxModel;
-module.exports = Object.assign(Tax, TaxModel);
+const TaxModel = mongoose.model("Tax", taxSchema);
+
+module.exports = TaxModel;

@@ -25,6 +25,6 @@ const helpcenterSchema = new mongoose.Schema({
     updatedAt: { type: String, required: true }
 });
 
-const HelpCenterModel = mongoose.models.HelpCenter || mongoose.model("HelpCenter", helpcenterSchema);
-const HelpCenter = (db) => HelpCenterModel;
-module.exports = Object.assign(HelpCenter, HelpCenterModel);
+const HelpCenterModel = mongoose.model("HelpCenter", helpcenterSchema);
+
+module.exports = HelpCenterModel;

@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const fiscalyearSchema = new mongoose.Schema({
     fiscalyearid: { type: Number, required: true },
@@ -10,6 +10,6 @@ const fiscalyearSchema = new mongoose.Schema({
     updatedAt: { type: String, required: true }
 });
 
-const FiscalYearModel = mongoose.models.FiscalYear || mongoose.model("FiscalYear", fiscalyearSchema);
-const FiscalYear = (db) => FiscalYearModel;
-module.exports = Object.assign(FiscalYear, FiscalYearModel);
+const FiscalYearModel = mongoose.model("FiscalYear", fiscalyearSchema);
+
+module.exports = FiscalYearModel;

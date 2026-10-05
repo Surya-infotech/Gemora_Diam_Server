@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const generalsettingSchema = new mongoose.Schema({
     softwarename: { type: String, required: true },
@@ -15,6 +15,6 @@ const generalsettingSchema = new mongoose.Schema({
     description: { type: String, required: true }
 });
 
-const GeneralSettingModel = mongoose.models.GeneralSetting || mongoose.model("GeneralSetting", generalsettingSchema);
-const GeneralSetting = (db) => GeneralSettingModel;
-module.exports = Object.assign(GeneralSetting, GeneralSettingModel);
+const GeneralSettingModel = mongoose.model("GeneralSetting", generalsettingSchema);
+
+module.exports = GeneralSettingModel;

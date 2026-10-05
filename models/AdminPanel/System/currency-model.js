@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const currencySchema = new mongoose.Schema({
     currencyid: { type: Number, required: true },
@@ -12,6 +12,6 @@ const currencySchema = new mongoose.Schema({
     status: { type: Boolean, default: true }
 });
 
-const CurrencyModel = mongoose.models.Currency || mongoose.model("Currency", currencySchema);
-const Currency = (db) => CurrencyModel;
-module.exports = Object.assign(Currency, CurrencyModel);
+const CurrencyModel = mongoose.model("Currency", currencySchema);
+
+module.exports = CurrencyModel;

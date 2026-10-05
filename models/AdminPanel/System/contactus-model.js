@@ -9,6 +9,6 @@ const contactusSchema = new mongoose.Schema({
     updatedAt: { type: String, required: true }
 });
 
-const ContactUsModel = mongoose.models.ContactUs || mongoose.model("ContactUs", contactusSchema);
-const ContactUs = (db) => ContactUsModel;
-module.exports = Object.assign(ContactUs, ContactUsModel);
+const ContactUsModel = mongoose.model("ContactUs", contactusSchema);
+
+module.exports = ContactUsModel;

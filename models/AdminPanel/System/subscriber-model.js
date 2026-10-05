@@ -9,6 +9,6 @@ const subscriberSchema = new mongoose.Schema({
     updatedAt: { type: String, required: true }
 });
 
-const SubscriberModel = mongoose.models.Subscriber || mongoose.model("Subscriber", subscriberSchema);
-const Subscriber = (db) => SubscriberModel;
-module.exports = Object.assign(Subscriber, SubscriberModel);
+const SubscriberModel = mongoose.model("Subscriber", subscriberSchema);
+
+module.exports = SubscriberModel;
