@@ -2,7 +2,7 @@ const MiscSetting = require("../../../../models/AdminPanel/System/Setting/miscse
 
 const get_misc_setting = async (req, res) => {
     try {
-        const miscSetting = await MiscSetting.findOne();
+        let miscSetting = await MiscSetting.findOne();
 
         if (!miscSetting) {
             return res.status(404).json({ message: "Misc setting not found" });
@@ -17,7 +17,7 @@ const get_misc_setting = async (req, res) => {
 
 const update_misc_setting = async (req, res) => {
     try {
-        const { currencyid, timeZone, dateFormat, timeFormat, defaultlanguage, yearlydiscount, yearlydiscounttype } = req.body;
+        const { currencyid, timeZone, dateFormat, timeFormat } = req.body;
 
         // Find existing misc setting or create new one
         let miscSetting = await MiscSetting.findOne();
@@ -29,9 +29,6 @@ const update_misc_setting = async (req, res) => {
             if (timeZone !== undefined) updateData.timeZone = timeZone;
             if (dateFormat !== undefined) updateData.dateFormat = dateFormat;
             if (timeFormat !== undefined) updateData.timeFormat = timeFormat;
-            if (defaultlanguage !== undefined) updateData.defaultlanguage = defaultlanguage;
-            if (yearlydiscount !== undefined) updateData.yearlydiscount = yearlydiscount;
-            if (yearlydiscounttype !== undefined) updateData.yearlydiscounttype = yearlydiscounttype;
 
             miscSetting = await MiscSetting.findOneAndUpdate(
                 { _id: miscSetting._id },
@@ -40,7 +37,7 @@ const update_misc_setting = async (req, res) => {
             );
         } else {
             // Create new setting if none exists
-            if (!currencyid || !timeZone || !dateFormat || !timeFormat || !defaultlanguage) {
+            if (!currencyid || !timeZone || !dateFormat || !timeFormat) {
                 return res.status(400).json({ message: "All fields are required" });
             }
 
@@ -48,10 +45,7 @@ const update_misc_setting = async (req, res) => {
                 currencyid,
                 timeZone,
                 dateFormat,
-                timeFormat,
-                defaultlanguage,
-                yearlydiscount: yearlydiscount || "",
-                yearlydiscounttype: yearlydiscounttype || "percentage"
+                timeFormat
             });
 
             await miscSetting.save();

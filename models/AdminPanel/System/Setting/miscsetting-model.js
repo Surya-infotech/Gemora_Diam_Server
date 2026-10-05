@@ -4,10 +4,7 @@ const miscsettingSchema = new mongoose.Schema({
     currencyid: { type: Number, required: true },
     timeZone: { type: String, required: true },
     dateFormat: { type: String, required: true },
-    timeFormat: { type: String, required: true },
-    defaultlanguage: { type: String, required: true },
-    yearlydiscount: { type: String, default: "" },
-    yearlydiscounttype: { type: String, default: "percentage" }
+    timeFormat: { type: String, required: true }
 });
 
 const MiscSettingModel = mongoose.model("MiscSetting", miscsettingSchema);
