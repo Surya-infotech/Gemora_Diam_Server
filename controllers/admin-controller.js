@@ -1,5 +1,6 @@
 const Admin = require("../models/admin-model");
 const AdminLoginActivity = require("../models/loginactivity-model");
+const MiscSetting = require("../models/AdminPanel/System/Setting/miscsetting-model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const moment = require("moment-timezone");
@@ -235,18 +236,31 @@ const changePassword = async (req, res) => {
 const getAdminLoginActivity = async (req, res) => {
     try {
         const activities = await AdminLoginActivity.find().sort({ login: -1 }).limit(50);
+        const miscSettings = await MiscSetting.findOne();
+
+        const dateFormat = miscSettings?.dateFormat || "DD/MM/YYYY";
+        const timeFormat = miscSettings?.timeFormat || "hh:mm A";
+        const timeZone = miscSettings?.timeZone || "Asia/Kolkata";
 
         const formattedActivities = activities.map((activity) => {
             const act = activity.toObject();
+            const formattedLogin = act.login
+                ? moment.tz(act.login, timeZone).format(`${dateFormat} ${timeFormat}`)
+                : "";
             return {
                 ...act,
-                loginFormatted: act.login ? moment(act.login).format("DD/MM/YYYY hh:mm A") : ""
+                loginFormatted: formattedLogin
             };
         });
 
         return res.status(200).json({
             message: "Login activity fetched successfully",
-            activities: formattedActivities
+            activities: formattedActivities,
+            miscSettings: miscSettings ? {
+                timeZone: miscSettings.timeZone,
+                dateFormat: miscSettings.dateFormat,
+                timeFormat: miscSettings.timeFormat
+            } : null
         });
     } catch (error) {
         console.error("Error fetching login activity:", error);
