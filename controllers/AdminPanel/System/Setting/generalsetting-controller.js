@@ -60,7 +60,7 @@ const update_general_setting = async (req, res) => {
             generalSetting = await GeneralSetting.findOneAndUpdate(
                 { _id: generalSetting._id },
                 updateData,
-                { new: true }
+                { returnDocument: 'after' }
             );
         } else {
             // Create new setting if none exists

@@ -33,7 +33,7 @@ const update_misc_setting = async (req, res) => {
             miscSetting = await MiscSetting.findOneAndUpdate(
                 { _id: miscSetting._id },
                 updateData,
-                { new: true }
+                { returnDocument: 'after' }
             );
         } else {
             // Create new setting if none exists

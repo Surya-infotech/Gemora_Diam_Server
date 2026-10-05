@@ -37,7 +37,7 @@ const update_social_media = async (req, res) => {
             socialMediaSetting = await SocialMedia.findOneAndUpdate(
                 { _id: socialMediaSetting._id },
                 { socialmedia },
-                { new: true }
+                { returnDocument: 'after' }
             );
         } else {
             // Create new setting if none exists

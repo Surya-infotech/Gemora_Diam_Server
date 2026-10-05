@@ -29,7 +29,7 @@ const update_invoice_setting = async (req, res) => {
             invoiceSetting = await InvoiceSetting.findOneAndUpdate(
                 { _id: invoiceSetting._id },
                 updateData,
-                { new: true }
+                { returnDocument: 'after' }
             );
         } else {
             if (!invoiceprefix || !notes) {

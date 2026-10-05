@@ -77,7 +77,7 @@ const updateCurrency_status = async (req, res) => {
     try {
         const isObjectId = mongoose.Types.ObjectId.isValid(currencyid);
         const query = isObjectId ? { _id: currencyid } : { currencyid: Number(currencyid) };
-        const updated = await Currency.findOneAndUpdate(query, { status }, { new: true });
+        const updated = await Currency.findOneAndUpdate(query, { status }, { returnDocument: 'after' });
 
         if (!updated) return res.status(404).json({ message: "Currency not found" });
         return res.status(200).json(updated);
@@ -119,7 +119,7 @@ const updateCurrency = async (req, res) => {
         };
         if (status !== undefined) updateData.status = status;
 
-        const updated = await Currency.findByIdAndUpdate(existingSelf._id, updateData, { new: true });
+        const updated = await Currency.findByIdAndUpdate(existingSelf._id, updateData, { returnDocument: 'after' });
         return res.status(200).json(updated);
     } catch (error) {
         console.error("Error updating Currency:", error);

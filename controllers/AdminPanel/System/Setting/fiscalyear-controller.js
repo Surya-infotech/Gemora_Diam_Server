@@ -108,7 +108,7 @@ const update_fiscalyear = async (req, res) => {
         const updated = await FiscalYear.findByIdAndUpdate(
             fiscalyearId,
             { fiscalyear, startdate, enddate, status, updatedAt: new Date().toISOString() },
-            { new: true }
+            { returnDocument: 'after' }
         );
         if (!updated) return res.status(404).json({ message: "Fiscal year not found" });
         return res.status(200).json(updated);
