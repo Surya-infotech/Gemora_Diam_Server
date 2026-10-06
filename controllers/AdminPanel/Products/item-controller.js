@@ -133,6 +133,32 @@ const add_item = async (req, res) => {
                 clarityname: String(c.clarityname || c.label || "")
             })) : [];
 
+            let parsedDiamondColors = [];
+            if (req.body.diamondcolors) {
+                try {
+                    parsedDiamondColors = typeof req.body.diamondcolors === "string" ? JSON.parse(req.body.diamondcolors) : req.body.diamondcolors;
+                } catch {
+                    parsedDiamondColors = [];
+                }
+            }
+            const formattedDiamondColors = Array.isArray(parsedDiamondColors) ? parsedDiamondColors.map(dc => ({
+                colorid: Number(dc.colorid || dc.value),
+                colorname: String(dc.colorname || dc.label || "")
+            })) : [];
+
+            let parsedBandColors = [];
+            if (req.body.bandcolors) {
+                try {
+                    parsedBandColors = typeof req.body.bandcolors === "string" ? JSON.parse(req.body.bandcolors) : req.body.bandcolors;
+                } catch {
+                    parsedBandColors = [];
+                }
+            }
+            const formattedBandColors = Array.isArray(parsedBandColors) ? parsedBandColors.map(bc => ({
+                colorid: Number(bc.colorid || bc.value),
+                colorname: String(bc.colorname || bc.label || "")
+            })) : [];
+
 
             let parsedStones = [];
             if (req.body.stones) {
@@ -172,6 +198,8 @@ const add_item = async (req, res) => {
                 ringsizes: formattedRingSizes,
                 shapes: formattedShapes,
                 clarities: formattedClarities,
+                diamondcolors: formattedDiamondColors,
+                bandcolors: formattedBandColors,
                 stones: formattedStones,
                 styles: formattedStyles,
                 description: description ? description.trim() : "",
@@ -353,6 +381,34 @@ const update_item = async (req, res) => {
                 })) : [];
 
                 existingItem.clarities = formattedClarities;
+            }
+            if (req.body.diamondcolors !== undefined) {
+                let parsedDiamondColors = [];
+                try {
+                    parsedDiamondColors = typeof req.body.diamondcolors === "string" ? JSON.parse(req.body.diamondcolors) : req.body.diamondcolors;
+                } catch {
+                    parsedDiamondColors = [];
+                }
+                const formattedDiamondColors = Array.isArray(parsedDiamondColors) ? parsedDiamondColors.map(dc => ({
+                    colorid: Number(dc.colorid || dc.value),
+                    colorname: String(dc.colorname || dc.label || "")
+                })) : [];
+
+                existingItem.diamondcolors = formattedDiamondColors;
+            }
+            if (req.body.bandcolors !== undefined) {
+                let parsedBandColors = [];
+                try {
+                    parsedBandColors = typeof req.body.bandcolors === "string" ? JSON.parse(req.body.bandcolors) : req.body.bandcolors;
+                } catch {
+                    parsedBandColors = [];
+                }
+                const formattedBandColors = Array.isArray(parsedBandColors) ? parsedBandColors.map(bc => ({
+                    colorid: Number(bc.colorid || bc.value),
+                    colorname: String(bc.colorname || bc.label || "")
+                })) : [];
+
+                existingItem.bandcolors = formattedBandColors;
             }
             if (req.body.stones !== undefined) {
                 let parsedStones = [];
