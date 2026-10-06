@@ -4,6 +4,7 @@ const metalcontroller = require("../../controllers/AdminPanel/Attributes/metal-c
 const diamondsizecontroller = require("../../controllers/AdminPanel/Attributes/diamondsize-controller");
 const ringsizecontroller = require("../../controllers/AdminPanel/Attributes/ringsize-controller");
 const shapecontroller = require("../../controllers/AdminPanel/Attributes/shape-controller");
+const claritycontroller = require("../../controllers/AdminPanel/Attributes/clarity-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 
 // Metal Routes
@@ -44,5 +45,15 @@ attributesRouter.route("/EditShape/:shapeid").get(authMiddleware, shapecontrolle
 attributesRouter.route("/UpdateShapeStatus/:shapeid").put(authMiddleware, shapecontroller.update_shape_status);
 attributesRouter.route("/UpdateShape/:shapeid").put(authMiddleware, shapecontroller.update_shape);
 attributesRouter.route("/DeleteShape/:shapeid").delete(authMiddleware, shapecontroller.delete_shape);
+
+
+// Clarity Routes
+attributesRouter.route("/GetClarities").get(authMiddleware, claritycontroller.get_clarities);
+attributesRouter.route("/GetActiveClarities").get(claritycontroller.get_active_clarities);
+attributesRouter.route("/AddClarity").post(authMiddleware, claritycontroller.add_clarity);
+attributesRouter.route("/EditClarity/:clarityid").get(authMiddleware, claritycontroller.edit_clarity);
+attributesRouter.route("/UpdateClarityStatus/:clarityid").put(authMiddleware, claritycontroller.update_clarity_status);
+attributesRouter.route("/UpdateClarity/:clarityid").put(authMiddleware, claritycontroller.update_clarity);
+attributesRouter.route("/DeleteClarity/:clarityid").delete(authMiddleware, claritycontroller.delete_clarity);
 
 module.exports = attributesRouter;
