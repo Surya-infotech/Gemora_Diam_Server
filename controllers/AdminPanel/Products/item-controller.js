@@ -101,6 +101,19 @@ const add_item = async (req, res) => {
                 shapename: String(s.shapename || s.label || "")
             })) : [];
 
+            let parsedClarities = [];
+            if (req.body.clarities) {
+                try {
+                    parsedClarities = typeof req.body.clarities === "string" ? JSON.parse(req.body.clarities) : req.body.clarities;
+                } catch {
+                    parsedClarities = [];
+                }
+            }
+            const formattedClarities = Array.isArray(parsedClarities) ? parsedClarities.map(c => ({
+                clarityid: Number(c.clarityid || c.value),
+                clarityname: String(c.clarityname || c.label || "")
+            })) : [];
+
             const now = new Date().toISOString();
             const imageUrl = req.file ? req.file.location : (req.body.image || "");
 
@@ -111,6 +124,7 @@ const add_item = async (req, res) => {
                 categoryname: categoryNameResolved,
                 ringsizes: formattedRingSizes,
                 shapes: formattedShapes,
+                clarities: formattedClarities,
                 description: description ? description.trim() : "",
                 image: imageUrl,
                 status: true,
@@ -257,6 +271,20 @@ const update_item = async (req, res) => {
                 })) : [];
 
                 existingItem.shapes = formattedShapes;
+            }
+            if (req.body.clarities !== undefined) {
+                let parsedClarities = [];
+                try {
+                    parsedClarities = typeof req.body.clarities === "string" ? JSON.parse(req.body.clarities) : req.body.clarities;
+                } catch {
+                    parsedClarities = [];
+                }
+                const formattedClarities = Array.isArray(parsedClarities) ? parsedClarities.map(c => ({
+                    clarityid: Number(c.clarityid || c.value),
+                    clarityname: String(c.clarityname || c.label || "")
+                })) : [];
+
+                existingItem.clarities = formattedClarities;
             }
             if (status !== undefined) {
                 existingItem.status = (status === true || status === "true" || status === 1 || status === "1");

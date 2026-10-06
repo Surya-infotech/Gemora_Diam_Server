@@ -1,4 +1,5 @@
 const Clarity = require("../../../models/AdminPanel/Attributes/clarity-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_clarities = async (req, res) => {
@@ -132,6 +133,34 @@ const update_clarity = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        // Update clarity in Item table
+        const targetClarityId = existingSelf.clarityid;
+        if (targetClarityId !== undefined && targetClarityId !== null) {
+            await Item.updateMany(
+                {
+                    "clarities.clarityid": {
+                        $in: [Number(targetClarityId), String(targetClarityId)]
+                    }
+                },
+                {
+                    $set: {
+                        "clarities.$[elem].clarityname": trimmedName,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        {
+                            "elem.clarityid": {
+                                $in: [Number(targetClarityId), String(targetClarityId)]
+                            }
+                        }
+                    ]
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Clarity updated successfully", clarity: existingSelf });
     } catch (error) {
         console.error("Error updating clarity:", error);
@@ -149,6 +178,31 @@ const delete_clarity = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Clarity not found" });
         }
+
+        // Remove clarity details from all items containing this clarity
+        const deletedClarityId = deleted.clarityid;
+        if (deletedClarityId !== undefined && deletedClarityId !== null) {
+            await Item.updateMany(
+                {
+                    "clarities.clarityid": {
+                        $in: [Number(deletedClarityId), String(deletedClarityId)]
+                    }
+                },
+                {
+                    $pull: {
+                        clarities: {
+                            clarityid: {
+                                $in: [Number(deletedClarityId), String(deletedClarityId)]
+                            }
+                        }
+                    },
+                    $set: {
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Clarity deleted successfully" });
     } catch (error) {
         console.error("Error deleting clarity:", error);

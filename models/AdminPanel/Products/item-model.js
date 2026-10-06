@@ -23,6 +23,15 @@ const itemSchema = new mongoose.Schema({
         ],
         default: []
     },
+    clarities: {
+        type: [
+            {
+                clarityid: { type: Number },
+                clarityname: { type: String }
+            }
+        ],
+        default: []
+    },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
     status: { type: Boolean, default: true },
