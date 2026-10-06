@@ -5,6 +5,7 @@ const connectDB = require("./src/db");
 const adminRouter = require("./router/admin-router");
 const systemrouteradmin = require("./router/AdminPanel/system-router");
 const attributesrouteradmin = require("./router/AdminPanel/attributes-router");
+const supportrouteradmin = require("./router/AdminPanel/support-router");
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.get("/Status", (req, res) => {
 app.use("/admin", adminRouter);
 app.use("/System", systemrouteradmin);
 app.use("/Attributes", attributesrouteradmin);
+app.use("/Support", supportrouteradmin);
 
 const PORT = process.env.PORT || 8081;
 
