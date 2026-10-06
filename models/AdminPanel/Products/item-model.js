@@ -1,20 +1,10 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 
 const itemSchema = new mongoose.Schema({
     itemid: { type: Number, required: true },
     itemname: { type: String, required: true },
     categoryid: { type: Number, default: null },
     categoryname: { type: String, default: "" },
-    metals: {
-        type: [
-            {
-                metalid: { type: Number },
-                metalname: { type: String },
-                metaltype: { type: String }
-            }
-        ],
-        default: []
-    },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
     status: { type: Boolean, default: true },

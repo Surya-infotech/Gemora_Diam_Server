@@ -1,4 +1,4 @@
-const Item = require("../../../models/AdminPanel/Products/item-model");
+﻿const Item = require("../../../models/AdminPanel/Products/item-model");
 const Category = require("../../../models/AdminPanel/Attributes/category-model");
 const mongoose = require("mongoose");
 const { uploadToS3, deleteImageFromS3 } = require("../../../utils/s3Config-admin");
@@ -75,27 +75,6 @@ const add_item = async (req, res) => {
             const maxItem = await Item.findOne().sort({ itemid: -1 });
             const nextItemId = maxItem ? parseInt(maxItem.itemid) + 1 : 1;
 
-            let parsedMetals = [];
-            if (req.body.metals) {
-                try {
-                    parsedMetals = typeof req.body.metals === "string" ? JSON.parse(req.body.metals) : req.body.metals;
-                } catch {
-                    parsedMetals = [];
-                }
-            }
-            const formattedMetals = Array.isArray(parsedMetals) ? parsedMetals.map(m => ({
-                metalid: Number(m.metalid || m.value),
-                metalname: m.metalname || "",
-                metaltype: m.metaltype || ""
-            })) : [];
-
-            if (!formattedMetals || formattedMetals.length === 0) {
-                if (req.file && req.file.location) {
-                    await deleteImageFromS3(req.file.location, "item");
-                }
-                return res.status(400).json({ message: "Metal is required" });
-            }
-
             const now = new Date().toISOString();
             const imageUrl = req.file ? req.file.location : (req.body.image || "");
 
@@ -104,7 +83,6 @@ const add_item = async (req, res) => {
                 itemname: trimmedName,
                 categoryid: categoryIdResolved,
                 categoryname: categoryNameResolved,
-                metals: formattedMetals,
                 description: description ? description.trim() : "",
                 image: imageUrl,
                 status: true,
@@ -223,28 +201,6 @@ const update_item = async (req, res) => {
             existingItem.itemname = trimmedName;
             if (description !== undefined) {
                 existingItem.description = description ? description.trim() : "";
-            }
-            if (req.body.metals !== undefined) {
-                let parsedMetals = [];
-                try {
-                    parsedMetals = typeof req.body.metals === "string" ? JSON.parse(req.body.metals) : req.body.metals;
-                } catch {
-                    parsedMetals = [];
-                }
-                const formattedMetals = Array.isArray(parsedMetals) ? parsedMetals.map(m => ({
-                    metalid: Number(m.metalid || m.value),
-                    metalname: m.metalname || "",
-                    metaltype: m.metaltype || ""
-                })) : [];
-
-                if (formattedMetals.length === 0) {
-                    if (req.file && req.file.location) {
-                        await deleteImageFromS3(req.file.location, "item");
-                    }
-                    return res.status(400).json({ message: "Metal is required" });
-                }
-
-                existingItem.metals = formattedMetals;
             }
             if (status !== undefined) {
                 existingItem.status = (status === true || status === "true" || status === 1 || status === "1");
