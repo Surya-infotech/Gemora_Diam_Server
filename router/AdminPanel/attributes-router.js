@@ -8,6 +8,7 @@ const claritycontroller = require("../../controllers/AdminPanel/Attributes/clari
 const diamondcolorcontroller = require("../../controllers/AdminPanel/Attributes/diamondcolor-controller");
 const stonecontroller = require("../../controllers/AdminPanel/Attributes/stone-controller");
 const stylecontroller = require("../../controllers/AdminPanel/Attributes/style-controller");
+const categorycontroller = require("../../controllers/AdminPanel/Attributes/category-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 
 // Metal Routes
@@ -88,5 +89,15 @@ attributesRouter.route("/EditStyle/:styleid").get(authMiddleware, stylecontrolle
 attributesRouter.route("/UpdateStyleStatus/:styleid").put(authMiddleware, stylecontroller.update_style_status);
 attributesRouter.route("/UpdateStyle/:styleid").put(authMiddleware, stylecontroller.update_style);
 attributesRouter.route("/DeleteStyle/:styleid").delete(authMiddleware, stylecontroller.delete_style);
+
+
+// Category Routes
+attributesRouter.route("/GetCategories").get(authMiddleware, categorycontroller.get_categories);
+attributesRouter.route("/GetActiveCategories").get(categorycontroller.get_active_categories);
+attributesRouter.route("/AddCategory").post(authMiddleware, categorycontroller.add_category);
+attributesRouter.route("/EditCategory/:categoryid").get(authMiddleware, categorycontroller.edit_category);
+attributesRouter.route("/UpdateCategoryStatus/:categoryid").put(authMiddleware, categorycontroller.update_category_status);
+attributesRouter.route("/UpdateCategory/:categoryid").put(authMiddleware, categorycontroller.update_category);
+attributesRouter.route("/DeleteCategory/:categoryid").delete(authMiddleware, categorycontroller.delete_category);
 
 module.exports = attributesRouter;
