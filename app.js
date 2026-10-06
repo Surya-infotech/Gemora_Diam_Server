@@ -4,6 +4,7 @@ const cors = require("cors");
 const connectDB = require("./src/db");
 const adminRouter = require("./router/admin-router");
 const systemrouteradmin = require("./router/AdminPanel/system-router");
+const attributesrouteradmin = require("./router/AdminPanel/attributes-router");
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.get("/Status", (req, res) => {
 
 app.use("/admin", adminRouter);
 app.use("/System", systemrouteradmin);
+app.use("/Attributes", attributesrouteradmin);
 
 const PORT = process.env.PORT || 8081;
 

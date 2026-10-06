@@ -2,6 +2,7 @@ const express = require("express");
 const systemrouter = express.Router();
 const currencycontroller = require("../../controllers/AdminPanel/System/currency-controller");
 const taxcontroller = require("../../controllers/AdminPanel/System/tax-controller");
+const metalcontroller = require("../../controllers/AdminPanel/System/metal-controller");
 const fiscalyearcontroller = require("../../controllers/AdminPanel/System/Setting/fiscalyear-controller");
 const generalsettingcontroller = require("../../controllers/AdminPanel/System/Setting/generalsetting-controller");
 const socialmediacontroller = require("../../controllers/AdminPanel/System/Setting/socialmedia-controller");
@@ -36,6 +37,15 @@ systemrouter.route("/EditTax/:taxId").get(authMiddleware, taxcontroller.edit_tax
 systemrouter.route("/UpdateTaxStatus/:taxId").put(authMiddleware, taxcontroller.update_tax_status);
 systemrouter.route("/UpdateTax/:taxId").put(authMiddleware, taxcontroller.update_tax);
 systemrouter.route("/DeleteTax/:taxId").delete(authMiddleware, taxcontroller.delete_tax);
+
+// Metal Routes
+systemrouter.route("/GetMetals").get(authMiddleware, metalcontroller.get_metals);
+systemrouter.route("/GetActiveMetals").get(metalcontroller.get_active_metals);
+systemrouter.route("/AddMetal").post(authMiddleware, metalcontroller.add_metal);
+systemrouter.route("/EditMetal/:metalid").get(authMiddleware, metalcontroller.edit_metal);
+systemrouter.route("/UpdateMetalStatus/:metalid").put(authMiddleware, metalcontroller.update_metal_status);
+systemrouter.route("/UpdateMetal/:metalid").put(authMiddleware, metalcontroller.update_metal);
+systemrouter.route("/DeleteMetal/:metalid").delete(authMiddleware, metalcontroller.delete_metal);
 
 // Fiscal Year Routes
 systemrouter.route("/CheckCurrentFiscalYear").get(fiscalyearcontroller.check_current_fiscalyear);
