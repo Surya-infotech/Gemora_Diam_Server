@@ -47,6 +47,10 @@ const add_item = async (req, res) => {
                 return res.status(400).json({ message: "Category is required" });
             }
 
+            if (!req.file || !req.file.location) {
+                return res.status(400).json({ message: "Image is required" });
+            }
+
             const trimmedName = itemname.trim();
 
             const existingItem = await Item.findOne({
@@ -164,6 +168,10 @@ const update_item = async (req, res) => {
                     await deleteImageFromS3(req.file.location, "item");
                 }
                 return res.status(400).json({ message: "Item Name is required" });
+            }
+
+            if (!existingItem.image && (!req.file || !req.file.location)) {
+                return res.status(400).json({ message: "Image is required" });
             }
 
             const trimmedName = itemname.trim();
