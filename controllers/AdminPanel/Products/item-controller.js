@@ -1,4 +1,4 @@
-﻿const Item = require("../../../models/AdminPanel/Products/item-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const Category = require("../../../models/AdminPanel/Attributes/category-model");
 const mongoose = require("mongoose");
 const { uploadToS3, deleteImageFromS3 } = require("../../../utils/s3Config-admin");
