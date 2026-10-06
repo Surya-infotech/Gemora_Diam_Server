@@ -7,6 +7,7 @@ const shapecontroller = require("../../controllers/AdminPanel/Attributes/shape-c
 const claritycontroller = require("../../controllers/AdminPanel/Attributes/clarity-controller");
 const diamondcolorcontroller = require("../../controllers/AdminPanel/Attributes/diamondcolor-controller");
 const stonecontroller = require("../../controllers/AdminPanel/Attributes/stone-controller");
+const stylecontroller = require("../../controllers/AdminPanel/Attributes/style-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 
 // Metal Routes
@@ -77,5 +78,15 @@ attributesRouter.route("/EditStone/:stoneid").get(authMiddleware, stonecontrolle
 attributesRouter.route("/UpdateStoneStatus/:stoneid").put(authMiddleware, stonecontroller.update_stone_status);
 attributesRouter.route("/UpdateStone/:stoneid").put(authMiddleware, stonecontroller.update_stone);
 attributesRouter.route("/DeleteStone/:stoneid").delete(authMiddleware, stonecontroller.delete_stone);
+
+
+// Style Routes
+attributesRouter.route("/GetStyles").get(authMiddleware, stylecontroller.get_styles);
+attributesRouter.route("/GetActiveStyles").get(stylecontroller.get_active_styles);
+attributesRouter.route("/AddStyle").post(authMiddleware, stylecontroller.add_style);
+attributesRouter.route("/EditStyle/:styleid").get(authMiddleware, stylecontroller.edit_style);
+attributesRouter.route("/UpdateStyleStatus/:styleid").put(authMiddleware, stylecontroller.update_style_status);
+attributesRouter.route("/UpdateStyle/:styleid").put(authMiddleware, stylecontroller.update_style);
+attributesRouter.route("/DeleteStyle/:styleid").delete(authMiddleware, stylecontroller.delete_style);
 
 module.exports = attributesRouter;
