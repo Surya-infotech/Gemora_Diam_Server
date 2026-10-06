@@ -6,6 +6,8 @@ const itemSchema = new mongoose.Schema({
     itemname: { type: String, required: true },
     categoryid: { type: Number, default: null },
     categoryname: { type: String, default: "" },
+    subcategoryid: { type: Number, default: null },
+    subcategoryname: { type: String, default: "" },
     ringsizes: {
         type: [
             {

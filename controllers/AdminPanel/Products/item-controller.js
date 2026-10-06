@@ -1,5 +1,6 @@
 const Item = require("../../../models/AdminPanel/Products/item-model");
 const Category = require("../../../models/AdminPanel/Attributes/category-model");
+const SubCategory = require("../../../models/AdminPanel/Attributes/subcategory-model");
 const mongoose = require("mongoose");
 const { uploadToS3, deleteImageFromS3 } = require("../../../utils/s3Config-admin");
 
@@ -91,6 +92,18 @@ const add_item = async (req, res) => {
             const categoryNameResolved = categoryDoc ? categoryDoc.categoryname : (req.body.categoryname || "");
             const categoryIdResolved = categoryDoc ? categoryDoc.categoryid : Number(categoryid) || 0;
 
+            let subcategoryIdResolved = null;
+            let subcategoryNameResolved = "";
+            if (req.body.subcategoryid) {
+                const isSubCatObjectId = mongoose.Types.ObjectId.isValid(req.body.subcategoryid);
+                const subCatQuery = isSubCatObjectId ? { _id: req.body.subcategoryid } : { subcategoryid: Number(req.body.subcategoryid) };
+                const subCategoryDoc = await SubCategory.findOne(subCatQuery);
+                if (subCategoryDoc) {
+                    subcategoryIdResolved = subCategoryDoc.subcategoryid;
+                    subcategoryNameResolved = subCategoryDoc.subcategoryname;
+                }
+            }
+
             const maxItem = await Item.findOne().sort({ itemid: -1 });
             const nextItemId = maxItem ? parseInt(maxItem.itemid) + 1 : 1;
 
@@ -159,7 +172,6 @@ const add_item = async (req, res) => {
                 colorname: String(bc.colorname || bc.label || "")
             })) : [];
 
-
             let parsedStones = [];
             if (req.body.stones) {
                 try {
@@ -195,6 +207,8 @@ const add_item = async (req, res) => {
                 itemname: trimmedName,
                 categoryid: categoryIdResolved,
                 categoryname: categoryNameResolved,
+                subcategoryid: subcategoryIdResolved,
+                subcategoryname: subcategoryNameResolved,
                 ringsizes: formattedRingSizes,
                 shapes: formattedShapes,
                 clarities: formattedClarities,
@@ -267,10 +281,10 @@ const update_item = async (req, res) => {
             return res.status(400).json({ message: err.message || "Error uploading image" });
         }
 
-        try {
-            const { itemid } = req.params;
-            const { sku, itemname, categoryid, description, status } = req.body;
+        const { itemid } = req.params;
+        const { sku, itemname, categoryid, description, status } = req.body;
 
+        try {
             const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
             const selfQuery = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
             const existingItem = await Item.findOne(selfQuery);
@@ -294,10 +308,6 @@ const update_item = async (req, res) => {
                     await deleteImageFromS3(req.file.location, "item");
                 }
                 return res.status(400).json({ message: "Item Name is required" });
-            }
-
-            if (!existingItem.image && (!req.file || !req.file.location)) {
-                return res.status(400).json({ message: "Image is required" });
             }
 
             const trimmedSku = sku.trim();
@@ -332,6 +342,24 @@ const update_item = async (req, res) => {
                 if (categoryDoc) {
                     existingItem.categoryid = categoryDoc.categoryid;
                     existingItem.categoryname = categoryDoc.categoryname;
+                }
+            }
+
+            if (req.body.subcategoryid !== undefined) {
+                if (req.body.subcategoryid) {
+                    const isSubCatObjectId = mongoose.Types.ObjectId.isValid(req.body.subcategoryid);
+                    const subCatQuery = isSubCatObjectId ? { _id: req.body.subcategoryid } : { subcategoryid: Number(req.body.subcategoryid) };
+                    const subCategoryDoc = await SubCategory.findOne(subCatQuery);
+                    if (subCategoryDoc && subCategoryDoc.categoryid === existingItem.categoryid) {
+                        existingItem.subcategoryid = subCategoryDoc.subcategoryid;
+                        existingItem.subcategoryname = subCategoryDoc.subcategoryname;
+                    } else {
+                        existingItem.subcategoryid = null;
+                        existingItem.subcategoryname = "";
+                    }
+                } else {
+                    existingItem.subcategoryid = null;
+                    existingItem.subcategoryname = "";
                 }
             }
 

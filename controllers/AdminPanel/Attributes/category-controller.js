@@ -175,13 +175,15 @@ const delete_category = async (req, res) => {
             return res.status(404).json({ message: "Category not found" });
         }
 
-        // Remove category details from all items belonging to this category
+        // Remove category details and subcategory details from all items belonging to this category
         await Item.updateMany(
             { categoryid: deleted.categoryid },
             {
                 $set: {
                     categoryid: null,
                     categoryname: "",
+                    subcategoryid: null,
+                    subcategoryname: "",
                     updatedAt: new Date().toISOString()
                 }
             }

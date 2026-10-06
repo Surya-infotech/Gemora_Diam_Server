@@ -1,5 +1,6 @@
 const SubCategory = require("../../../models/AdminPanel/Attributes/subcategory-model");
 const Category = require("../../../models/AdminPanel/Attributes/category-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_subcategories = async (req, res) => {
@@ -46,7 +47,7 @@ const add_subcategory = async (req, res) => {
 
         const existing = await SubCategory.findOne({
             categoryid: categoryDoc.categoryid,
-            subcategoryname: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}$`, "i") }
+            subcategoryname: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i") }
         });
         if (existing) {
             return res.status(400).json({ message: "Sub Category Already Exists" });
@@ -143,12 +144,14 @@ const update_subcategory = async (req, res) => {
         const duplicateQuery = {
             _id: { $ne: existingSelf._id },
             categoryid: categoryDoc.categoryid,
-            subcategoryname: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}$`, "i") }
+            subcategoryname: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i") }
         };
         const duplicate = await SubCategory.findOne(duplicateQuery);
         if (duplicate) {
             return res.status(400).json({ message: "Sub Category Already Exists" });
         }
+
+        const categoryChanged = existingSelf.categoryid !== categoryDoc.categoryid;
 
         existingSelf.subcategoryname = trimmedName;
         existingSelf.categoryid = categoryDoc.categoryid;
@@ -159,6 +162,32 @@ const update_subcategory = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        if (categoryChanged) {
+            // When category changes on subcategory, remove subcategory details from items using this subcategory
+            await Item.updateMany(
+                { subcategoryid: existingSelf.subcategoryid },
+                {
+                    $set: {
+                        subcategoryid: null,
+                        subcategoryname: "",
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
+        } else {
+            // When update subcategory name, update subcategory name on items
+            await Item.updateMany(
+                { subcategoryid: existingSelf.subcategoryid },
+                {
+                    $set: {
+                        subcategoryname: trimmedName,
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Sub Category updated successfully", subcategory: existingSelf });
     } catch (error) {
         console.error("Error updating subcategory:", error);
@@ -176,6 +205,18 @@ const delete_subcategory = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Sub Category not found" });
         }
+
+        // Remove subcategory details from items that used this subcategory
+        await Item.updateMany(
+            { subcategoryid: deleted.subcategoryid },
+            {
+                $set: {
+                    subcategoryid: null,
+                    subcategoryname: "",
+                    updatedAt: new Date().toISOString()
+                }
+            }
+        );
 
         return res.status(200).json({ message: "Sub Category deleted successfully" });
     } catch (error) {
