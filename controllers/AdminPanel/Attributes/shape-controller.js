@@ -1,4 +1,5 @@
 const Shape = require("../../../models/AdminPanel/Attributes/shape-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_shapes = async (req, res) => {
@@ -132,6 +133,34 @@ const update_shape = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        // Update shape in Item table
+        const targetShapeId = existingSelf.shapeid;
+        if (targetShapeId !== undefined && targetShapeId !== null) {
+            await Item.updateMany(
+                {
+                    "shapes.shapeid": {
+                        $in: [Number(targetShapeId), String(targetShapeId)]
+                    }
+                },
+                {
+                    $set: {
+                        "shapes.$[elem].shapename": trimmedName,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        {
+                            "elem.shapeid": {
+                                $in: [Number(targetShapeId), String(targetShapeId)]
+                            }
+                        }
+                    ]
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Shape updated successfully", shape: existingSelf });
     } catch (error) {
         console.error("Error updating shape:", error);
@@ -149,6 +178,31 @@ const delete_shape = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Shape not found" });
         }
+
+        // Remove shape details from all items containing this shape
+        const deletedShapeId = deleted.shapeid;
+        if (deletedShapeId !== undefined && deletedShapeId !== null) {
+            await Item.updateMany(
+                {
+                    "shapes.shapeid": {
+                        $in: [Number(deletedShapeId), String(deletedShapeId)]
+                    }
+                },
+                {
+                    $pull: {
+                        shapes: {
+                            shapeid: {
+                                $in: [Number(deletedShapeId), String(deletedShapeId)]
+                            }
+                        }
+                    },
+                    $set: {
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Shape deleted successfully" });
     } catch (error) {
         console.error("Error deleting shape:", error);
