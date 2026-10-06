@@ -1,4 +1,4 @@
-const ContactUs = require("../../../models/AdminPanel/System/contactus-model");
+const ContactUs = require("../../../models/AdminPanel/Support/contactus-model");
 
 const get_contactus = async (req, res) => {
     try {

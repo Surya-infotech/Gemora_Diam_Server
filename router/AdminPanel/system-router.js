@@ -7,19 +7,7 @@ const generalsettingcontroller = require("../../controllers/AdminPanel/System/Se
 const socialmediacontroller = require("../../controllers/AdminPanel/System/Setting/socialmedia-controller");
 const miscsettingcontroller = require("../../controllers/AdminPanel/System/Setting/miscsetting-controller");
 const invoicesettingcontroller = require("../../controllers/AdminPanel/System/Setting/invoicesetting-controller");
-const contactuscontroller = require("../../controllers/AdminPanel/System/contactus-controller");
-const subscribercontroller = require("../../controllers/AdminPanel/System/subscriber-controller");
-const faqcontroller = require("../../controllers/AdminPanel/System/faq-controller");
-const policycontroller = require("../../controllers/AdminPanel/System/policy-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
-
-// Contact Us Routes
-systemrouter.route("/GetContactUs").get(authMiddleware, contactuscontroller.get_contactus);
-systemrouter.route("/AddContactUs").post(contactuscontroller.add_contactus);
-
-// Newsletter Subscriber Routes
-systemrouter.route("/SubscribeNewsletter").post(subscribercontroller.subscribe_newsletter);
-systemrouter.route("/GetSubscribers").get(authMiddleware, subscribercontroller.get_subscribers);
 
 // Currency Routes
 systemrouter.route("/GetCurrencies").get(authMiddleware, currencycontroller.get_currency);
@@ -63,23 +51,5 @@ systemrouter.route("/UpdateMiscSetting").put(authMiddleware, miscsettingcontroll
 // Invoice Setting Routes
 systemrouter.route("/GetInvoiceSetting").get(authMiddleware, invoicesettingcontroller.get_invoice_setting);
 systemrouter.route("/UpdateInvoiceSetting").put(authMiddleware, invoicesettingcontroller.update_invoice_setting);
-
-// FAQ Routes
-systemrouter.route("/GetFAQs").get(authMiddleware, faqcontroller.get_faqs);
-systemrouter.route("/GetActiveFAQs").get(faqcontroller.get_active_faqs);
-systemrouter.route("/AddFAQ").post(authMiddleware, faqcontroller.add_faq);
-systemrouter.route("/EditFAQ/:faqid").get(authMiddleware, faqcontroller.edit_faq);
-systemrouter.route("/UpdateFAQStatus/:faqid").put(authMiddleware, faqcontroller.update_faq_status);
-systemrouter.route("/UpdateFAQ/:faqid").put(authMiddleware, faqcontroller.update_faq);
-systemrouter.route("/DeleteFAQ/:faqid").delete(authMiddleware, faqcontroller.delete_faq);
-
-// Policy Routes
-systemrouter.route("/GetPolicies").get(authMiddleware, policycontroller.get_policies);
-systemrouter.route("/GetActivePolicies").get(policycontroller.get_active_policies);
-systemrouter.route("/AddPolicy").post(authMiddleware, policycontroller.add_policy);
-systemrouter.route("/EditPolicy/:policyid").get(authMiddleware, policycontroller.edit_policy);
-systemrouter.route("/UpdatePolicyStatus/:policyid").put(authMiddleware, policycontroller.update_policy_status);
-systemrouter.route("/UpdatePolicy/:policyid").put(authMiddleware, policycontroller.update_policy);
-systemrouter.route("/DeletePolicy/:policyid").delete(authMiddleware, policycontroller.delete_policy);
 
 module.exports = systemrouter;

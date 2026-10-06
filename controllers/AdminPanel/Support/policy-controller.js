@@ -1,4 +1,4 @@
-const Policy = require("../../../models/AdminPanel/System/policy-model");
+const Policy = require("../../../models/AdminPanel/Support/policy-model");
 const mongoose = require("mongoose");
 
 const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

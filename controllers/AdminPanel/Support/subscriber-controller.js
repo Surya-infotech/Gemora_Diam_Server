@@ -1,4 +1,4 @@
-const Subscriber = require("../../../models/AdminPanel/System/subscriber-model");
+const Subscriber = require("../../../models/AdminPanel/Support/subscriber-model");
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

@@ -1,9 +1,9 @@
 const express = require("express");
 const supportrouter = express.Router();
-const contactuscontroller = require("../../controllers/AdminPanel/System/contactus-controller");
-const subscribercontroller = require("../../controllers/AdminPanel/System/subscriber-controller");
-const faqcontroller = require("../../controllers/AdminPanel/System/faq-controller");
-const policycontroller = require("../../controllers/AdminPanel/System/policy-controller");
+const contactuscontroller = require("../../controllers/AdminPanel/Support/contactus-controller");
+const subscribercontroller = require("../../controllers/AdminPanel/Support/subscriber-controller");
+const faqcontroller = require("../../controllers/AdminPanel/Support/faq-controller");
+const policycontroller = require("../../controllers/AdminPanel/Support/policy-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 
 // Contact Us Routes

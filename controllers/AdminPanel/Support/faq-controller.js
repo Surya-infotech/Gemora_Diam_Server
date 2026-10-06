@@ -1,4 +1,4 @@
-const FAQ = require("../../../models/AdminPanel/System/faq-model");
+const FAQ = require("../../../models/AdminPanel/Support/faq-model");
 const mongoose = require("mongoose");
 
 const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
