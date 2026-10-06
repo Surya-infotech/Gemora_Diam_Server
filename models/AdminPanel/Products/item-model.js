@@ -14,6 +14,15 @@ const itemSchema = new mongoose.Schema({
         ],
         default: []
     },
+    shapes: {
+        type: [
+            {
+                shapeid: { type: Number },
+                shapename: { type: String }
+            }
+        ],
+        default: []
+    },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
     status: { type: Boolean, default: true },

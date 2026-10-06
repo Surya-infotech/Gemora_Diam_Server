@@ -88,6 +88,19 @@ const add_item = async (req, res) => {
                 ringsize: String(r.ringsize || r.label || "")
             })) : [];
 
+            let parsedShapes = [];
+            if (req.body.shapes) {
+                try {
+                    parsedShapes = typeof req.body.shapes === "string" ? JSON.parse(req.body.shapes) : req.body.shapes;
+                } catch {
+                    parsedShapes = [];
+                }
+            }
+            const formattedShapes = Array.isArray(parsedShapes) ? parsedShapes.map(s => ({
+                shapeid: Number(s.shapeid || s.value),
+                shapename: String(s.shapename || s.label || "")
+            })) : [];
+
             const now = new Date().toISOString();
             const imageUrl = req.file ? req.file.location : (req.body.image || "");
 
@@ -97,6 +110,7 @@ const add_item = async (req, res) => {
                 categoryid: categoryIdResolved,
                 categoryname: categoryNameResolved,
                 ringsizes: formattedRingSizes,
+                shapes: formattedShapes,
                 description: description ? description.trim() : "",
                 image: imageUrl,
                 status: true,
@@ -229,6 +243,20 @@ const update_item = async (req, res) => {
                 })) : [];
 
                 existingItem.ringsizes = formattedRingSizes;
+            }
+            if (req.body.shapes !== undefined) {
+                let parsedShapes = [];
+                try {
+                    parsedShapes = typeof req.body.shapes === "string" ? JSON.parse(req.body.shapes) : req.body.shapes;
+                } catch {
+                    parsedShapes = [];
+                }
+                const formattedShapes = Array.isArray(parsedShapes) ? parsedShapes.map(s => ({
+                    shapeid: Number(s.shapeid || s.value),
+                    shapename: String(s.shapename || s.label || "")
+                })) : [];
+
+                existingItem.shapes = formattedShapes;
             }
             if (status !== undefined) {
                 existingItem.status = (status === true || status === "true" || status === 1 || status === "1");
