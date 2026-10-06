@@ -10,6 +10,7 @@ const invoicesettingcontroller = require("../../controllers/AdminPanel/System/Se
 const contactuscontroller = require("../../controllers/AdminPanel/System/contactus-controller");
 const subscribercontroller = require("../../controllers/AdminPanel/System/subscriber-controller");
 const faqcontroller = require("../../controllers/AdminPanel/System/faq-controller");
+const policycontroller = require("../../controllers/AdminPanel/System/policy-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 
 // Contact Us Routes
@@ -71,5 +72,14 @@ systemrouter.route("/EditFAQ/:faqid").get(authMiddleware, faqcontroller.edit_faq
 systemrouter.route("/UpdateFAQStatus/:faqid").put(authMiddleware, faqcontroller.update_faq_status);
 systemrouter.route("/UpdateFAQ/:faqid").put(authMiddleware, faqcontroller.update_faq);
 systemrouter.route("/DeleteFAQ/:faqid").delete(authMiddleware, faqcontroller.delete_faq);
+
+// Policy Routes
+systemrouter.route("/GetPolicies").get(authMiddleware, policycontroller.get_policies);
+systemrouter.route("/GetActivePolicies").get(policycontroller.get_active_policies);
+systemrouter.route("/AddPolicy").post(authMiddleware, policycontroller.add_policy);
+systemrouter.route("/EditPolicy/:policyid").get(authMiddleware, policycontroller.edit_policy);
+systemrouter.route("/UpdatePolicyStatus/:policyid").put(authMiddleware, policycontroller.update_policy_status);
+systemrouter.route("/UpdatePolicy/:policyid").put(authMiddleware, policycontroller.update_policy);
+systemrouter.route("/DeletePolicy/:policyid").delete(authMiddleware, policycontroller.delete_policy);
 
 module.exports = systemrouter;
