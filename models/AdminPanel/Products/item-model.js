@@ -5,6 +5,16 @@ const itemSchema = new mongoose.Schema({
     itemname: { type: String, required: true },
     categoryid: { type: Number, required: true },
     categoryname: { type: String, required: true },
+    metals: {
+        type: [
+            {
+                metalid: { type: Number },
+                metalname: { type: String },
+                metaltype: { type: String }
+            }
+        ],
+        default: []
+    },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
     status: { type: Boolean, default: true },
