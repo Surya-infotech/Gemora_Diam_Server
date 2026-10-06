@@ -75,6 +75,19 @@ const add_item = async (req, res) => {
             const maxItem = await Item.findOne().sort({ itemid: -1 });
             const nextItemId = maxItem ? parseInt(maxItem.itemid) + 1 : 1;
 
+            let parsedRingSizes = [];
+            if (req.body.ringsizes) {
+                try {
+                    parsedRingSizes = typeof req.body.ringsizes === "string" ? JSON.parse(req.body.ringsizes) : req.body.ringsizes;
+                } catch {
+                    parsedRingSizes = [];
+                }
+            }
+            const formattedRingSizes = Array.isArray(parsedRingSizes) ? parsedRingSizes.map(r => ({
+                ringsizeid: Number(r.ringsizeid || r.value),
+                ringsize: String(r.ringsize || r.label || "")
+            })) : [];
+
             const now = new Date().toISOString();
             const imageUrl = req.file ? req.file.location : (req.body.image || "");
 
@@ -83,6 +96,7 @@ const add_item = async (req, res) => {
                 itemname: trimmedName,
                 categoryid: categoryIdResolved,
                 categoryname: categoryNameResolved,
+                ringsizes: formattedRingSizes,
                 description: description ? description.trim() : "",
                 image: imageUrl,
                 status: true,
@@ -201,6 +215,20 @@ const update_item = async (req, res) => {
             existingItem.itemname = trimmedName;
             if (description !== undefined) {
                 existingItem.description = description ? description.trim() : "";
+            }
+            if (req.body.ringsizes !== undefined) {
+                let parsedRingSizes = [];
+                try {
+                    parsedRingSizes = typeof req.body.ringsizes === "string" ? JSON.parse(req.body.ringsizes) : req.body.ringsizes;
+                } catch {
+                    parsedRingSizes = [];
+                }
+                const formattedRingSizes = Array.isArray(parsedRingSizes) ? parsedRingSizes.map(r => ({
+                    ringsizeid: Number(r.ringsizeid || r.value),
+                    ringsize: String(r.ringsize || r.label || "")
+                })) : [];
+
+                existingItem.ringsizes = formattedRingSizes;
             }
             if (status !== undefined) {
                 existingItem.status = (status === true || status === "true" || status === 1 || status === "1");

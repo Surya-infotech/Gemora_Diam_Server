@@ -5,6 +5,15 @@ const itemSchema = new mongoose.Schema({
     itemname: { type: String, required: true },
     categoryid: { type: Number, default: null },
     categoryname: { type: String, default: "" },
+    ringsizes: {
+        type: [
+            {
+                ringsizeid: { type: Number },
+                ringsize: { type: String }
+            }
+        ],
+        default: []
+    },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
     status: { type: Boolean, default: true },
