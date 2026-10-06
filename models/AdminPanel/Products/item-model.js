@@ -33,15 +33,6 @@ const itemSchema = new mongoose.Schema({
         ],
         default: []
     },
-    diamondcolors: {
-        type: [
-            {
-                diamondcolorid: { type: Number },
-                diamondcolor: { type: String }
-            }
-        ],
-        default: []
-    },
     stones: {
         type: [
             {
