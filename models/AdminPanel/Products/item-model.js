@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const itemSchema = new mongoose.Schema({
     itemid: { type: Number, required: true },
     itemname: { type: String, required: true },
-    categoryid: { type: Number, required: true },
-    categoryname: { type: String, required: true },
+    categoryid: { type: Number, default: null },
+    categoryname: { type: String, default: "" },
     metals: {
         type: [
             {
