@@ -9,6 +9,7 @@ const colorcontroller = require("../../controllers/AdminPanel/Attributes/color-c
 const stonecontroller = require("../../controllers/AdminPanel/Attributes/stone-controller");
 const stylecontroller = require("../../controllers/AdminPanel/Attributes/style-controller");
 const categorycontroller = require("../../controllers/AdminPanel/Attributes/category-controller");
+const subcategorycontroller = require("../../controllers/AdminPanel/Attributes/subcategory-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 
 // Metal Routes
@@ -100,5 +101,15 @@ attributesRouter.route("/EditCategory/:categoryid").get(authMiddleware, category
 attributesRouter.route("/UpdateCategoryStatus/:categoryid").put(authMiddleware, categorycontroller.update_category_status);
 attributesRouter.route("/UpdateCategory/:categoryid").put(authMiddleware, categorycontroller.update_category);
 attributesRouter.route("/DeleteCategory/:categoryid").delete(authMiddleware, categorycontroller.delete_category);
+
+
+// SubCategory Routes
+attributesRouter.route("/GetSubCategories").get(authMiddleware, subcategorycontroller.get_subcategories);
+attributesRouter.route("/GetActiveSubCategories").get(subcategorycontroller.get_active_subcategories);
+attributesRouter.route("/AddSubCategory").post(authMiddleware, subcategorycontroller.add_subcategory);
+attributesRouter.route("/EditSubCategory/:subcategoryid").get(authMiddleware, subcategorycontroller.edit_subcategory);
+attributesRouter.route("/UpdateSubCategoryStatus/:subcategoryid").put(authMiddleware, subcategorycontroller.update_subcategory_status);
+attributesRouter.route("/UpdateSubCategory/:subcategoryid").put(authMiddleware, subcategorycontroller.update_subcategory);
+attributesRouter.route("/DeleteSubCategory/:subcategoryid").delete(authMiddleware, subcategorycontroller.delete_subcategory);
 
 module.exports = attributesRouter;

@@ -1,5 +1,6 @@
 const Category = require("../../../models/AdminPanel/Attributes/category-model");
 const Item = require("../../../models/AdminPanel/Products/item-model");
+const SubCategory = require("../../../models/AdminPanel/Attributes/subcategory-model");
 const mongoose = require("mongoose");
 
 const get_categories = async (req, res) => {
@@ -145,6 +146,17 @@ const update_category = async (req, res) => {
             }
         );
 
+        // Update category name on SubCategory table
+        await SubCategory.updateMany(
+            { categoryid: existingSelf.categoryid },
+            {
+                $set: {
+                    categoryname: trimmedName,
+                    updatedAt: new Date().toISOString()
+                }
+            }
+        );
+
         return res.status(200).json({ message: "Category updated successfully", category: existingSelf });
     } catch (error) {
         console.error("Error updating category:", error);
@@ -165,6 +177,18 @@ const delete_category = async (req, res) => {
 
         // Remove category details from all items belonging to this category
         await Item.updateMany(
+            { categoryid: deleted.categoryid },
+            {
+                $set: {
+                    categoryid: null,
+                    categoryname: "",
+                    updatedAt: new Date().toISOString()
+                }
+            }
+        );
+
+        // Remove category details from all subcategories belonging to this category
+        await SubCategory.updateMany(
             { categoryid: deleted.categoryid },
             {
                 $set: {
