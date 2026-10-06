@@ -195,7 +195,7 @@ const update_item = async (req, res) => {
                 existingItem.description = description ? description.trim() : "";
             }
             if (status !== undefined) {
-                existingItem.status = Boolean(status);
+                existingItem.status = (status === true || status === "true" || status === 1 || status === "1");
             }
 
             if (req.file && req.file.location) {
