@@ -3,6 +3,7 @@ const attributesRouter = express.Router();
 const metalcontroller = require("../../controllers/AdminPanel/Attributes/metal-controller");
 const diamondsizecontroller = require("../../controllers/AdminPanel/Attributes/diamondsize-controller");
 const ringsizecontroller = require("../../controllers/AdminPanel/Attributes/ringsize-controller");
+const shapecontroller = require("../../controllers/AdminPanel/Attributes/shape-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 
 // Metal Routes
@@ -33,5 +34,15 @@ attributesRouter.route("/EditRingSize/:ringsizeid").get(authMiddleware, ringsize
 attributesRouter.route("/UpdateRingSizeStatus/:ringsizeid").put(authMiddleware, ringsizecontroller.update_ring_size_status);
 attributesRouter.route("/UpdateRingSize/:ringsizeid").put(authMiddleware, ringsizecontroller.update_ring_size);
 attributesRouter.route("/DeleteRingSize/:ringsizeid").delete(authMiddleware, ringsizecontroller.delete_ring_size);
+
+
+// Shape Routes
+attributesRouter.route("/GetShapes").get(authMiddleware, shapecontroller.get_shapes);
+attributesRouter.route("/GetActiveShapes").get(shapecontroller.get_active_shapes);
+attributesRouter.route("/AddShape").post(authMiddleware, shapecontroller.add_shape);
+attributesRouter.route("/EditShape/:shapeid").get(authMiddleware, shapecontroller.edit_shape);
+attributesRouter.route("/UpdateShapeStatus/:shapeid").put(authMiddleware, shapecontroller.update_shape_status);
+attributesRouter.route("/UpdateShape/:shapeid").put(authMiddleware, shapecontroller.update_shape);
+attributesRouter.route("/DeleteShape/:shapeid").delete(authMiddleware, shapecontroller.delete_shape);
 
 module.exports = attributesRouter;
