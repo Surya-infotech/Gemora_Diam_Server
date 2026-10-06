@@ -5,6 +5,7 @@ const diamondsizecontroller = require("../../controllers/AdminPanel/Attributes/d
 const ringsizecontroller = require("../../controllers/AdminPanel/Attributes/ringsize-controller");
 const shapecontroller = require("../../controllers/AdminPanel/Attributes/shape-controller");
 const claritycontroller = require("../../controllers/AdminPanel/Attributes/clarity-controller");
+const colorcontroller = require("../../controllers/AdminPanel/Attributes/color-controller");
 const stonecontroller = require("../../controllers/AdminPanel/Attributes/stone-controller");
 const stylecontroller = require("../../controllers/AdminPanel/Attributes/style-controller");
 const categorycontroller = require("../../controllers/AdminPanel/Attributes/category-controller");
@@ -59,6 +60,16 @@ attributesRouter.route("/UpdateClarityStatus/:clarityid").put(authMiddleware, cl
 attributesRouter.route("/UpdateClarity/:clarityid").put(authMiddleware, claritycontroller.update_clarity);
 attributesRouter.route("/DeleteClarity/:clarityid").delete(authMiddleware, claritycontroller.delete_clarity);
 
+
+
+// Color Routes
+attributesRouter.route("/GetColors").get(authMiddleware, colorcontroller.get_colors);
+attributesRouter.route("/GetActiveColors").get(colorcontroller.get_active_colors);
+attributesRouter.route("/AddColor").post(authMiddleware, colorcontroller.add_color);
+attributesRouter.route("/EditColor/:colorid").get(authMiddleware, colorcontroller.edit_color);
+attributesRouter.route("/UpdateColorStatus/:colorid").put(authMiddleware, colorcontroller.update_color_status);
+attributesRouter.route("/UpdateColor/:colorid").put(authMiddleware, colorcontroller.update_color);
+attributesRouter.route("/DeleteColor/:colorid").delete(authMiddleware, colorcontroller.delete_color);
 
 
 // Stone Routes
