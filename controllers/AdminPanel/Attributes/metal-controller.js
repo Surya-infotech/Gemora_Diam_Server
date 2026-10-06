@@ -1,5 +1,4 @@
 const Metal = require("../../../models/AdminPanel/Attributes/metal-model");
-const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_metals = async (req, res) => {
@@ -137,22 +136,6 @@ const update_metal = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
-
-        // Update metal details in Item collection
-        await Item.updateMany(
-            { "metals.metalid": { $in: [existingSelf.metalid, Number(existingSelf.metalid)] } },
-            {
-                $set: {
-                    "metals.$[elem].metalname": trimmedName,
-                    "metals.$[elem].metaltype": trimmedType,
-                    updatedAt: new Date().toISOString()
-                }
-            },
-            {
-                arrayFilters: [{ "elem.metalid": { $in: [existingSelf.metalid, Number(existingSelf.metalid)] } }]
-            }
-        );
-
         return res.status(200).json({ message: "Metal updated successfully", metal: existingSelf });
     } catch (error) {
         console.error("Error updating metal:", error);
@@ -170,19 +153,6 @@ const delete_metal = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Metal not found" });
         }
-
-        // Remove this metal from all items in Item collection
-        await Item.updateMany(
-            { "metals.metalid": { $in: [deleted.metalid, Number(deleted.metalid)] } },
-            {
-                $pull: {
-                    metals: { metalid: { $in: [deleted.metalid, Number(deleted.metalid)] } }
-                },
-                $set: {
-                    updatedAt: new Date().toISOString()
-                }
-            }
-        );
 
         return res.status(200).json({ message: "Metal deleted successfully" });
     } catch (error) {
