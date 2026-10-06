@@ -5,7 +5,6 @@ const diamondsizecontroller = require("../../controllers/AdminPanel/Attributes/d
 const ringsizecontroller = require("../../controllers/AdminPanel/Attributes/ringsize-controller");
 const shapecontroller = require("../../controllers/AdminPanel/Attributes/shape-controller");
 const claritycontroller = require("../../controllers/AdminPanel/Attributes/clarity-controller");
-const diamondcolorcontroller = require("../../controllers/AdminPanel/Attributes/diamondcolor-controller");
 const stonecontroller = require("../../controllers/AdminPanel/Attributes/stone-controller");
 const stylecontroller = require("../../controllers/AdminPanel/Attributes/style-controller");
 const categorycontroller = require("../../controllers/AdminPanel/Attributes/category-controller");
@@ -60,15 +59,6 @@ attributesRouter.route("/UpdateClarityStatus/:clarityid").put(authMiddleware, cl
 attributesRouter.route("/UpdateClarity/:clarityid").put(authMiddleware, claritycontroller.update_clarity);
 attributesRouter.route("/DeleteClarity/:clarityid").delete(authMiddleware, claritycontroller.delete_clarity);
 
-
-// Diamond Color Routes
-attributesRouter.route("/GetDiamondColors").get(authMiddleware, diamondcolorcontroller.get_diamond_colors);
-attributesRouter.route("/GetActiveDiamondColors").get(diamondcolorcontroller.get_active_diamond_colors);
-attributesRouter.route("/AddDiamondColor").post(authMiddleware, diamondcolorcontroller.add_diamond_color);
-attributesRouter.route("/EditDiamondColor/:diamondcolorid").get(authMiddleware, diamondcolorcontroller.edit_diamond_color);
-attributesRouter.route("/UpdateDiamondColorStatus/:diamondcolorid").put(authMiddleware, diamondcolorcontroller.update_diamond_color_status);
-attributesRouter.route("/UpdateDiamondColor/:diamondcolorid").put(authMiddleware, diamondcolorcontroller.update_diamond_color);
-attributesRouter.route("/DeleteDiamondColor/:diamondcolorid").delete(authMiddleware, diamondcolorcontroller.delete_diamond_color);
 
 
 // Stone Routes
