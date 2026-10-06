@@ -1,4 +1,5 @@
 const RingSize = require("../../../models/AdminPanel/Attributes/ringsize-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_ring_sizes = async (req, res) => {
@@ -132,6 +133,34 @@ const update_ring_size = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        // Update ring size in Item table
+        const targetRingSizeId = existingSelf.ringsizeid;
+        if (targetRingSizeId !== undefined && targetRingSizeId !== null) {
+            await Item.updateMany(
+                {
+                    "ringsizes.ringsizeid": {
+                        $in: [Number(targetRingSizeId), String(targetRingSizeId)]
+                    }
+                },
+                {
+                    $set: {
+                        "ringsizes.$[elem].ringsize": trimmedSize,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        {
+                            "elem.ringsizeid": {
+                                $in: [Number(targetRingSizeId), String(targetRingSizeId)]
+                            }
+                        }
+                    ]
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Ring Size updated successfully", ringSize: existingSelf });
     } catch (error) {
         console.error("Error updating ring size:", error);
@@ -149,6 +178,31 @@ const delete_ring_size = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Ring Size not found" });
         }
+
+        // Remove ring size details from all items containing this ring size
+        const deletedRingSizeId = deleted.ringsizeid;
+        if (deletedRingSizeId !== undefined && deletedRingSizeId !== null) {
+            await Item.updateMany(
+                {
+                    "ringsizes.ringsizeid": {
+                        $in: [Number(deletedRingSizeId), String(deletedRingSizeId)]
+                    }
+                },
+                {
+                    $pull: {
+                        ringsizes: {
+                            ringsizeid: {
+                                $in: [Number(deletedRingSizeId), String(deletedRingSizeId)]
+                            }
+                        }
+                    },
+                    $set: {
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Ring Size deleted successfully" });
     } catch (error) {
         console.error("Error deleting ring size:", error);
