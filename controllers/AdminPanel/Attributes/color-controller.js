@@ -1,4 +1,5 @@
 const Color = require("../../../models/AdminPanel/Attributes/color-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_colors = async (req, res) => {
@@ -144,6 +145,9 @@ const update_color = async (req, res) => {
             return res.status(400).json({ message: "Color with this type already exists" });
         }
 
+        const oldColorType = existingSelf.colortype;
+        const targetColorId = existingSelf.colorid;
+
         existingSelf.colorname = trimmedName;
         existingSelf.colortype = trimmedType;
         if (status !== undefined) {
@@ -152,6 +156,104 @@ const update_color = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        // Sync with Item table
+        if (targetColorId !== undefined && targetColorId !== null) {
+            if (oldColorType !== trimmedType) {
+                // Color type changed: remove color from the old color list in all items
+                if (oldColorType === "Diamond") {
+                    await Item.updateMany(
+                        {
+                            "diamondcolors.colorid": {
+                                $in: [Number(targetColorId), String(targetColorId)]
+                            }
+                        },
+                        {
+                            $pull: {
+                                diamondcolors: {
+                                    colorid: {
+                                        $in: [Number(targetColorId), String(targetColorId)]
+                                    }
+                                }
+                            },
+                            $set: {
+                                updatedAt: new Date().toISOString()
+                            }
+                        }
+                    );
+                } else if (oldColorType === "Band") {
+                    await Item.updateMany(
+                        {
+                            "bandcolors.colorid": {
+                                $in: [Number(targetColorId), String(targetColorId)]
+                            }
+                        },
+                        {
+                            $pull: {
+                                bandcolors: {
+                                    colorid: {
+                                        $in: [Number(targetColorId), String(targetColorId)]
+                                    }
+                                }
+                            },
+                            $set: {
+                                updatedAt: new Date().toISOString()
+                            }
+                        }
+                    );
+                }
+            } else {
+                // Color type is unchanged: update colorname in matching items
+                if (trimmedType === "Diamond") {
+                    await Item.updateMany(
+                        {
+                            "diamondcolors.colorid": {
+                                $in: [Number(targetColorId), String(targetColorId)]
+                            }
+                        },
+                        {
+                            $set: {
+                                "diamondcolors.$[elem].colorname": trimmedName,
+                                updatedAt: new Date().toISOString()
+                            }
+                        },
+                        {
+                            arrayFilters: [
+                                {
+                                    "elem.colorid": {
+                                        $in: [Number(targetColorId), String(targetColorId)]
+                                    }
+                                }
+                            ]
+                        }
+                    );
+                } else if (trimmedType === "Band") {
+                    await Item.updateMany(
+                        {
+                            "bandcolors.colorid": {
+                                $in: [Number(targetColorId), String(targetColorId)]
+                            }
+                        },
+                        {
+                            $set: {
+                                "bandcolors.$[elem].colorname": trimmedName,
+                                updatedAt: new Date().toISOString()
+                            }
+                        },
+                        {
+                            arrayFilters: [
+                                {
+                                    "elem.colorid": {
+                                        $in: [Number(targetColorId), String(targetColorId)]
+                                    }
+                                }
+                            ]
+                        }
+                    );
+                }
+            }
+        }
+
         return res.status(200).json({ message: "Color updated successfully", color: existingSelf });
     } catch (error) {
         console.error("Error updating color:", error);
@@ -168,6 +270,36 @@ const delete_color = async (req, res) => {
 
         if (!deleted) {
             return res.status(404).json({ message: "Color not found" });
+        }
+
+        // Remove color details from all items containing this color in diamondcolors and bandcolors
+        const deletedColorId = deleted.colorid;
+        if (deletedColorId !== undefined && deletedColorId !== null) {
+            await Item.updateMany(
+                {
+                    $or: [
+                        { "diamondcolors.colorid": { $in: [Number(deletedColorId), String(deletedColorId)] } },
+                        { "bandcolors.colorid": { $in: [Number(deletedColorId), String(deletedColorId)] } }
+                    ]
+                },
+                {
+                    $pull: {
+                        diamondcolors: {
+                            colorid: {
+                                $in: [Number(deletedColorId), String(deletedColorId)]
+                            }
+                        },
+                        bandcolors: {
+                            colorid: {
+                                $in: [Number(deletedColorId), String(deletedColorId)]
+                            }
+                        }
+                    },
+                    $set: {
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
         }
 
         return res.status(200).json({ message: "Color deleted successfully" });
