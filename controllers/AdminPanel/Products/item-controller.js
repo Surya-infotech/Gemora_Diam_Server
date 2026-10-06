@@ -31,7 +31,14 @@ const add_item = async (req, res) => {
         }
 
         try {
-            const { itemname, categoryid, description } = req.body;
+            const { sku, itemname, categoryid, description } = req.body;
+
+            if (!sku || !sku.trim()) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "SKU is required" });
+            }
 
             if (!itemname || !itemname.trim()) {
                 if (req.file && req.file.location) {
@@ -51,7 +58,19 @@ const add_item = async (req, res) => {
                 return res.status(400).json({ message: "Image is required" });
             }
 
+            const trimmedSku = sku.trim();
             const trimmedName = itemname.trim();
+
+            const existingSku = await Item.findOne({
+                sku: { $regex: new RegExp(`^${trimmedSku.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i") }
+            });
+
+            if (existingSku) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "SKU Already Exists" });
+            }
 
             const existingItem = await Item.findOne({
                 itemname: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i") }
@@ -158,6 +177,7 @@ const add_item = async (req, res) => {
 
             const newItem = new Item({
                 itemid: nextItemId,
+                sku: trimmedSku,
                 itemname: trimmedName,
                 categoryid: categoryIdResolved,
                 categoryname: categoryNameResolved,
@@ -234,7 +254,7 @@ const update_item = async (req, res) => {
 
         try {
             const { itemid } = req.params;
-            const { itemname, categoryid, description, status } = req.body;
+            const { sku, itemname, categoryid, description, status } = req.body;
 
             const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
             const selfQuery = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
@@ -245,6 +265,13 @@ const update_item = async (req, res) => {
                     await deleteImageFromS3(req.file.location, "item");
                 }
                 return res.status(404).json({ message: "Item not found" });
+            }
+
+            if (!sku || !sku.trim()) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "SKU is required" });
             }
 
             if (!itemname || !itemname.trim()) {
@@ -258,14 +285,25 @@ const update_item = async (req, res) => {
                 return res.status(400).json({ message: "Image is required" });
             }
 
+            const trimmedSku = sku.trim();
             const trimmedName = itemname.trim();
 
-            const duplicateQuery = {
+            const duplicateSku = await Item.findOne({
+                _id: { $ne: existingItem._id },
+                sku: { $regex: new RegExp(`^${trimmedSku.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i") }
+            });
+            if (duplicateSku) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "SKU Already Exists" });
+            }
+
+            const duplicateName = await Item.findOne({
                 _id: { $ne: existingItem._id },
                 itemname: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i") }
-            };
-            const duplicate = await Item.findOne(duplicateQuery);
-            if (duplicate) {
+            });
+            if (duplicateName) {
                 if (req.file && req.file.location) {
                     await deleteImageFromS3(req.file.location, "item");
                 }
@@ -282,6 +320,7 @@ const update_item = async (req, res) => {
                 }
             }
 
+            existingItem.sku = trimmedSku;
             existingItem.itemname = trimmedName;
             if (description !== undefined) {
                 existingItem.description = description ? description.trim() : "";
