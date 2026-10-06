@@ -6,6 +6,7 @@ const ringsizecontroller = require("../../controllers/AdminPanel/Attributes/ring
 const shapecontroller = require("../../controllers/AdminPanel/Attributes/shape-controller");
 const claritycontroller = require("../../controllers/AdminPanel/Attributes/clarity-controller");
 const diamondcolorcontroller = require("../../controllers/AdminPanel/Attributes/diamondcolor-controller");
+const stonecontroller = require("../../controllers/AdminPanel/Attributes/stone-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 
 // Metal Routes
@@ -66,5 +67,15 @@ attributesRouter.route("/EditDiamondColor/:diamondcolorid").get(authMiddleware, 
 attributesRouter.route("/UpdateDiamondColorStatus/:diamondcolorid").put(authMiddleware, diamondcolorcontroller.update_diamond_color_status);
 attributesRouter.route("/UpdateDiamondColor/:diamondcolorid").put(authMiddleware, diamondcolorcontroller.update_diamond_color);
 attributesRouter.route("/DeleteDiamondColor/:diamondcolorid").delete(authMiddleware, diamondcolorcontroller.delete_diamond_color);
+
+
+// Stone Routes
+attributesRouter.route("/GetStones").get(authMiddleware, stonecontroller.get_stones);
+attributesRouter.route("/GetActiveStones").get(stonecontroller.get_active_stones);
+attributesRouter.route("/AddStone").post(authMiddleware, stonecontroller.add_stone);
+attributesRouter.route("/EditStone/:stoneid").get(authMiddleware, stonecontroller.edit_stone);
+attributesRouter.route("/UpdateStoneStatus/:stoneid").put(authMiddleware, stonecontroller.update_stone_status);
+attributesRouter.route("/UpdateStone/:stoneid").put(authMiddleware, stonecontroller.update_stone);
+attributesRouter.route("/DeleteStone/:stoneid").delete(authMiddleware, stonecontroller.delete_stone);
 
 module.exports = attributesRouter;
