@@ -1,4 +1,5 @@
 const Style = require("../../../models/AdminPanel/Attributes/style-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_styles = async (req, res) => {
@@ -132,6 +133,34 @@ const update_style = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        // Update style in Item table
+        const targetStyleId = existingSelf.styleid;
+        if (targetStyleId !== undefined && targetStyleId !== null) {
+            await Item.updateMany(
+                {
+                    "styles.styleid": {
+                        $in: [Number(targetStyleId), String(targetStyleId)]
+                    }
+                },
+                {
+                    $set: {
+                        "styles.$[elem].stylename": trimmedName,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        {
+                            "elem.styleid": {
+                                $in: [Number(targetStyleId), String(targetStyleId)]
+                            }
+                        }
+                    ]
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Style updated successfully", style: existingSelf });
     } catch (error) {
         console.error("Error updating style:", error);
@@ -149,6 +178,31 @@ const delete_style = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Style not found" });
         }
+
+        // Remove style details from all items containing this style
+        const deletedStyleId = deleted.styleid;
+        if (deletedStyleId !== undefined && deletedStyleId !== null) {
+            await Item.updateMany(
+                {
+                    "styles.styleid": {
+                        $in: [Number(deletedStyleId), String(deletedStyleId)]
+                    }
+                },
+                {
+                    $pull: {
+                        styles: {
+                            styleid: {
+                                $in: [Number(deletedStyleId), String(deletedStyleId)]
+                            }
+                        }
+                    },
+                    $set: {
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Style deleted successfully" });
     } catch (error) {
         console.error("Error deleting style:", error);

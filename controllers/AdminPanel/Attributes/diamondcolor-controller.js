@@ -1,4 +1,5 @@
 const DiamondColor = require("../../../models/AdminPanel/Attributes/diamondcolor-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_diamond_colors = async (req, res) => {
@@ -132,6 +133,34 @@ const update_diamond_color = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        // Update diamond color in Item table
+        const targetColorId = existingSelf.diamondcolorid;
+        if (targetColorId !== undefined && targetColorId !== null) {
+            await Item.updateMany(
+                {
+                    "diamondcolors.diamondcolorid": {
+                        $in: [Number(targetColorId), String(targetColorId)]
+                    }
+                },
+                {
+                    $set: {
+                        "diamondcolors.$[elem].diamondcolor": trimmedColor,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        {
+                            "elem.diamondcolorid": {
+                                $in: [Number(targetColorId), String(targetColorId)]
+                            }
+                        }
+                    ]
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Diamond Color updated successfully", diamondColor: existingSelf });
     } catch (error) {
         console.error("Error updating diamond color:", error);
@@ -149,6 +178,31 @@ const delete_diamond_color = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Diamond Color not found" });
         }
+
+        // Remove diamond color details from all items containing this diamond color
+        const deletedColorId = deleted.diamondcolorid;
+        if (deletedColorId !== undefined && deletedColorId !== null) {
+            await Item.updateMany(
+                {
+                    "diamondcolors.diamondcolorid": {
+                        $in: [Number(deletedColorId), String(deletedColorId)]
+                    }
+                },
+                {
+                    $pull: {
+                        diamondcolors: {
+                            diamondcolorid: {
+                                $in: [Number(deletedColorId), String(deletedColorId)]
+                            }
+                        }
+                    },
+                    $set: {
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Diamond Color deleted successfully" });
     } catch (error) {
         console.error("Error deleting diamond color:", error);

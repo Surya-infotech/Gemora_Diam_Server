@@ -1,4 +1,5 @@
 const Stone = require("../../../models/AdminPanel/Attributes/stone-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_stones = async (req, res) => {
@@ -132,6 +133,34 @@ const update_stone = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        // Update stone in Item table
+        const targetStoneId = existingSelf.stoneid;
+        if (targetStoneId !== undefined && targetStoneId !== null) {
+            await Item.updateMany(
+                {
+                    "stones.stoneid": {
+                        $in: [Number(targetStoneId), String(targetStoneId)]
+                    }
+                },
+                {
+                    $set: {
+                        "stones.$[elem].stonename": trimmedName,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        {
+                            "elem.stoneid": {
+                                $in: [Number(targetStoneId), String(targetStoneId)]
+                            }
+                        }
+                    ]
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Stone updated successfully", stone: existingSelf });
     } catch (error) {
         console.error("Error updating stone:", error);
@@ -149,6 +178,31 @@ const delete_stone = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Stone not found" });
         }
+
+        // Remove stone details from all items containing this stone
+        const deletedStoneId = deleted.stoneid;
+        if (deletedStoneId !== undefined && deletedStoneId !== null) {
+            await Item.updateMany(
+                {
+                    "stones.stoneid": {
+                        $in: [Number(deletedStoneId), String(deletedStoneId)]
+                    }
+                },
+                {
+                    $pull: {
+                        stones: {
+                            stoneid: {
+                                $in: [Number(deletedStoneId), String(deletedStoneId)]
+                            }
+                        }
+                    },
+                    $set: {
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Stone deleted successfully" });
     } catch (error) {
         console.error("Error deleting stone:", error);

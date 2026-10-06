@@ -114,6 +114,45 @@ const add_item = async (req, res) => {
                 clarityname: String(c.clarityname || c.label || "")
             })) : [];
 
+            let parsedDiamondColors = [];
+            if (req.body.diamondcolors) {
+                try {
+                    parsedDiamondColors = typeof req.body.diamondcolors === "string" ? JSON.parse(req.body.diamondcolors) : req.body.diamondcolors;
+                } catch {
+                    parsedDiamondColors = [];
+                }
+            }
+            const formattedDiamondColors = Array.isArray(parsedDiamondColors) ? parsedDiamondColors.map(c => ({
+                diamondcolorid: Number(c.diamondcolorid || c.value),
+                diamondcolor: String(c.diamondcolor || c.label || "")
+            })) : [];
+
+            let parsedStones = [];
+            if (req.body.stones) {
+                try {
+                    parsedStones = typeof req.body.stones === "string" ? JSON.parse(req.body.stones) : req.body.stones;
+                } catch {
+                    parsedStones = [];
+                }
+            }
+            const formattedStones = Array.isArray(parsedStones) ? parsedStones.map(s => ({
+                stoneid: Number(s.stoneid || s.value),
+                stonename: String(s.stonename || s.label || "")
+            })) : [];
+
+            let parsedStyles = [];
+            if (req.body.styles) {
+                try {
+                    parsedStyles = typeof req.body.styles === "string" ? JSON.parse(req.body.styles) : req.body.styles;
+                } catch {
+                    parsedStyles = [];
+                }
+            }
+            const formattedStyles = Array.isArray(parsedStyles) ? parsedStyles.map(st => ({
+                styleid: Number(st.styleid || st.value),
+                stylename: String(st.stylename || st.label || "")
+            })) : [];
+
             const now = new Date().toISOString();
             const imageUrl = req.file ? req.file.location : (req.body.image || "");
 
@@ -125,6 +164,9 @@ const add_item = async (req, res) => {
                 ringsizes: formattedRingSizes,
                 shapes: formattedShapes,
                 clarities: formattedClarities,
+                diamondcolors: formattedDiamondColors,
+                stones: formattedStones,
+                styles: formattedStyles,
                 description: description ? description.trim() : "",
                 image: imageUrl,
                 status: true,
@@ -285,6 +327,48 @@ const update_item = async (req, res) => {
                 })) : [];
 
                 existingItem.clarities = formattedClarities;
+            }
+            if (req.body.diamondcolors !== undefined) {
+                let parsedDiamondColors = [];
+                try {
+                    parsedDiamondColors = typeof req.body.diamondcolors === "string" ? JSON.parse(req.body.diamondcolors) : req.body.diamondcolors;
+                } catch {
+                    parsedDiamondColors = [];
+                }
+                const formattedDiamondColors = Array.isArray(parsedDiamondColors) ? parsedDiamondColors.map(c => ({
+                    diamondcolorid: Number(c.diamondcolorid || c.value),
+                    diamondcolor: String(c.diamondcolor || c.label || "")
+                })) : [];
+
+                existingItem.diamondcolors = formattedDiamondColors;
+            }
+            if (req.body.stones !== undefined) {
+                let parsedStones = [];
+                try {
+                    parsedStones = typeof req.body.stones === "string" ? JSON.parse(req.body.stones) : req.body.stones;
+                } catch {
+                    parsedStones = [];
+                }
+                const formattedStones = Array.isArray(parsedStones) ? parsedStones.map(s => ({
+                    stoneid: Number(s.stoneid || s.value),
+                    stonename: String(s.stonename || s.label || "")
+                })) : [];
+
+                existingItem.stones = formattedStones;
+            }
+            if (req.body.styles !== undefined) {
+                let parsedStyles = [];
+                try {
+                    parsedStyles = typeof req.body.styles === "string" ? JSON.parse(req.body.styles) : req.body.styles;
+                } catch {
+                    parsedStyles = [];
+                }
+                const formattedStyles = Array.isArray(parsedStyles) ? parsedStyles.map(st => ({
+                    styleid: Number(st.styleid || st.value),
+                    stylename: String(st.stylename || st.label || "")
+                })) : [];
+
+                existingItem.styles = formattedStyles;
             }
             if (status !== undefined) {
                 existingItem.status = (status === true || status === "true" || status === 1 || status === "1");
