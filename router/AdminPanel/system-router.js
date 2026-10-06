@@ -9,6 +9,7 @@ const miscsettingcontroller = require("../../controllers/AdminPanel/System/Setti
 const invoicesettingcontroller = require("../../controllers/AdminPanel/System/Setting/invoicesetting-controller");
 const contactuscontroller = require("../../controllers/AdminPanel/System/contactus-controller");
 const subscribercontroller = require("../../controllers/AdminPanel/System/subscriber-controller");
+const faqcontroller = require("../../controllers/AdminPanel/System/faq-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 
 // Contact Us Routes
@@ -61,5 +62,14 @@ systemrouter.route("/UpdateMiscSetting").put(authMiddleware, miscsettingcontroll
 // Invoice Setting Routes
 systemrouter.route("/GetInvoiceSetting").get(authMiddleware, invoicesettingcontroller.get_invoice_setting);
 systemrouter.route("/UpdateInvoiceSetting").put(authMiddleware, invoicesettingcontroller.update_invoice_setting);
+
+// FAQ Routes
+systemrouter.route("/GetFAQs").get(authMiddleware, faqcontroller.get_faqs);
+systemrouter.route("/GetActiveFAQs").get(faqcontroller.get_active_faqs);
+systemrouter.route("/AddFAQ").post(authMiddleware, faqcontroller.add_faq);
+systemrouter.route("/EditFAQ/:faqid").get(authMiddleware, faqcontroller.edit_faq);
+systemrouter.route("/UpdateFAQStatus/:faqid").put(authMiddleware, faqcontroller.update_faq_status);
+systemrouter.route("/UpdateFAQ/:faqid").put(authMiddleware, faqcontroller.update_faq);
+systemrouter.route("/DeleteFAQ/:faqid").delete(authMiddleware, faqcontroller.delete_faq);
 
 module.exports = systemrouter;
