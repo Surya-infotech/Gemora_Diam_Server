@@ -21,7 +21,7 @@ const multiuploadToS3 = (uploadType) => (req, res, next) => {
                 cb(null, `admin/${uploadType}/${Date.now()}_${file.originalname}`);
             }
         })
-    }).array("images", 3);
+    }).array("images", 10);
 
     upload(req, res, function (err) {
         if (err) return res.status(500).json({ message: "Error uploading image", error: err });
