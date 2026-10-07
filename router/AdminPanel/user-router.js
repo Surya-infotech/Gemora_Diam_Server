@@ -7,6 +7,7 @@ const { authMiddleware } = require("../../middlewares/auth-middleware");
 userrouter.route("/GetEmployees").get(authMiddleware, employeecontroller.get_employees);
 userrouter.route("/AddEmployee").post(authMiddleware, employeecontroller.add_employee);
 userrouter.route("/EditEmployee/:employeeId").get(authMiddleware, employeecontroller.edit_employee);
+userrouter.route("/GetEmployeeDetails/:employeeId").get(authMiddleware, employeecontroller.edit_employee);
 userrouter.route("/UpdateEmployee/:employeeId").put(authMiddleware, employeecontroller.update_employee);
 userrouter.route("/UpdateEmployeeStatus/:employeeId").put(authMiddleware, employeecontroller.update_employee_status);
 userrouter.route("/DeleteEmployee/:employeeId").delete(authMiddleware, employeecontroller.delete_employee);
