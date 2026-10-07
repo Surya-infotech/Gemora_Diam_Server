@@ -1,4 +1,4 @@
-const Admin = require("../models/admin-model");
+﻿const Employee = require("../models/AdminPanel/User/employee-model");
 const AdminLoginActivity = require("../models/loginactivity-model");
 const MiscSetting = require("../models/AdminPanel/System/Setting/miscsetting-model");
 const bcrypt = require("bcryptjs");
@@ -15,16 +15,22 @@ const verifyToken = async (req, res) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_KEY || "gemora_diam_secret_jwt_key_2026");
-        const admin = await Admin.findById(decoded.adminId);
+        const userId = decoded.adminId || decoded.employeeId || decoded.id;
+        const employee = await Employee.findById(userId);
 
-        if (!admin || admin.Token !== token) {
+        if (!employee || employee.Token !== token || employee.status === false) {
             return res.status(401).json({ message: "Invalid or expired session token" });
         }
 
-        const adminData = admin.toObject();
-        delete adminData.password;
+        const employeeData = employee.toObject();
+        delete employeeData.password;
 
-        return res.status(200).json({ message: "Token is valid", admin: adminData });
+        return res.status(200).json({
+            message: "Token is valid",
+            role: employee.role,
+            employee: employeeData,
+            admin: employeeData
+        });
     } catch (error) {
         if (error.name === "TokenExpiredError") {
             return res.status(401).json({ message: "Token expired" });
@@ -34,7 +40,7 @@ const verifyToken = async (req, res) => {
     }
 };
 
-// Admin Sign In (Login)
+// Sign In (Login using Employee table)
 const login_admin = async (req, res) => {
     try {
         const { email, password, browserdetails, ipaddress, device, location } = req.body;
@@ -43,36 +49,38 @@ const login_admin = async (req, res) => {
             return res.status(400).json({ message: "Email and password are required" });
         }
 
-        // Single database lookup: no req.db or multi-tenant switching
-        const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
-        if (!admin) {
+        const cleanEmail = email.toLowerCase().trim();
+        const employee = await Employee.findOne({ email: cleanEmail });
+        if (!employee) {
             return res.status(404).json({ message: "Invalid Email" });
         }
 
-        const isPasswordValid = await bcrypt.compare(password, admin.password);
+        if (employee.status === false) {
+            return res.status(403).json({ message: "Your account is inactive. Please contact administrator." });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, employee.password);
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid Password" });
         }
 
-        // Generate JWT token
-        const token = await admin.generateToken();
+        const token = employee.generateToken();
 
-        // Save active token on admin document
-        admin.Token = token;
-        admin.updatedAt = new Date().toISOString();
-        await admin.save();
+        employee.Token = token;
+        employee.updatedAt = new Date().toISOString();
+        await employee.save();
 
-        // Record Login Activity
+        // Record login activity
         try {
             const maxActivity = await AdminLoginActivity.findOne().sort({ loginacitivityid: -1 });
             const nextLoginActivityId = maxActivity ? parseInt(maxActivity.loginacitivityid) + 1 : 1;
 
-            const clientIp = ipaddress || req.headers["x-forwarded-for"]?.split(",")[0] || req.ip || "Unknown";
+            const clientIp = ipaddress || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "Unknown";
             const clientBrowser = browserdetails || req.headers["user-agent"] || "Unknown";
 
             const newActivity = new AdminLoginActivity({
                 loginacitivityid: nextLoginActivityId,
-                adminid: admin._id,
+                adminid: employee._id,
                 browserdetails: clientBrowser,
                 ipaddress: clientIp,
                 device: device || "Desktop",
@@ -82,68 +90,77 @@ const login_admin = async (req, res) => {
 
             await newActivity.save();
         } catch (activityError) {
-            console.error("Failed to record admin login activity:", activityError.message);
+            console.error("Failed to record login activity:", activityError.message);
         }
 
-        const adminResponse = admin.toObject();
-        delete adminResponse.password;
+        const employeeResponse = employee.toObject();
+        delete employeeResponse.password;
 
         return res.status(200).json({
             message: "Login successful",
             token,
-            admin: adminResponse
+            role: employee.role,
+            employee: employeeResponse,
+            admin: employeeResponse
         });
     } catch (error) {
-        console.error("Admin login error:", error);
+        console.error("Sign in error:", error);
         return res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
-// Fetch Admin Profile Details
+// Fetch User Profile Details
 const getAdminDetailsById = async (req, res) => {
     try {
-        // Admin is retrieved either from authenticated user or first admin record
-        const adminId = req.admin?._id;
-        const admin = adminId ? await Admin.findById(adminId) : await Admin.findOne();
+        const userId = req.user?._id || req.admin?._id || req.employee?._id;
+        const employee = userId ? await Employee.findById(userId) : await Employee.findOne();
 
-        if (!admin) {
-            return res.status(404).json({ message: "Admin not found" });
+        if (!employee) {
+            return res.status(404).json({ message: "User not found" });
         }
 
-        const adminDetails = {
-            _id: admin._id,
-            adminfirstname: admin.adminfirstname || "",
-            adminlastname: admin.adminlastname || "",
-            email: admin.email || "",
-            phone: admin.phone || "",
-            gender: admin.gender || "",
-            address: admin.address || "",
-            countryname: admin.countryname || "",
-            statename: admin.statename || "",
-            cityname: admin.cityname || "",
-            countryid: admin.countryid || "",
-            stateid: admin.stateid || "",
-            cityid: admin.cityid || "",
-            profileimage: admin.profileimage || "",
-            createdAt: admin.createdAt || "",
-            updatedAt: admin.updatedAt || ""
+        const userDetails = {
+            _id: employee._id,
+            firstname: employee.firstname || "",
+            lastname: employee.lastname || "",
+            adminfirstname: employee.firstname || "",
+            adminlastname: employee.lastname || "",
+            email: employee.email || "",
+            phone: employee.phone || "",
+            role: employee.role || "Employee",
+            status: employee.status,
+            gender: employee.gender || "Male",
+            address: employee.address || "",
+            countryname: employee.countryname || "",
+            statename: employee.statename || "",
+            cityname: employee.cityname || "",
+            countryid: employee.countryid || "",
+            stateid: employee.stateid || "",
+            cityid: employee.cityid || "",
+            profileimage: employee.profileimage || "",
+            createdAt: employee.createdAt || "",
+            updatedAt: employee.updatedAt || ""
         };
 
-        return res.status(200).json({ message: "Admin details fetched successfully", admin: adminDetails });
+        return res.status(200).json({
+            message: "Profile details fetched successfully",
+            admin: userDetails,
+            employee: userDetails
+        });
     } catch (error) {
-        console.error("Error fetching admin details:", error);
+        console.error("Error fetching profile details:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
 
-// Update Admin Profile Details
+// Update User Profile Details
 const updateAdmin = async (req, res) => {
     try {
-        const adminId = req.admin?._id;
-        const admin = adminId ? await Admin.findById(adminId) : await Admin.findOne();
+        const userId = req.user?._id || req.admin?._id || req.employee?._id;
+        const employee = userId ? await Employee.findById(userId) : await Employee.findOne();
 
-        if (!admin) {
-            return res.status(404).json({ message: "Admin not found" });
+        if (!employee) {
+            return res.status(404).json({ message: "User not found" });
         }
 
         uploadToS3("profileimage")(req, res, async function (err) {
@@ -155,36 +172,39 @@ const updateAdmin = async (req, res) => {
             const updateData = req.body;
 
             if (req.file) {
-                if (admin.profileimage) {
-                    await deleteImageFromS3(admin.profileimage, "profileimage");
+                if (employee.profileimage) {
+                    await deleteImageFromS3(employee.profileimage, "profileimage");
                 }
-                admin.profileimage = req.file.location;
+                employee.profileimage = req.file.location;
             }
 
-            // Update admin fields
-            admin.adminfirstname = updateData.firstname || admin.adminfirstname;
-            admin.adminlastname = updateData.lastname || admin.adminlastname;
-            admin.email = updateData.email || admin.email;
-            admin.phone = updateData.phone || admin.phone;
-            admin.address = updateData.address || admin.address;
-            admin.gender = updateData.gender || admin.gender;
-            admin.countryname = updateData.countryname || admin.countryname;
-            admin.statename = updateData.statename || admin.statename;
-            admin.cityname = updateData.cityname || admin.cityname;
-            admin.countryid = updateData.countryid || admin.countryid;
-            admin.stateid = updateData.stateid || admin.stateid;
-            admin.cityid = updateData.cityid || admin.cityid;
-            admin.updatedAt = new Date().toISOString();
+            employee.firstname = updateData.firstname || updateData.adminfirstname || employee.firstname;
+            employee.lastname = updateData.lastname || updateData.adminlastname || employee.lastname;
+            employee.email = updateData.email || employee.email;
+            employee.phone = updateData.phone || employee.phone;
+            employee.address = updateData.address || employee.address;
+            employee.gender = updateData.gender || employee.gender;
+            employee.countryname = updateData.countryname || employee.countryname;
+            employee.statename = updateData.statename || employee.statename;
+            employee.cityname = updateData.cityname || employee.cityname;
+            employee.countryid = updateData.countryid || employee.countryid;
+            employee.stateid = updateData.stateid || employee.stateid;
+            employee.cityid = updateData.cityid || employee.cityid;
+            employee.updatedAt = new Date().toISOString();
 
-            await admin.save();
+            await employee.save();
 
-            const updatedAdmin = admin.toObject();
-            delete updatedAdmin.password;
+            const updatedUser = employee.toObject();
+            delete updatedUser.password;
 
-            return res.status(200).json({ message: "Admin details updated successfully", admin: updatedAdmin });
+            return res.status(200).json({
+                message: "Profile details updated successfully",
+                admin: updatedUser,
+                employee: updatedUser
+            });
         });
     } catch (error) {
-        console.error("Error updating admin details:", error);
+        console.error("Error updating profile details:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -195,12 +215,12 @@ const verifyOldPassword = async (req, res) => {
         const { oldPassword } = req.body;
         if (!oldPassword) return res.status(400).json({ message: "Old password is required" });
 
-        const adminId = req.admin?._id;
-        const admin = adminId ? await Admin.findById(adminId) : await Admin.findOne();
+        const userId = req.user?._id || req.admin?._id || req.employee?._id;
+        const employee = userId ? await Employee.findById(userId) : await Employee.findOne();
 
-        if (!admin) return res.status(404).json({ message: "Admin not found" });
+        if (!employee) return res.status(404).json({ message: "User not found" });
 
-        const isPasswordMatch = await bcrypt.compare(oldPassword, admin.password);
+        const isPasswordMatch = await bcrypt.compare(oldPassword, employee.password);
         if (!isPasswordMatch) return res.status(401).json({ message: "Incorrect old password" });
 
         return res.status(200).json({ message: "Old password verified successfully" });
@@ -216,14 +236,14 @@ const changePassword = async (req, res) => {
         const { newPassword } = req.body;
         if (!newPassword) return res.status(400).json({ message: "New password is required" });
 
-        const adminId = req.admin?._id;
-        const admin = adminId ? await Admin.findById(adminId) : await Admin.findOne();
+        const userId = req.user?._id || req.admin?._id || req.employee?._id;
+        const employee = userId ? await Employee.findById(userId) : await Employee.findOne();
 
-        if (!admin) return res.status(404).json({ message: "Admin not found" });
+        if (!employee) return res.status(404).json({ message: "User not found" });
 
-        admin.password = await bcrypt.hash(newPassword, 10);
-        admin.updatedAt = new Date().toISOString();
-        await admin.save();
+        employee.password = await bcrypt.hash(newPassword, 10);
+        employee.updatedAt = new Date().toISOString();
+        await employee.save();
 
         return res.status(200).json({ message: "Password updated successfully" });
     } catch (error) {
@@ -232,7 +252,7 @@ const changePassword = async (req, res) => {
     }
 };
 
-// Get Admin Login Activities
+// Get Login Activities
 const getAdminLoginActivity = async (req, res) => {
     try {
         const activities = await AdminLoginActivity.find().sort({ login: -1 }).limit(50);

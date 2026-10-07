@@ -1,5 +1,4 @@
 ﻿const Employee = require("../../../models/AdminPanel/User/employee-model");
-const Admin = require("../../../models/admin-model");
 const bcrypt = require("bcryptjs");
 
 const get_employees = async (req, res) => {
@@ -29,11 +28,6 @@ const add_employee = async (req, res) => {
 
         const existingEmployee = await Employee.findOne({ email: cleanEmail });
         if (existingEmployee) {
-            return res.status(400).json({ message: "Email Already Exists" });
-        }
-
-        const existingAdmin = await Admin.findOne({ email: cleanEmail });
-        if (existingAdmin) {
             return res.status(400).json({ message: "Email Already Exists" });
         }
 
@@ -117,11 +111,6 @@ const update_employee = async (req, res) => {
             _id: { $ne: employee._id }
         });
         if (emailExists) {
-            return res.status(400).json({ message: "Email Already Exists" });
-        }
-
-        const adminEmailExists = await Admin.findOne({ email: cleanEmail });
-        if (adminEmailExists) {
             return res.status(400).json({ message: "Email Already Exists" });
         }
 

@@ -1,5 +1,5 @@
-const jwt = require("jsonwebtoken");
-const Admin = require("../models/admin-model");
+﻿const jwt = require("jsonwebtoken");
+const Employee = require("../models/AdminPanel/User/employee-model");
 
 const authMiddleware = async (req, res, next) => {
     const authHeader = req.header("Authorization") || req.headers.authorization;
@@ -17,24 +17,30 @@ const authMiddleware = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_KEY);
+        const decoded = jwt.verify(token, process.env.JWT_KEY || "gemora_diam_secret_jwt_key_2026");
 
-        if (!decoded.adminId) {
+        const userId = decoded.adminId || decoded.employeeId || decoded.id;
+        if (!userId) {
             return res.status(401).json({ message: "Unauthorized: Invalid token payload" });
         }
 
-        const admin = await Admin.findById(decoded.adminId).select("-password");
+        const employee = await Employee.findById(userId).select("-password");
 
-        if (!admin) {
-            return res.status(401).json({ message: "Unauthorized: Admin account not found" });
+        if (!employee) {
+            return res.status(401).json({ message: "Unauthorized: Account not found" });
         }
 
-        if (admin.Token && admin.Token !== token) {
+        if (employee.status === false) {
+            return res.status(401).json({ message: "Unauthorized: Account is inactive" });
+        }
+
+        if (employee.Token && employee.Token !== token) {
             return res.status(401).json({ message: "Unauthorized: Token has been invalidated or logged in elsewhere" });
         }
 
-        req.admin = admin;
-        req.user = admin;
+        req.admin = employee;
+        req.user = employee;
+        req.employee = employee;
         req.token = token;
 
         next();

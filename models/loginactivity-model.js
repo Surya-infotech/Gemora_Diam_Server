@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 
 const loginActivitySchema = new mongoose.Schema({
     loginacitivityid: {
@@ -7,7 +7,7 @@ const loginActivitySchema = new mongoose.Schema({
     },
     adminid: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Admin",
+        ref: "Employee",
         required: false,
     },
     browserdetails: {
