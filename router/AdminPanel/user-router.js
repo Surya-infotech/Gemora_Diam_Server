@@ -12,4 +12,7 @@ userrouter.route("/UpdateEmployee/:employeeId").put(authMiddleware, employeecont
 userrouter.route("/UpdateEmployeeStatus/:employeeId").put(authMiddleware, employeecontroller.update_employee_status);
 userrouter.route("/DeleteEmployee/:employeeId").delete(authMiddleware, employeecontroller.delete_employee);
 
+userrouter.route("/GetEmployeePermissions/:employeeId").get(authMiddleware, employeecontroller.get_employee_permissions);
+userrouter.route("/UpdateEmployeePermissions/:employeeId").put(authMiddleware, employeecontroller.update_employee_permissions);
+
 module.exports = userrouter;

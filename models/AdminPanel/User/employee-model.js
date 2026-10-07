@@ -86,6 +86,10 @@ const employeeSchema = new mongoose.Schema({
         type: String,
         default: () => new Date().toISOString()
     },
+    permissions: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
+    },
     Token: {
         type: String,
         default: ""

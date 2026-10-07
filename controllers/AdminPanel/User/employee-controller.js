@@ -186,11 +186,75 @@ const delete_employee = async (req, res) => {
     }
 };
 
+
+const get_employee_permissions = async (req, res) => {
+    try {
+        const { employeeId } = req.params;
+        if (!employeeId) return res.status(400).json({ message: "Employee ID is required" });
+
+        let employee = await Employee.findOne({ _id: employeeId }).select("employeeid permissions updatedAt").lean();
+        if (!employee) {
+            employee = await Employee.findOne({ employeeid: employeeId }).select("employeeid permissions updatedAt").lean();
+        }
+
+        if (!employee) {
+            return res.status(404).json({ message: "Employee not found" });
+        }
+
+        return res.status(200).json({
+            employeeid: employee.employeeid,
+            permissions: employee.permissions || {},
+            updatedAt: employee.updatedAt || null
+        });
+    } catch (error) {
+        console.error("Error fetching employee permissions:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+const update_employee_permissions = async (req, res) => {
+    try {
+        const { employeeId } = req.params;
+        const { permissions } = req.body;
+
+        if (!employeeId) return res.status(400).json({ message: "Employee ID is required" });
+        if (!permissions || typeof permissions !== 'object') {
+            return res.status(400).json({ message: "Invalid permissions data" });
+        }
+
+        let employee = await Employee.findOne({ _id: employeeId });
+        if (!employee) {
+            employee = await Employee.findOne({ employeeid: employeeId });
+        }
+
+        if (!employee) {
+            return res.status(404).json({ message: "Employee not found" });
+        }
+
+        const now = new Date().toISOString();
+        employee.permissions = permissions;
+        employee.updatedAt = now;
+        employee.markModified('permissions');
+        await employee.save();
+
+        return res.status(200).json({
+            message: "Permissions updated successfully",
+            permissions: employee.permissions,
+            updatedAt: employee.updatedAt
+        });
+    } catch (error) {
+        console.error("Error updating employee permissions:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
 module.exports = {
     get_employees,
     add_employee,
     edit_employee,
     update_employee,
     update_employee_status,
-    delete_employee
+    delete_employee,
+    get_employee_permissions,
+    update_employee_permissions
 };
