@@ -91,31 +91,59 @@ const deleteImageFromS3 = async (imageUrl, uploadType) => {
     if (!imageUrl) return;
 
     try {
-        let key;
+        const keysToDelete = new Set();
+
         try {
-            const pathname = new URL(imageUrl).pathname.replace(/^\/+/, "");
-            if (pathname) key = pathname;
-        } catch {
-            key = null;
-        }
-        if (!key) {
-            const lastSegment = (imageUrl.split("/").pop() || "").split("?")[0];
-            const decodedImageKey = decodeURIComponent(lastSegment);
-            if (!uploadType) {
-                console.log("deleteImageFromS3: uploadType required when imageUrl is not a full URL");
-                return;
+            const parsedUrl = new URL(imageUrl);
+            let pathname = parsedUrl.pathname.replace(/^\/+/, "");
+            const bucketName = process.env.AWS_S3_BUCKET_NAME;
+            if (bucketName && pathname.startsWith(bucketName + "/")) {
+                pathname = pathname.substring(bucketName.length + 1);
             }
-            key = `${uploadType}/${decodedImageKey}`;
+            if (pathname) {
+                // S3 URLs encode spaces as '+' or '%20'
+                const decodedWithSpace = decodeURIComponent(pathname.replace(/\+/g, " "));
+                const decodedStandard = decodeURIComponent(pathname);
+
+                keysToDelete.add(decodedWithSpace);
+                keysToDelete.add(decodedStandard);
+                keysToDelete.add(pathname);
+            }
+        } catch {
+            // Not a full URL, fallback to segment parsing
         }
 
-        await s3.send(
-            new DeleteObjectCommand({
-                Bucket: process.env.AWS_S3_BUCKET_NAME,
-                Key: key
-            })
-        );
+        if (keysToDelete.size === 0) {
+            const lastSegment = (imageUrl.split("/").pop() || "").split("?")[0];
+            const decodedWithSpace = decodeURIComponent(lastSegment.replace(/\+/g, " "));
+            const decodedStandard = decodeURIComponent(lastSegment);
+
+            if (uploadType) {
+                keysToDelete.add(`${uploadType}/${decodedWithSpace}`);
+                keysToDelete.add(`${uploadType}/${decodedStandard}`);
+                keysToDelete.add(`${uploadType}/${lastSegment}`);
+            } else {
+                keysToDelete.add(decodedWithSpace);
+                keysToDelete.add(decodedStandard);
+                keysToDelete.add(lastSegment);
+            }
+        }
+
+        for (const key of keysToDelete) {
+            if (!key) continue;
+            try {
+                await s3.send(
+                    new DeleteObjectCommand({
+                        Bucket: process.env.AWS_S3_BUCKET_NAME,
+                        Key: key
+                    })
+                );
+            } catch (err) {
+                console.error(`[deleteImageFromS3] Error deleting key "${key}":`, err.message);
+            }
+        }
     } catch (error) {
-        console.log("Error deleting image from S3:", error);
+        console.error("Error deleting image/video from S3:", error);
     }
 };
 

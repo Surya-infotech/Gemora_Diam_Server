@@ -963,8 +963,13 @@ const delete_item_video = async (req, res) => {
         let existingVideos = item.galleryvideos || [];
 
         if (videoId && videoId !== 'all') {
+            const decodedVideoId = decodeURIComponent(videoId);
             const videoToDelete = existingVideos.find(
-                v => (v._id && v._id.toString() === videoId.toString()) || v.videoUrl === videoId || (videoId === 'legacy_video' && v.videoUrl === item.video)
+                v => (v._id && v._id.toString() === videoId.toString()) ||
+                     (v._id && v._id.toString() === decodedVideoId) ||
+                     v.videoUrl === videoId ||
+                     v.videoUrl === decodedVideoId ||
+                     (videoId === 'legacy_video' && v.videoUrl === item.video)
             );
 
             if (videoToDelete && videoToDelete.videoUrl) {
@@ -974,7 +979,11 @@ const delete_item_video = async (req, res) => {
             }
 
             item.galleryvideos = existingVideos.filter(
-                v => (v._id && v._id.toString() !== videoId.toString()) && v.videoUrl !== videoId && !(videoId === 'legacy_video' && v.videoUrl === item.video)
+                v => (v._id && v._id.toString() !== videoId.toString()) &&
+                     (v._id && v._id.toString() !== decodedVideoId) &&
+                     v.videoUrl !== videoId &&
+                     v.videoUrl !== decodedVideoId &&
+                     !(videoId === 'legacy_video' && v.videoUrl === item.video)
             );
 
             if (item.video && videoToDelete && item.video === videoToDelete.videoUrl) {
