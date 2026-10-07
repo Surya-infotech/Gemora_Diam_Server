@@ -8,7 +8,9 @@ router.route("/verify-token").get(adminController.verifyToken);
 router.route("/GetAdminDetails").get(authMiddleware, adminController.getAdminDetailsById);
 router.route("/UpdateAdminDetails").put(authMiddleware, adminController.updateAdmin);
 router.route("/GetLoginActivity/:EmployeeId").get(authMiddleware, adminController.getAdminLoginActivity);
+router.route("/VerifyOldPassword/:EmployeeId").post(authMiddleware, adminController.verifyOldPassword);
 router.route("/VerifyOldPassword").post(authMiddleware, adminController.verifyOldPassword);
+router.route("/ChangePassword/:EmployeeId").put(authMiddleware, adminController.changePassword);
 router.route("/ChangePassword").put(authMiddleware, adminController.changePassword);
 
 module.exports = router;

@@ -215,9 +215,10 @@ const verifyOldPassword = async (req, res) => {
         const { oldPassword } = req.body;
         if (!oldPassword) return res.status(400).json({ message: "Old password is required" });
 
-        const userId = req.user?._id || req.admin?._id || req.employee?._id;
-        const employee = userId ? await Employee.findById(userId) : await Employee.findOne();
+        const EmployeeId = req.params.EmployeeId;
+        if (!EmployeeId) return res.status(400).json({ message: "EmployeeId is required" });
 
+        const employee = await Employee.findOne({ _id: EmployeeId });
         if (!employee) return res.status(404).json({ message: "User not found" });
 
         const isPasswordMatch = await bcrypt.compare(oldPassword, employee.password);
@@ -236,9 +237,10 @@ const changePassword = async (req, res) => {
         const { newPassword } = req.body;
         if (!newPassword) return res.status(400).json({ message: "New password is required" });
 
-        const userId = req.user?._id || req.admin?._id || req.employee?._id;
-        const employee = userId ? await Employee.findById(userId) : await Employee.findOne();
+        const EmployeeId = req.params.EmployeeId;
+        if (!EmployeeId) return res.status(400).json({ message: "EmployeeId is required" });
 
+        const employee = await Employee.findOne({ _id: EmployeeId });
         if (!employee) return res.status(404).json({ message: "User not found" });
 
         employee.password = await bcrypt.hash(newPassword, 10);
