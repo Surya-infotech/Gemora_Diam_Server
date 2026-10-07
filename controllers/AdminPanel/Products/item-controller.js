@@ -3,6 +3,7 @@ const Category = require("../../../models/AdminPanel/Attributes/category-model")
 const SubCategory = require("../../../models/AdminPanel/Attributes/subcategory-model");
 const mongoose = require("mongoose");
 const { uploadToS3, deleteImageFromS3 } = require("../../../utils/s3Config-admin");
+const MiscSetting = require("../../../models/AdminPanel/System/Setting/miscsetting-model");
 
 const get_items = async (_req, res) => {
     try {
@@ -244,7 +245,18 @@ const edit_item = async (req, res) => {
         if (!item) {
             return res.status(404).json({ message: "Item not found" });
         }
-        return res.status(200).json(item);
+
+        const miscSetting = await MiscSetting.findOne().lean();
+        const itemObj = item.toObject ? item.toObject() : { ...item };
+        if (miscSetting) {
+            itemObj.miscSettings = {
+                timeZone: miscSetting.timeZone,
+                dateFormat: miscSetting.dateFormat,
+                timeFormat: miscSetting.timeFormat
+            };
+        }
+
+        return res.status(200).json(itemObj);
     } catch (error) {
         console.error("Error fetching item details:", error);
         return res.status(500).json({ message: "Server error" });
