@@ -1,5 +1,6 @@
 const Employee = require("../../../models/AdminPanel/User/employee-model");
 const bcrypt = require("bcryptjs");
+const MiscSetting = require("../../../models/AdminPanel/System/Setting/miscsetting-model");
 
 const get_employees = async (_req, res) => {
     try {
@@ -76,6 +77,15 @@ const edit_employee = async (req, res) => {
         }
 
         employee.role = employee.role || employee.employeetype || "Employee";
+
+        const miscSetting = await MiscSetting.findOne().lean();
+        if (miscSetting) {
+            employee.miscSettings = {
+                timeZone: miscSetting.timeZone,
+                dateFormat: miscSetting.dateFormat,
+                timeFormat: miscSetting.timeFormat
+            };
+        }
 
         return res.status(200).json(employee);
     } catch (error) {
