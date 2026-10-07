@@ -16,7 +16,7 @@ const get_items = async (req, res) => {
 
 const get_active_items = async (req, res) => {
     try {
-        const items = await Item.find({ status: true }).sort({ itemname: 1 }).lean();
+        const items = await Item.find().sort({ itemname: 1 }).lean();
         return res.status(200).json(items);
     } catch (error) {
         console.error("Error fetching active items:", error);
@@ -218,7 +218,6 @@ const add_item = async (req, res) => {
                 styles: formattedStyles,
                 description: description ? description.trim() : "",
                 image: imageUrl,
-                status: true,
                 createdAt: now,
                 updatedAt: now
             });
@@ -252,27 +251,6 @@ const edit_item = async (req, res) => {
     }
 };
 
-const update_item_status = async (req, res) => {
-    const { itemid } = req.params;
-    const { status } = req.body;
-    try {
-        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
-        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
-        const updated = await Item.findOneAndUpdate(
-            query,
-            { status: Boolean(status), updatedAt: new Date().toISOString() },
-            { returnDocument: "after" }
-        );
-
-        if (!updated) {
-            return res.status(404).json({ message: "Item not found" });
-        }
-        return res.status(200).json(updated);
-    } catch (error) {
-        console.error("Error updating item status:", error);
-        return res.status(500).json({ message: "Server error" });
-    }
-};
 
 const update_item = async (req, res) => {
     uploadToS3("item")(req, res, async function (err) {
@@ -282,7 +260,7 @@ const update_item = async (req, res) => {
         }
 
         const { itemid } = req.params;
-        const { sku, itemname, categoryid, description, status } = req.body;
+        const { sku, itemname, categoryid, description } = req.body;
 
         try {
             const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
@@ -466,9 +444,6 @@ const update_item = async (req, res) => {
 
                 existingItem.styles = formattedStyles;
             }
-            if (status !== undefined) {
-                existingItem.status = (status === true || status === "true" || status === 1 || status === "1");
-            }
 
             if (req.file && req.file.location) {
                 if (existingItem.image) {
@@ -519,7 +494,6 @@ module.exports = {
     get_active_items,
     add_item,
     edit_item,
-    update_item_status,
     update_item,
     delete_item
 };
