@@ -16,7 +16,7 @@ const get_items = async (req, res) => {
 
 const get_active_items = async (req, res) => {
     try {
-        const items = await Item.find().sort({ itemname: 1 }).lean();
+        const items = await Item.find({ status: "Published" }).sort({ itemname: 1 }).lean();
         return res.status(200).json(items);
     } catch (error) {
         console.error("Error fetching active items:", error);
