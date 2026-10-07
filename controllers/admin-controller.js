@@ -112,8 +112,10 @@ const login_admin = async (req, res) => {
 // Fetch User Profile Details
 const getAdminDetailsById = async (req, res) => {
     try {
-        const userId = req.user?._id || req.admin?._id || req.employee?._id;
-        const employee = userId ? await Employee.findById(userId) : await Employee.findOne();
+        const EmployeeId = req.params.EmployeeId;
+        if (!EmployeeId) return res.status(400).json({ message: "EmployeeId is required" });
+
+        const employee = await Employee.findOne({ _id: EmployeeId });
 
         if (!employee) {
             return res.status(404).json({ message: "User not found" });
@@ -156,8 +158,10 @@ const getAdminDetailsById = async (req, res) => {
 // Update User Profile Details
 const updateAdmin = async (req, res) => {
     try {
-        const userId = req.user?._id || req.admin?._id || req.employee?._id;
-        const employee = userId ? await Employee.findById(userId) : await Employee.findOne();
+        const EmployeeId = req.params.EmployeeId;
+        if (!EmployeeId) return res.status(400).json({ message: "EmployeeId is required" });
+
+        const employee = await Employee.findOne({ _id: EmployeeId });
 
         if (!employee) {
             return res.status(404).json({ message: "User not found" });
