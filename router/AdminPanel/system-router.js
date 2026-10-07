@@ -1,3 +1,4 @@
+const employeecontroller = require("../../controllers/AdminPanel/System/employee-controller");
 const express = require("express");
 const systemrouter = express.Router();
 const currencycontroller = require("../../controllers/AdminPanel/System/currency-controller");
@@ -51,5 +52,14 @@ systemrouter.route("/UpdateMiscSetting").put(authMiddleware, miscsettingcontroll
 // Invoice Setting Routes
 systemrouter.route("/GetInvoiceSetting").get(authMiddleware, invoicesettingcontroller.get_invoice_setting);
 systemrouter.route("/UpdateInvoiceSetting").put(authMiddleware, invoicesettingcontroller.update_invoice_setting);
+
+
+// Employee Routes
+systemrouter.route("/GetEmployees").get(authMiddleware, employeecontroller.get_employees);
+systemrouter.route("/AddEmployee").post(authMiddleware, employeecontroller.add_employee);
+systemrouter.route("/EditEmployee/:employeeId").get(authMiddleware, employeecontroller.edit_employee);
+systemrouter.route("/UpdateEmployee/:employeeId").put(authMiddleware, employeecontroller.update_employee);
+systemrouter.route("/UpdateEmployeeStatus/:employeeId").put(authMiddleware, employeecontroller.update_employee_status);
+systemrouter.route("/DeleteEmployee/:employeeId").delete(authMiddleware, employeecontroller.delete_employee);
 
 module.exports = systemrouter;
