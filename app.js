@@ -7,6 +7,7 @@ const systemrouteradmin = require("./router/AdminPanel/system-router");
 const attributesrouteradmin = require("./router/AdminPanel/attributes-router");
 const supportrouteradmin = require("./router/AdminPanel/support-router");
 const productsrouteradmin = require("./router/AdminPanel/products-router");
+const userrouteradmin = require("./router/AdminPanel/user-router");
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use("/System", systemrouteradmin);
 app.use("/Attributes", attributesrouteradmin);
 app.use("/Support", supportrouteradmin);
 app.use("/Products", productsrouteradmin);
+app.use("/User", userrouteradmin);
 
 const PORT = process.env.PORT || 8081;
 

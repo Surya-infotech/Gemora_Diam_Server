@@ -1,4 +1,4 @@
-const Employee = require("../../../models/AdminPanel/System/employee-model");
+﻿const Employee = require("../../../models/AdminPanel/User/employee-model");
 const Admin = require("../../../models/admin-model");
 const bcrypt = require("bcryptjs");
 
