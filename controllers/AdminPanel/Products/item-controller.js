@@ -660,6 +660,39 @@ const update_item_price = async (req, res) => {
     }
 };
 
+const update_item_status = async (req, res) => {
+    const { itemid } = req.params;
+    const { status } = req.body;
+
+    try {
+        if (!status || !['Draft', 'Published'].includes(status)) {
+            return res.status(400).json({ message: "Invalid status. Must be 'Draft' or 'Published'" });
+        }
+
+        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
+        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
+
+        const updatedItem = await Item.findOneAndUpdate(
+            query,
+            { status, updatedAt: new Date().toISOString() },
+            { new: true, returnDocument: "after" }
+        );
+
+        if (!updatedItem) {
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        return res.status(200).json({
+            message: `Item status updated to ${status} successfully`,
+            status: updatedItem.status,
+            item: updatedItem
+        });
+    } catch (error) {
+        console.error("Error updating item status:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
 module.exports = {
     get_items,
     get_active_items,
@@ -667,5 +700,8 @@ module.exports = {
     edit_item,
     update_item,
     delete_item,
-    update_item_price
+    update_item_price,
+    update_item_status
 };
+
+// Added update_item_status
