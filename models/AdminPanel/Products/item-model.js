@@ -73,6 +73,7 @@ const itemSchema = new mongoose.Schema({
     },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
+    status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' },
     createdAt: { type: String, required: true },
     updatedAt: { type: String, required: true }
 });
