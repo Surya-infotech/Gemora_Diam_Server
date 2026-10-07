@@ -499,16 +499,18 @@ const delete_item = async (req, res) => {
 
         if (item.galleryvideos && item.galleryvideos.length > 0) {
             for (const vid of item.galleryvideos) {
-                if (vid.videoUrl) {
-                    await deleteImageFromS3(vid.videoUrl, "item-video");
+                const vk = vid.videoKey || vid.videoUrl;
+                if (vk) {
+                    await deleteImageFromS3(vk, "item-video");
                 }
             }
         }
 
         if (item.galleryimages && item.galleryimages.length > 0) {
             for (const img of item.galleryimages) {
-                if (img.imageUrl) {
-                    await deleteImageFromS3(img.imageUrl, "item-gallery");
+                const ik = img.imageKey || img.imageUrl;
+                if (ik) {
+                    await deleteImageFromS3(ik, "item-gallery");
                 }
             }
         }
@@ -773,6 +775,7 @@ const upload_item_gallery_images = async (req, res) => {
         const now = new Date().toISOString();
         const newGalleryImages = req.files.map(file => ({
             imageUrl: file.location,
+            imageKey: file.key || "",
             createdAt: now
         }));
 
@@ -828,9 +831,10 @@ const delete_item_gallery_image = async (req, res) => {
             return res.status(404).json({ message: "Image not found in gallery" });
         }
 
-        if (imageToDelete.imageUrl) {
+        const imageKeyOrUrl = imageToDelete.imageKey || imageToDelete.imageUrl;
+        if (imageKeyOrUrl) {
             try {
-                await deleteImageFromS3(imageToDelete.imageUrl, "item-gallery");
+                await deleteImageFromS3(imageKeyOrUrl, "item-gallery");
             } catch (s3Error) {
                 console.error("Error deleting image from S3:", s3Error);
             }
@@ -913,6 +917,7 @@ const upload_item_videos = async (req, res) => {
         const now = new Date().toISOString();
         const newVideos = req.files.map(file => ({
             videoUrl: file.location,
+            videoKey: file.key || "",
             createdAt: now
         }));
 
@@ -972,10 +977,9 @@ const delete_item_video = async (req, res) => {
                      (videoId === 'legacy_video' && v.videoUrl === item.video)
             );
 
-            if (videoToDelete && videoToDelete.videoUrl) {
-                await deleteImageFromS3(videoToDelete.videoUrl, "item-video");
-            } else if (item.video) {
-                await deleteImageFromS3(item.video, "item-video");
+            const videoKeyOrUrl = (videoToDelete && (videoToDelete.videoKey || videoToDelete.videoUrl)) || item.video;
+            if (videoKeyOrUrl) {
+                await deleteImageFromS3(videoKeyOrUrl, "item-video");
             }
 
             item.galleryvideos = existingVideos.filter(
@@ -991,7 +995,8 @@ const delete_item_video = async (req, res) => {
             }
         } else {
             for (const v of existingVideos) {
-                if (v.videoUrl) await deleteImageFromS3(v.videoUrl, "item-video");
+                const k = v.videoKey || v.videoUrl;
+                if (k) await deleteImageFromS3(k, "item-video");
             }
             if (item.video) {
                 await deleteImageFromS3(item.video, "item-video");

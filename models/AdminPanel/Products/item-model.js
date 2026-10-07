@@ -148,12 +148,14 @@ const itemSchema = new mongoose.Schema({
     galleryvideos: [
         {
             videoUrl: { type: String, default: "" },
+            videoKey: { type: String, default: "" },
             createdAt: { type: String }
         }
     ],
     galleryimages: [
         {
             imageUrl: { type: String, default: "" },
+            imageKey: { type: String, default: "" },
             createdAt: { type: String }
         }
     ],
