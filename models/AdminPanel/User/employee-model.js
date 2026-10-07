@@ -60,7 +60,7 @@ employeeSchema.methods.generateToken = function () {
     try {
         return jwt.sign(
             { adminId: this._id.toString(), email: this.email, role: this.employeetype ? this.employeetype.toLowerCase() : "employee" },
-            process.env.JWT_KEY || "gemora_diam_secret_jwt_key_2026",
+            process.env.JWT_KEY,
             { expiresIn: "12h" }
         );
     } catch (error) {
