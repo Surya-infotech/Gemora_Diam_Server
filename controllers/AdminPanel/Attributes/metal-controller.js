@@ -1,7 +1,7 @@
 const Metal = require("../../../models/AdminPanel/Attributes/metal-model");
 const mongoose = require("mongoose");
 
-const get_metals = async (req, res) => {
+const get_metals = async (_req, res) => {
     try {
         const metals = await Metal.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ metals });
@@ -11,7 +11,7 @@ const get_metals = async (req, res) => {
     }
 };
 
-const get_active_metals = async (req, res) => {
+const get_active_metals = async (_req, res) => {
     try {
         const metals = await Metal.find({ status: true }).sort({ metalname: 1 }).lean();
         return res.status(200).json(metals);

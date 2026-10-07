@@ -1,7 +1,7 @@
 const DiamondSize = require("../../../models/AdminPanel/Attributes/diamondsize-model");
 const mongoose = require("mongoose");
 
-const get_diamond_sizes = async (req, res) => {
+const get_diamond_sizes = async (_req, res) => {
     try {
         const diamondSizes = await DiamondSize.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ diamondSizes });
@@ -11,7 +11,7 @@ const get_diamond_sizes = async (req, res) => {
     }
 };
 
-const get_active_diamond_sizes = async (req, res) => {
+const get_active_diamond_sizes = async (_req, res) => {
     try {
         const diamondSizes = await DiamondSize.find({ status: true }).sort({ diamondsize: 1 }).lean();
         return res.status(200).json(diamondSizes);

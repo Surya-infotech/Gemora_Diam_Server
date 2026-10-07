@@ -2,7 +2,7 @@ const Color = require("../../../models/AdminPanel/Attributes/color-model");
 const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
-const get_colors = async (req, res) => {
+const get_colors = async (_req, res) => {
     try {
         const colors = await Color.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ colors });

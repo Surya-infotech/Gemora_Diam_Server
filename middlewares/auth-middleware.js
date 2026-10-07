@@ -1,4 +1,4 @@
-﻿const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const Employee = require("../models/AdminPanel/User/employee-model");
 
 const authMiddleware = async (req, res, next) => {
@@ -52,4 +52,4 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
-module.exports = { authMiddleware, authmiddleware: authMiddleware };
+module.exports = { authMiddleware };

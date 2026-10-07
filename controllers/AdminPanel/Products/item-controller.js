@@ -4,7 +4,7 @@ const SubCategory = require("../../../models/AdminPanel/Attributes/subcategory-m
 const mongoose = require("mongoose");
 const { uploadToS3, deleteImageFromS3 } = require("../../../utils/s3Config-admin");
 
-const get_items = async (req, res) => {
+const get_items = async (_req, res) => {
     try {
         const items = await Item.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ items });
@@ -14,7 +14,7 @@ const get_items = async (req, res) => {
     }
 };
 
-const get_active_items = async (req, res) => {
+const get_active_items = async (_req, res) => {
     try {
         const items = await Item.find({ status: "Published" }).sort({ itemname: 1 }).lean();
         return res.status(200).json(items);

@@ -3,7 +3,7 @@ const Category = require("../../../models/AdminPanel/Attributes/category-model")
 const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
-const get_subcategories = async (req, res) => {
+const get_subcategories = async (_req, res) => {
     try {
         const subcategories = await SubCategory.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ subcategories });

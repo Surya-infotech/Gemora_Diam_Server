@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const get_policies = async (req, res) => {
+const get_policies = async (_req, res) => {
     try {
         const policies = await Policy.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ policies });
@@ -13,7 +13,7 @@ const get_policies = async (req, res) => {
     }
 };
 
-const get_active_policies = async (req, res) => {
+const get_active_policies = async (_req, res) => {
     try {
         const policies = await Policy.find({ status: true }).sort({ policyname: 1 }).lean();
         return res.status(200).json(policies);

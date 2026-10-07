@@ -2,7 +2,7 @@ const Style = require("../../../models/AdminPanel/Attributes/style-model");
 const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
-const get_styles = async (req, res) => {
+const get_styles = async (_req, res) => {
     try {
         const styles = await Style.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ styles });
@@ -12,7 +12,7 @@ const get_styles = async (req, res) => {
     }
 };
 
-const get_active_styles = async (req, res) => {
+const get_active_styles = async (_req, res) => {
     try {
         const styles = await Style.find({ status: true }).sort({ stylename: 1 }).lean();
         return res.status(200).json(styles);

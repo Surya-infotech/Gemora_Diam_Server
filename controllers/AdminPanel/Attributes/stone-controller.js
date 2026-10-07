@@ -2,7 +2,7 @@ const Stone = require("../../../models/AdminPanel/Attributes/stone-model");
 const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
-const get_stones = async (req, res) => {
+const get_stones = async (_req, res) => {
     try {
         const stones = await Stone.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ stones });
@@ -12,7 +12,7 @@ const get_stones = async (req, res) => {
     }
 };
 
-const get_active_stones = async (req, res) => {
+const get_active_stones = async (_req, res) => {
     try {
         const stones = await Stone.find({ status: true }).sort({ stonename: 1 }).lean();
         return res.status(200).json(stones);

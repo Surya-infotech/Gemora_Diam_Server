@@ -1,7 +1,7 @@
 const GeneralSetting = require("../../../../models/AdminPanel/System/Setting/generalsetting-model");
 const SocialMedia = require("../../../../models/AdminPanel/System/Setting/socialmedia-model");
 
-const get_general_setting = async (req, res) => {
+const get_general_setting = async (_req, res) => {
     try {
         const generalSetting = await GeneralSetting.findOne();
 
@@ -16,7 +16,7 @@ const get_general_setting = async (req, res) => {
     }
 };
 
-const get_general_setting_for_landingpage = async (req, res) => {
+const get_general_setting_for_landingpage = async (_req, res) => {
     try {
         const generalSetting = await GeneralSetting.findOne();
         const socialMedia = await SocialMedia.findOne();

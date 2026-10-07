@@ -1,6 +1,6 @@
 const SocialMedia = require("../../../../models/AdminPanel/System/Setting/socialmedia-model");
 
-const get_social_media = async (req, res) => {
+const get_social_media = async (_req, res) => {
     try {
         const socialMedia = await SocialMedia.findOne();
 

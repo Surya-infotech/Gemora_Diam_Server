@@ -1,7 +1,7 @@
 const Currency = require("../../../models/AdminPanel/System/currency-model");
 const mongoose = require("mongoose");
 
-const get_currency_with_statustrue = async (req, res) => {
+const get_currency_with_statustrue = async (_req, res) => {
     try {
         const currency = await Currency.find({ status: true }).sort({ countryname: 1 });
         return res.status(200).json(currency);
@@ -11,11 +11,12 @@ const get_currency_with_statustrue = async (req, res) => {
     }
 };
 
-const get_currency = async (req, res) => {
+const get_currency = async (_req, res) => {
     try {
         const currency = await Currency.find().sort({ currencyid: 1 });
         return res.status(200).json(currency);
     } catch (error) {
+        console.error("Error fetching currencies:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -67,6 +68,7 @@ const edit_currency = async (req, res) => {
         if (!currency) return res.status(404).json({ message: "Currency not found" });
         return res.status(200).json(currency);
     } catch (error) {
+        console.error("Error editing currency:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -82,6 +84,7 @@ const updateCurrency_status = async (req, res) => {
         if (!updated) return res.status(404).json({ message: "Currency not found" });
         return res.status(200).json(updated);
     } catch (error) {
+        console.error("Error updating currency status:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -139,6 +142,7 @@ const deletecurrency = async (req, res) => {
         await Currency.deleteOne({ _id: currency._id });
         return res.status(200).json({ message: "Currency deleted successfully" });
     } catch (error) {
+        console.error("Error deleting currency:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };

@@ -2,7 +2,7 @@ const Tax = require("../../../models/AdminPanel/System/tax-model");
 const MiscSetting = require("../../../models/AdminPanel/System/Setting/miscsetting-model");
 const Currency = require("../../../models/AdminPanel/System/currency-model");
 
-const get_taxes = async (req, res) => {
+const get_taxes = async (_req, res) => {
     try {
         const rawTaxes = await Tax.find().sort({ updatedAt: -1 }).lean();
         const currencies = await Currency.find().lean();
@@ -53,7 +53,7 @@ const get_taxes = async (req, res) => {
     }
 };
 
-const get_active_taxes = async (req, res) => {
+const get_active_taxes = async (_req, res) => {
     try {
         const activeTaxes = await Tax.find({ status: true }).sort({ updatedAt: -1 });
         return res.status(200).json(activeTaxes);

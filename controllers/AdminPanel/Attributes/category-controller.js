@@ -3,7 +3,7 @@ const Item = require("../../../models/AdminPanel/Products/item-model");
 const SubCategory = require("../../../models/AdminPanel/Attributes/subcategory-model");
 const mongoose = require("mongoose");
 
-const get_categories = async (req, res) => {
+const get_categories = async (_req, res) => {
     try {
         const categories = await Category.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ categories });
@@ -13,7 +13,7 @@ const get_categories = async (req, res) => {
     }
 };
 
-const get_active_categories = async (req, res) => {
+const get_active_categories = async (_req, res) => {
     try {
         const categories = await Category.find({ status: true }).sort({ categoryname: 1 }).lean();
         return res.status(200).json(categories);

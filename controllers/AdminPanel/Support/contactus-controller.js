@@ -1,6 +1,6 @@
 const ContactUs = require("../../../models/AdminPanel/Support/contactus-model");
 
-const get_contactus = async (req, res) => {
+const get_contactus = async (_req, res) => {
     try {
         const contactusList = await ContactUs.find().sort({ createdAt: -1 }).lean();
         return res.status(200).json(contactusList);

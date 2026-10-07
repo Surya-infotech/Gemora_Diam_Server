@@ -2,7 +2,7 @@ const Clarity = require("../../../models/AdminPanel/Attributes/clarity-model");
 const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
-const get_clarities = async (req, res) => {
+const get_clarities = async (_req, res) => {
     try {
         const clarities = await Clarity.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ clarities });
@@ -12,7 +12,7 @@ const get_clarities = async (req, res) => {
     }
 };
 
-const get_active_clarities = async (req, res) => {
+const get_active_clarities = async (_req, res) => {
     try {
         const clarities = await Clarity.find({ status: true }).sort({ clarityname: 1 }).lean();
         return res.status(200).json(clarities);

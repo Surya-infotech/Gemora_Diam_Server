@@ -1,4 +1,4 @@
-﻿require("dotenv").config();
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./src/db");
@@ -37,7 +37,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Health Check / Status Route
-app.get("/Status", (req, res) => {
+app.get("/Status", (_req, res) => {
     res.status(200).json({
         status: "OK",
         message: "Gemora Diam backend server is running!",

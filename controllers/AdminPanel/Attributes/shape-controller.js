@@ -2,7 +2,7 @@ const Shape = require("../../../models/AdminPanel/Attributes/shape-model");
 const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
-const get_shapes = async (req, res) => {
+const get_shapes = async (_req, res) => {
     try {
         const shapes = await Shape.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ shapes });
@@ -12,7 +12,7 @@ const get_shapes = async (req, res) => {
     }
 };
 
-const get_active_shapes = async (req, res) => {
+const get_active_shapes = async (_req, res) => {
     try {
         const shapes = await Shape.find({ status: true }).sort({ shapename: 1 }).lean();
         return res.status(200).json(shapes);

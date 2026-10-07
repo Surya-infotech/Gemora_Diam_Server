@@ -2,7 +2,7 @@ const RingSize = require("../../../models/AdminPanel/Attributes/ringsize-model")
 const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
-const get_ring_sizes = async (req, res) => {
+const get_ring_sizes = async (_req, res) => {
     try {
         const ringSizes = await RingSize.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ ringSizes });
@@ -12,7 +12,7 @@ const get_ring_sizes = async (req, res) => {
     }
 };
 
-const get_active_ring_sizes = async (req, res) => {
+const get_active_ring_sizes = async (_req, res) => {
     try {
         const ringSizes = await RingSize.find({ status: true }).sort({ ringsize: 1 }).lean();
         return res.status(200).json(ringSizes);

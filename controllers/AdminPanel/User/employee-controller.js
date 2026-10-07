@@ -1,7 +1,7 @@
-﻿const Employee = require("../../../models/AdminPanel/User/employee-model");
+const Employee = require("../../../models/AdminPanel/User/employee-model");
 const bcrypt = require("bcryptjs");
 
-const get_employees = async (req, res) => {
+const get_employees = async (_req, res) => {
     try {
         const employees = await Employee.find().select("-password").sort({ updatedAt: -1 }).lean();
         const formattedEmployees = employees.map(emp => ({

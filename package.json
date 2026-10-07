@@ -6,7 +6,7 @@
   "scripts": {
    "start": "pm2-runtime start app.js --name gemora-diam-server",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon app.js -e js,hbs,css",
+    "dev": "nodemon app.js",
     "server": "nodemon app.js",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:stop": "pm2 stop gemora-diam-server",

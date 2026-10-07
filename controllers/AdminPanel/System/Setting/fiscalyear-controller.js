@@ -1,6 +1,6 @@
 const FiscalYear = require("../../../../models/AdminPanel/System/Setting/fiscalyear-model");
 
-const check_current_fiscalyear = async (req, res) => {
+const check_current_fiscalyear = async (_req, res) => {
     try {
         const today = new Date().toISOString().split("T")[0];
 
@@ -37,7 +37,7 @@ const check_current_fiscalyear = async (req, res) => {
     }
 };
 
-const get_fiscalyear = async (req, res) => {
+const get_fiscalyear = async (_req, res) => {
     try {
         let fiscalyear = await FiscalYear.find().sort({ fiscalyearid: -1 });
 
@@ -97,6 +97,7 @@ const edit_fiscalyear = async (req, res) => {
         if (!fiscalyear) return res.status(404).json({ message: "Fiscal year not found" });
         return res.status(200).json(fiscalyear);
     } catch (error) {
+        console.error("Error editing fiscal year:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -113,6 +114,7 @@ const update_fiscalyear = async (req, res) => {
         if (!updated) return res.status(404).json({ message: "Fiscal year not found" });
         return res.status(200).json(updated);
     } catch (error) {
+        console.error("Error updating fiscal year:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -123,6 +125,7 @@ const delete_fiscalyear = async (req, res) => {
         await FiscalYear.findByIdAndDelete(fiscalyearId);
         return res.status(200).json({ message: "Fiscal year deleted successfully" });
     } catch (error) {
+        console.error("Error deleting fiscal year:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };

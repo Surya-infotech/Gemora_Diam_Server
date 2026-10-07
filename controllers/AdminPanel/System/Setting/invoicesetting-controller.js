@@ -1,6 +1,6 @@
 const InvoiceSetting = require("../../../../models/AdminPanel/System/Setting/invoicesetting-model");
 
-const get_invoice_setting = async (req, res) => {
+const get_invoice_setting = async (_req, res) => {
     try {
         const invoiceSetting = await InvoiceSetting.findOne();
 

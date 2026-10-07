@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const get_faqs = async (req, res) => {
+const get_faqs = async (_req, res) => {
     try {
         const faqs = await FAQ.find().sort({ updatedAt: -1 }).lean();
         return res.status(200).json({ faqs });

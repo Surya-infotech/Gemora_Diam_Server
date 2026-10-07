@@ -60,7 +60,7 @@ const subscribe_newsletter = async (req, res) => {
     }
 };
 
-const get_subscribers = async (req, res) => {
+const get_subscribers = async (_req, res) => {
     try {
         const subscribers = await Subscriber.find().sort({ subscriberid: -1 }).lean();
         return res.status(200).json(subscribers);

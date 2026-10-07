@@ -32,7 +32,7 @@ const multiuploadToS3 = (uploadType) => (req, res, next) => {
 const uploadToS3 = (uploadType) => (req, res, next) => {
     const upload = multer({
         limits: { fileSize: 10 * 1024 * 1024 },
-        fileFilter: (req, file, cb) => {
+        fileFilter: (_req, file, cb) => {
             if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg' || file.mimetype === 'image/png') {
                 cb(null, true);
             } else {
@@ -44,7 +44,7 @@ const uploadToS3 = (uploadType) => (req, res, next) => {
             bucket: process.env.AWS_S3_BUCKET_NAME,
             contentType: multerS3.AUTO_CONTENT_TYPE,
             cacheControl: 'max-age=31536000',
-            key: (req, file, cb) => {
+            key: (_req, file, cb) => {
                 cb(null, `${uploadType}/${Date.now()}_${file.originalname}`);
             }
         })

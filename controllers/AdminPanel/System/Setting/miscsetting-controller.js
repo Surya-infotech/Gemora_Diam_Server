@@ -1,6 +1,6 @@
 const MiscSetting = require("../../../../models/AdminPanel/System/Setting/miscsetting-model");
 
-const get_misc_setting = async (req, res) => {
+const get_misc_setting = async (_req, res) => {
     try {
         let miscSetting = await MiscSetting.findOne();
 
