@@ -5,7 +5,7 @@ const loginActivitySchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    adminid: {
+    employeeid: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Employee",
         required: false,
@@ -36,6 +36,6 @@ const loginActivitySchema = new mongoose.Schema({
     }
 });
 
-const AdminLoginActivity = mongoose.model("AdminLoginActivity", loginActivitySchema);
+const LoginActivity = mongoose.model("LoginActivity", loginActivitySchema);
 
-module.exports = AdminLoginActivity;
+module.exports = LoginActivity;

@@ -1,5 +1,5 @@
 ﻿const Employee = require("../models/AdminPanel/User/employee-model");
-const AdminLoginActivity = require("../models/loginactivity-model");
+const LoginActivity = require("../models/loginactivity-model");
 const MiscSetting = require("../models/AdminPanel/System/Setting/miscsetting-model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -72,15 +72,15 @@ const login_admin = async (req, res) => {
 
         // Record login activity
         try {
-            const maxActivity = await AdminLoginActivity.findOne().sort({ loginacitivityid: -1 });
+            const maxActivity = await LoginActivity.findOne().sort({ loginacitivityid: -1 });
             const nextLoginActivityId = maxActivity ? parseInt(maxActivity.loginacitivityid) + 1 : 1;
 
             const clientIp = ipaddress || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "Unknown";
             const clientBrowser = browserdetails || req.headers["user-agent"] || "Unknown";
 
-            const newActivity = new AdminLoginActivity({
+            const newActivity = new LoginActivity({
                 loginacitivityid: nextLoginActivityId,
-                adminid: employee._id,
+                employeeid: employee._id,
                 browserdetails: clientBrowser,
                 ipaddress: clientIp,
                 device: device || "Desktop",
@@ -255,7 +255,7 @@ const changePassword = async (req, res) => {
 // Get Login Activities
 const getAdminLoginActivity = async (req, res) => {
     try {
-        const activities = await AdminLoginActivity.find().sort({ login: -1 }).limit(50);
+        const activities = await LoginActivity.find().sort({ login: -1 }).limit(50);
         const miscSettings = await MiscSetting.findOne();
 
         const dateFormat = miscSettings?.dateFormat || "DD/MM/YYYY";
