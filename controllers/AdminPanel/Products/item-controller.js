@@ -493,6 +493,14 @@ const delete_item = async (req, res) => {
             await deleteImageFromS3(item.image, "item");
         }
 
+        if (item.galleryimages && item.galleryimages.length > 0) {
+            for (const img of item.galleryimages) {
+                if (img.imageUrl) {
+                    await deleteImageFromS3(img.imageUrl, "item-gallery");
+                }
+            }
+        }
+
         await Item.deleteOne({ _id: item._id });
         return res.status(200).json({ message: "Item deleted successfully" });
     } catch (error) {
@@ -693,6 +701,137 @@ const update_item_status = async (req, res) => {
     }
 };
 
+const get_item_gallery_images = async (req, res) => {
+    try {
+        const { itemid } = req.params;
+
+        if (!itemid) {
+            return res.status(400).json({ message: "Item ID is required" });
+        }
+
+        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
+        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
+        const item = await Item.findOne(query).select('galleryimages');
+
+        if (!item) {
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        return res.status(200).json({ galleryimages: item.galleryimages || [] });
+    } catch (error) {
+        console.error("Error fetching item gallery images:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+const upload_item_gallery_images = async (req, res) => {
+    try {
+        const { itemid } = req.params;
+
+        if (!itemid) {
+            return res.status(400).json({ message: "Item ID is required" });
+        }
+
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: "No images provided" });
+        }
+
+        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
+        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
+        const item = await Item.findOne(query);
+
+        if (!item) {
+            for (const file of req.files) {
+                if (file.location) {
+                    await deleteImageFromS3(file.location, "item-gallery");
+                }
+            }
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        const now = new Date().toISOString();
+        const newGalleryImages = req.files.map(file => ({
+            imageUrl: file.location,
+            createdAt: now
+        }));
+
+        const existingGalleryImages = item.galleryimages || [];
+        item.galleryimages = [...existingGalleryImages, ...newGalleryImages];
+        item.updatedAt = now;
+
+        await item.save();
+
+        return res.status(200).json({
+            message: "Gallery images uploaded successfully",
+            galleryimages: item.galleryimages
+        });
+    } catch (error) {
+        console.error("Error uploading item gallery images:", error);
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                if (file.location) {
+                    await deleteImageFromS3(file.location, "item-gallery");
+                }
+            }
+        }
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+const delete_item_gallery_image = async (req, res) => {
+    try {
+        const { itemid, imageId } = req.params;
+
+        if (!itemid) {
+            return res.status(400).json({ message: "Item ID is required" });
+        }
+
+        if (!imageId) {
+            return res.status(400).json({ message: "Image ID is required" });
+        }
+
+        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
+        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
+        const item = await Item.findOne(query);
+
+        if (!item) {
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        const existingGalleryImages = item.galleryimages || [];
+        const imageToDelete = existingGalleryImages.find(
+            img => img._id && img._id.toString() === imageId.toString()
+        );
+
+        if (!imageToDelete) {
+            return res.status(404).json({ message: "Image not found in gallery" });
+        }
+
+        if (imageToDelete.imageUrl) {
+            try {
+                await deleteImageFromS3(imageToDelete.imageUrl, "item-gallery");
+            } catch (s3Error) {
+                console.error("Error deleting image from S3:", s3Error);
+            }
+        }
+
+        item.galleryimages = existingGalleryImages.filter(
+            img => !img._id || img._id.toString() !== imageId.toString()
+        );
+        item.updatedAt = new Date().toISOString();
+
+        await item.save();
+
+        return res.status(200).json({
+            message: "Gallery image deleted successfully",
+            galleryimages: item.galleryimages
+        });
+    } catch (error) {
+        console.error("Error deleting item gallery image:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
 module.exports = {
     get_items,
     get_active_items,
@@ -701,7 +840,10 @@ module.exports = {
     update_item,
     delete_item,
     update_item_price,
-    update_item_status
+    update_item_status,
+    get_item_gallery_images,
+    upload_item_gallery_images,
+    delete_item_gallery_image
 };
 
 // Added update_item_status
