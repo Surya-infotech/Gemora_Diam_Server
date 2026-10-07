@@ -5,7 +5,11 @@ const bcrypt = require("bcryptjs");
 const get_employees = async (req, res) => {
     try {
         const employees = await Employee.find().select("-password").sort({ updatedAt: -1 }).lean();
-        return res.status(200).json({ employees: employees || [] });
+        const formattedEmployees = employees.map(emp => ({
+            ...emp,
+            role: emp.role || emp.employeetype || "Employee"
+        }));
+        return res.status(200).json({ employees: formattedEmployees });
     } catch (error) {
         console.error("Error fetching employees:", error);
         return res.status(500).json({ message: "Server error" });
@@ -14,9 +18,10 @@ const get_employees = async (req, res) => {
 
 const add_employee = async (req, res) => {
     try {
-        const { firstname, lastname, email, password, phone, employeetype } = req.body;
+        const { firstname, lastname, email, password, phone, role, employeetype } = req.body;
+        const employeeRole = role || employeetype;
 
-        if (!firstname || !lastname || !email || !password || !employeetype) {
+        if (!firstname || !lastname || !email || !password || !employeeRole) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -44,7 +49,7 @@ const add_employee = async (req, res) => {
             email: cleanEmail,
             password: hashedPassword,
             phone: phone ? phone.trim() : "",
-            employeetype: employeetype || "Employee",
+            role: employeeRole || "Employee",
             status: true,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -67,14 +72,16 @@ const edit_employee = async (req, res) => {
         const { employeeId } = req.params;
         if (!employeeId) return res.status(400).json({ message: "Employee ID is required" });
 
-        let employee = await Employee.findOne({ _id: employeeId }).select("-password");
+        let employee = await Employee.findOne({ _id: employeeId }).select("-password").lean();
         if (!employee) {
-            employee = await Employee.findOne({ employeeid: employeeId }).select("-password");
+            employee = await Employee.findOne({ employeeid: employeeId }).select("-password").lean();
         }
 
         if (!employee) {
             return res.status(404).json({ message: "Employee not found" });
         }
+
+        employee.role = employee.role || employee.employeetype || "Employee";
 
         return res.status(200).json(employee);
     } catch (error) {
@@ -86,10 +93,11 @@ const edit_employee = async (req, res) => {
 const update_employee = async (req, res) => {
     try {
         const { employeeId } = req.params;
-        const { firstname, lastname, email, phone, employeetype, status } = req.body;
+        const { firstname, lastname, email, phone, role, employeetype, status } = req.body;
+        const employeeRole = role || employeetype;
 
         if (!employeeId) return res.status(400).json({ message: "Employee ID is required" });
-        if (!firstname || !lastname || !email || !employeetype) {
+        if (!firstname || !lastname || !email || !employeeRole) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -121,7 +129,7 @@ const update_employee = async (req, res) => {
         employee.lastname = lastname.trim();
         employee.email = cleanEmail;
         employee.phone = phone ? phone.trim() : "";
-        employee.employeetype = employeetype;
+        employee.role = employeeRole;
         if (status !== undefined) {
             employee.status = Boolean(status);
         }

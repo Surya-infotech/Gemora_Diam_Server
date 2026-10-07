@@ -32,7 +32,7 @@ const employeeSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
-    employeetype: {
+    role: {
         type: String,
         enum: ["Admin", "Employee"],
         default: "Employee",
@@ -59,7 +59,7 @@ const employeeSchema = new mongoose.Schema({
 employeeSchema.methods.generateToken = function () {
     try {
         return jwt.sign(
-            { adminId: this._id.toString(), email: this.email, role: this.employeetype ? this.employeetype.toLowerCase() : "employee" },
+            { adminId: this._id.toString(), email: this.email, role: this.role },
             process.env.JWT_KEY,
             { expiresIn: "12h" }
         );
