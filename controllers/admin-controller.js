@@ -80,7 +80,7 @@ const login_admin = async (req, res) => {
 
             const newActivity = new LoginActivity({
                 loginacitivityid: nextLoginActivityId,
-                employeeid: employee._id,
+                employeeid: employee.employeeid,
                 browserdetails: clientBrowser,
                 ipaddress: clientIp,
                 device: device || "Desktop",
@@ -255,7 +255,12 @@ const changePassword = async (req, res) => {
 // Get Login Activities
 const getAdminLoginActivity = async (req, res) => {
     try {
-        const activities = await LoginActivity.find().sort({ login: -1 }).limit(50);
+        const { EmployeeId } = req.params;
+        if (!EmployeeId) return res.status(400).json({ message: "EmployeeId is required" });
+
+        const employee = await Employee.findOne({ _id: EmployeeId });
+        if (!employee) return res.status(404).json({ message: "User not found" });
+        const activities = await LoginActivity.find({ employeeid: employee.employeeid }).sort({ createdAt: -1 });
         const miscSettings = await MiscSetting.findOne();
 
         const dateFormat = miscSettings?.dateFormat || "DD/MM/YYYY";

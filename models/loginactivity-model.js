@@ -6,8 +6,7 @@ const loginActivitySchema = new mongoose.Schema({
         required: true,
     },
     employeeid: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Employee",
+        type: Number,
         required: false,
     },
     browserdetails: {
