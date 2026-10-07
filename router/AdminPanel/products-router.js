@@ -10,5 +10,6 @@ productsrouter.route("/EditItem/:itemid").get(authMiddleware, itemcontroller.edi
 productsrouter.route("/GetItemDetails/:itemid").get(authMiddleware, itemcontroller.edit_item);
 productsrouter.route("/UpdateItem/:itemid").put(authMiddleware, itemcontroller.update_item);
 productsrouter.route("/DeleteItem/:itemid").delete(authMiddleware, itemcontroller.delete_item);
+productsrouter.route("/UpdateItemPrice/:itemid").put(authMiddleware, itemcontroller.update_item_price);
 
 module.exports = productsrouter;

@@ -71,6 +71,77 @@ const itemSchema = new mongoose.Schema({
         ],
         default: []
     },
+    pricing: {
+        priceType: {
+            type: String,
+            enum: ['metal_wise', 'metal_with_diamond_carat', 'metal_with_stone', 'metal_with_stone_diamond_carat'],
+            default: 'metal_wise'
+        },
+        metalWisePrices: {
+            type: [
+                {
+                    metalid: { type: Number },
+                    metalname: { type: String, default: "" },
+                    metaltype: { type: String, default: "" },
+                    price: { type: Number, default: 0 }
+                }
+            ],
+            default: []
+        },
+        metalWithDiamondCaratPrices: {
+            type: [
+                {
+                    metalid: { type: Number },
+                    metalname: { type: String, default: "" },
+                    metaltype: { type: String, default: "" },
+                    caratPrices: [
+                        {
+                            diamondsizeid: { type: Number },
+                            diamondsize: { type: String, default: "" },
+                            price: { type: Number, default: 0 }
+                        }
+                    ]
+                }
+            ],
+            default: []
+        },
+        metalWithStonePrices: {
+            type: [
+                {
+                    metalid: { type: Number },
+                    metalname: { type: String, default: "" },
+                    metaltype: { type: String, default: "" },
+                    stonePrices: [
+                        {
+                            stoneid: { type: Number },
+                            stonename: { type: String, default: "" },
+                            price: { type: Number, default: 0 }
+                        }
+                    ]
+                }
+            ],
+            default: []
+        },
+        metalWithStoneDiamondCaratPrices: {
+            type: [
+                {
+                    metalid: { type: Number },
+                    metalname: { type: String, default: "" },
+                    metaltype: { type: String, default: "" },
+                    stoneid: { type: Number },
+                    stonename: { type: String, default: "" },
+                    caratPrices: [
+                        {
+                            diamondsizeid: { type: Number },
+                            diamondsize: { type: String, default: "" },
+                            price: { type: Number, default: 0 }
+                        }
+                    ]
+                }
+            ],
+            default: []
+        }
+    },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
     status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' },

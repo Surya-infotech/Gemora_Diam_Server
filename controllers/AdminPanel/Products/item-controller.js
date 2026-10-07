@@ -501,11 +501,171 @@ const delete_item = async (req, res) => {
     }
 };
 
+const update_item_price = async (req, res) => {
+    const { itemid } = req.params;
+    const {
+        priceType,
+        metalWisePrices,
+        metalWithDiamondCaratPrices,
+        metalWithStonePrices,
+        metalWithStoneDiamondCaratPrices
+    } = req.body;
+
+    try {
+        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
+        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
+        const existingItem = await Item.findOne(query);
+
+        if (!existingItem) {
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        const validTypes = ['metal_wise', 'metal_with_diamond_carat', 'metal_with_stone', 'metal_with_stone_diamond_carat'];
+        if (!priceType || !validTypes.includes(priceType)) {
+            return res.status(400).json({ message: "Invalid price type" });
+        }
+
+        if (priceType === 'metal_wise') {
+            if (!Array.isArray(metalWisePrices) || metalWisePrices.length === 0) {
+                return res.status(400).json({ message: "At least one metal price is required" });
+            }
+            for (const item of metalWisePrices) {
+                if (!item.metalid || item.price === undefined || item.price === null || item.price === "" || Number(item.price) < 0) {
+                    return res.status(400).json({ message: "All metal price fields are required and must be valid" });
+                }
+            }
+        }
+
+        if (priceType === 'metal_with_diamond_carat') {
+            if (!Array.isArray(metalWithDiamondCaratPrices) || metalWithDiamondCaratPrices.length === 0) {
+                return res.status(400).json({ message: "At least one metal configuration is required" });
+            }
+            for (const mg of metalWithDiamondCaratPrices) {
+                if (!mg.metalid) {
+                    return res.status(400).json({ message: "Metal is required for all sections" });
+                }
+                if (!Array.isArray(mg.caratPrices) || mg.caratPrices.length === 0) {
+                    return res.status(400).json({ message: "At least one diamond carat price is required per metal" });
+                }
+                for (const cp of mg.caratPrices) {
+                    if (!cp.diamondsizeid || cp.price === undefined || cp.price === null || cp.price === "" || Number(cp.price) < 0) {
+                        return res.status(400).json({ message: "All diamond carat price fields are required and must be valid" });
+                    }
+                }
+            }
+        }
+
+        if (priceType === 'metal_with_stone') {
+            if (!Array.isArray(metalWithStonePrices) || metalWithStonePrices.length === 0) {
+                return res.status(400).json({ message: "At least one metal configuration is required" });
+            }
+            for (const mg of metalWithStonePrices) {
+                if (!mg.metalid) {
+                    return res.status(400).json({ message: "Metal is required for all sections" });
+                }
+                if (!Array.isArray(mg.stonePrices) || mg.stonePrices.length === 0) {
+                    return res.status(400).json({ message: "At least one stone price is required per metal" });
+                }
+                for (const sp of mg.stonePrices) {
+                    if (!sp.stoneid || sp.price === undefined || sp.price === null || sp.price === "" || Number(sp.price) < 0) {
+                        return res.status(400).json({ message: "All stone price fields are required and must be valid" });
+                    }
+                }
+            }
+        }
+
+        if (priceType === 'metal_with_stone_diamond_carat') {
+            if (!Array.isArray(metalWithStoneDiamondCaratPrices) || metalWithStoneDiamondCaratPrices.length === 0) {
+                return res.status(400).json({ message: "At least one metal and stone configuration is required" });
+            }
+            for (const msg of metalWithStoneDiamondCaratPrices) {
+                if (!msg.metalid) {
+                    return res.status(400).json({ message: "Metal is required for all sections" });
+                }
+                if (!msg.stoneid) {
+                    return res.status(400).json({ message: "Stone is required for all sections" });
+                }
+                if (!Array.isArray(msg.caratPrices) || msg.caratPrices.length === 0) {
+                    return res.status(400).json({ message: "At least one diamond carat price is required per configuration" });
+                }
+                for (const cp of msg.caratPrices) {
+                    if (!cp.diamondsizeid || cp.price === undefined || cp.price === null || cp.price === "" || Number(cp.price) < 0) {
+                        return res.status(400).json({ message: "All diamond carat price fields are required and must be valid" });
+                    }
+                }
+            }
+        }
+
+        existingItem.pricing = {
+            priceType,
+            metalWisePrices: (priceType === 'metal_wise' && Array.isArray(metalWisePrices))
+                ? metalWisePrices.map(m => ({
+                    metalid: Number(m.metalid),
+                    metalname: String(m.metalname || ""),
+                    metaltype: String(m.metaltype || ""),
+                    price: Number(m.price)
+                }))
+                : [],
+            metalWithDiamondCaratPrices: (priceType === 'metal_with_diamond_carat' && Array.isArray(metalWithDiamondCaratPrices))
+                ? metalWithDiamondCaratPrices.map(mg => ({
+                    metalid: Number(mg.metalid),
+                    metalname: String(mg.metalname || ""),
+                    metaltype: String(mg.metaltype || ""),
+                    caratPrices: Array.isArray(mg.caratPrices) ? mg.caratPrices.map(cp => ({
+                        diamondsizeid: Number(cp.diamondsizeid),
+                        diamondsize: String(cp.diamondsize || ""),
+                        price: Number(cp.price)
+                    })) : []
+                }))
+                : [],
+            metalWithStonePrices: (priceType === 'metal_with_stone' && Array.isArray(metalWithStonePrices))
+                ? metalWithStonePrices.map(mg => ({
+                    metalid: Number(mg.metalid),
+                    metalname: String(mg.metalname || ""),
+                    metaltype: String(mg.metaltype || ""),
+                    stonePrices: Array.isArray(mg.stonePrices) ? mg.stonePrices.map(sp => ({
+                        stoneid: Number(sp.stoneid),
+                        stonename: String(sp.stonename || ""),
+                        price: Number(sp.price)
+                    })) : []
+                }))
+                : [],
+            metalWithStoneDiamondCaratPrices: (priceType === 'metal_with_stone_diamond_carat' && Array.isArray(metalWithStoneDiamondCaratPrices))
+                ? metalWithStoneDiamondCaratPrices.map(msg => ({
+                    metalid: Number(msg.metalid),
+                    metalname: String(msg.metalname || ""),
+                    metaltype: String(msg.metaltype || ""),
+                    stoneid: Number(msg.stoneid),
+                    stonename: String(msg.stonename || ""),
+                    caratPrices: Array.isArray(msg.caratPrices) ? msg.caratPrices.map(cp => ({
+                        diamondsizeid: Number(cp.diamondsizeid),
+                        diamondsize: String(cp.diamondsize || ""),
+                        price: Number(cp.price)
+                    })) : []
+                }))
+                : []
+        };
+
+        existingItem.updatedAt = new Date().toISOString();
+        await existingItem.save();
+
+        return res.status(200).json({
+            message: "Item price updated successfully",
+            pricing: existingItem.pricing,
+            item: existingItem
+        });
+    } catch (error) {
+        console.error("Error updating item price:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
 module.exports = {
     get_items,
     get_active_items,
     add_item,
     edit_item,
     update_item,
-    delete_item
+    delete_item,
+    update_item_price
 };
