@@ -144,6 +144,13 @@ const itemSchema = new mongoose.Schema({
     },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
+    video: { type: String, default: "" },
+    galleryvideos: [
+        {
+            videoUrl: { type: String, default: "" },
+            createdAt: { type: String }
+        }
+    ],
     galleryimages: [
         {
             imageUrl: { type: String, default: "" },

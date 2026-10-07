@@ -119,4 +119,90 @@ const deleteImageFromS3 = async (imageUrl, uploadType) => {
     }
 };
 
-module.exports = { multiuploadToS3, uploadToS3, deleteImageFromS3 };
+const uploadVideoToS3 = (uploadType) => (req, res, next) => {
+    const upload = multer({
+        limits: { fileSize: 100 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            const allowedMimes = [
+                'video/mp4', 'video/webm', 'video/quicktime',
+                'video/x-matroska', 'video/ogg', 'video/x-m4v'
+            ];
+            const allowedExts = ['.mp4', '.webm', '.mov', '.mkv', '.ogg', '.m4v'];
+            const ext = (file.originalname || '').toLowerCase().slice((file.originalname || '').lastIndexOf('.'));
+            if (allowedMimes.includes(file.mimetype) || allowedExts.includes(ext)) {
+                cb(null, true);
+            } else {
+                cb(new Error("Invalid video format. Only MP4, WebM, MOV, and MKV are allowed."), false);
+            }
+        },
+        storage: multerS3({
+            s3: s3,
+            bucket: process.env.AWS_S3_BUCKET_NAME,
+            contentType: multerS3.AUTO_CONTENT_TYPE,
+            cacheControl: 'max-age=31536000',
+            key: (_req, file, cb) => {
+                cb(null, `${uploadType}/${Date.now()}_${file.originalname}`);
+            }
+        })
+    }).single("video");
+
+    upload(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ message: "Video file size exceeds the 100MB limit." });
+            }
+            return res.status(400).json({ message: err.message || "Error uploading video" });
+        }
+        if (err) {
+            return res.status(400).json({ message: err.message || "Error uploading video" });
+        }
+        if (typeof next === 'function') {
+            next();
+        }
+    });
+};
+
+const multiuploadVideoToS3 = (uploadType) => (req, res, next) => {
+    const upload = multer({
+        limits: { fileSize: 100 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            const allowedMimes = [
+                'video/mp4', 'video/webm', 'video/quicktime',
+                'video/x-matroska', 'video/ogg', 'video/x-m4v'
+            ];
+            const allowedExts = ['.mp4', '.webm', '.mov', '.mkv', '.ogg', '.m4v'];
+            const ext = (file.originalname || '').toLowerCase().slice((file.originalname || '').lastIndexOf('.'));
+            if (allowedMimes.includes(file.mimetype) || allowedExts.includes(ext)) {
+                cb(null, true);
+            } else {
+                cb(new Error("Invalid video format. Only MP4, WebM, MOV, and MKV are allowed."), false);
+            }
+        },
+        storage: multerS3({
+            s3: s3,
+            bucket: process.env.AWS_S3_BUCKET_NAME,
+            contentType: multerS3.AUTO_CONTENT_TYPE,
+            cacheControl: 'max-age=31536000',
+            key: (_req, file, cb) => {
+                cb(null, `${uploadType}/${Date.now()}_${file.originalname}`);
+            }
+        })
+    }).array("videos", 10);
+
+    upload(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ message: "Video file size exceeds the 100MB limit." });
+            }
+            return res.status(400).json({ message: err.message || "Error uploading videos" });
+        }
+        if (err) {
+            return res.status(400).json({ message: err.message || "Error uploading videos" });
+        }
+        if (typeof next === 'function') {
+            next();
+        }
+    });
+};
+
+module.exports = { multiuploadToS3, uploadToS3, uploadVideoToS3, multiuploadVideoToS3, deleteImageFromS3 };

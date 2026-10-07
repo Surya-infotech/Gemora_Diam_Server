@@ -493,6 +493,18 @@ const delete_item = async (req, res) => {
             await deleteImageFromS3(item.image, "item");
         }
 
+        if (item.video) {
+            await deleteImageFromS3(item.video, "item-video");
+        }
+
+        if (item.galleryvideos && item.galleryvideos.length > 0) {
+            for (const vid of item.galleryvideos) {
+                if (vid.videoUrl) {
+                    await deleteImageFromS3(vid.videoUrl, "item-video");
+                }
+            }
+        }
+
         if (item.galleryimages && item.galleryimages.length > 0) {
             for (const img of item.galleryimages) {
                 if (img.imageUrl) {
@@ -711,13 +723,22 @@ const get_item_gallery_images = async (req, res) => {
 
         const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
         const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
-        const item = await Item.findOne(query).select('galleryimages');
+        const item = await Item.findOne(query).select('galleryimages galleryvideos video');
 
         if (!item) {
             return res.status(404).json({ message: "Item not found" });
         }
 
-        return res.status(200).json({ galleryimages: item.galleryimages || [] });
+        let galleryvideos = item.galleryvideos || [];
+        if (galleryvideos.length === 0 && item.video) {
+            galleryvideos = [{ _id: 'legacy_video', videoUrl: item.video, createdAt: item.updatedAt || item.createdAt }];
+        }
+
+        return res.status(200).json({
+            galleryimages: item.galleryimages || [],
+            galleryvideos,
+            video: item.video || ''
+        });
     } catch (error) {
         console.error("Error fetching item gallery images:", error);
         return res.status(500).json({ message: "Server error" });
@@ -832,6 +853,158 @@ const delete_item_gallery_image = async (req, res) => {
     }
 };
 
+const upload_item_video = async (req, res) => {
+    try {
+        const { itemid } = req.params;
+        if (!itemid) return res.status(400).json({ message: "Item ID is required" });
+        if (!req.file || !req.file.location) return res.status(400).json({ message: "No video file provided" });
+
+        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
+        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
+        const item = await Item.findOne(query);
+
+        if (!item) {
+            if (req.file.location) {
+                await deleteImageFromS3(req.file.location, "item-video");
+            }
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        if (item.video) {
+            await deleteImageFromS3(item.video, "item-video");
+        }
+
+        item.video = req.file.location;
+        item.updatedAt = new Date().toISOString();
+        await item.save();
+
+        return res.status(200).json({
+            message: "Video uploaded successfully",
+            video: item.video
+        });
+    } catch (error) {
+        console.error("Error uploading item video:", error);
+        if (req.file && req.file.location) {
+            await deleteImageFromS3(req.file.location, "item-video");
+        }
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+const upload_item_videos = async (req, res) => {
+    try {
+        const { itemid } = req.params;
+        if (!itemid) return res.status(400).json({ message: "Item ID is required" });
+        if (!req.files || req.files.length === 0) return res.status(400).json({ message: "No video files provided" });
+
+        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
+        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
+        const item = await Item.findOne(query);
+
+        if (!item) {
+            for (const file of req.files) {
+                if (file.location) {
+                    await deleteImageFromS3(file.location, "item-video");
+                }
+            }
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        const now = new Date().toISOString();
+        const newVideos = req.files.map(file => ({
+            videoUrl: file.location,
+            createdAt: now
+        }));
+
+        let existingVideos = item.galleryvideos || [];
+        if (item.video && !existingVideos.some(v => v.videoUrl === item.video)) {
+            existingVideos.push({
+                videoUrl: item.video,
+                createdAt: item.createdAt || now
+            });
+        }
+
+        item.galleryvideos = [...existingVideos, ...newVideos];
+        if (item.galleryvideos.length > 0) {
+            item.video = item.galleryvideos[0].videoUrl;
+        }
+        item.updatedAt = now;
+        await item.save();
+
+        return res.status(200).json({
+            message: "Videos uploaded successfully",
+            galleryvideos: item.galleryvideos,
+            video: item.video
+        });
+    } catch (error) {
+        console.error("Error uploading item videos:", error);
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                if (file.location) {
+                    await deleteImageFromS3(file.location, "item-video");
+                }
+            }
+        }
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+const delete_item_video = async (req, res) => {
+    try {
+        const { itemid, videoId } = req.params;
+        if (!itemid) return res.status(400).json({ message: "Item ID is required" });
+
+        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
+        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
+        const item = await Item.findOne(query);
+
+        if (!item) return res.status(404).json({ message: "Item not found" });
+
+        let existingVideos = item.galleryvideos || [];
+
+        if (videoId && videoId !== 'all') {
+            const videoToDelete = existingVideos.find(
+                v => (v._id && v._id.toString() === videoId.toString()) || v.videoUrl === videoId || (videoId === 'legacy_video' && v.videoUrl === item.video)
+            );
+
+            if (videoToDelete && videoToDelete.videoUrl) {
+                await deleteImageFromS3(videoToDelete.videoUrl, "item-video");
+            } else if (item.video) {
+                await deleteImageFromS3(item.video, "item-video");
+            }
+
+            item.galleryvideos = existingVideos.filter(
+                v => (v._id && v._id.toString() !== videoId.toString()) && v.videoUrl !== videoId && !(videoId === 'legacy_video' && v.videoUrl === item.video)
+            );
+
+            if (item.video && videoToDelete && item.video === videoToDelete.videoUrl) {
+                item.video = item.galleryvideos.length > 0 ? item.galleryvideos[0].videoUrl : "";
+            }
+        } else {
+            for (const v of existingVideos) {
+                if (v.videoUrl) await deleteImageFromS3(v.videoUrl, "item-video");
+            }
+            if (item.video) {
+                await deleteImageFromS3(item.video, "item-video");
+            }
+            item.galleryvideos = [];
+            item.video = "";
+        }
+
+        item.updatedAt = new Date().toISOString();
+        await item.save();
+
+        return res.status(200).json({
+            message: "Video deleted successfully",
+            galleryvideos: item.galleryvideos,
+            video: item.video || ""
+        });
+    } catch (error) {
+        console.error("Error deleting item video:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
 module.exports = {
     get_items,
     get_active_items,
@@ -843,7 +1016,10 @@ module.exports = {
     update_item_status,
     get_item_gallery_images,
     upload_item_gallery_images,
-    delete_item_gallery_image
+    delete_item_gallery_image,
+    upload_item_video,
+    delete_item_video,
+    upload_item_videos
 };
 
 // Added update_item_status
