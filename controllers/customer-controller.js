@@ -1,4 +1,5 @@
-const Customer = require("../models/customer-model");
+﻿const Customer = require("../models/customer-model");
+const CustomerAddress = require("../models/customer-address-model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -189,9 +190,289 @@ const update_profile = async (req, res) => {
     }
 };
 
+// ==========================================
+// CUSTOMER ADDRESS CONTROLLER METHODS
+// ==========================================
+
+const get_addresses = async (req, res) => {
+    try {
+        const { customerId } = req.params;
+        if (!customerId) {
+            return res.status(400).json({ message: "Customer ID is required" });
+        }
+
+        let numericCustomerId = null;
+        if (!isNaN(customerId)) {
+            numericCustomerId = Number(customerId);
+        } else {
+            let cust = null;
+            try {
+                cust = await Customer.findById(customerId);
+            } catch {
+                // ignore
+            }
+            if (cust && cust.customerid) {
+                numericCustomerId = cust.customerid;
+            }
+        }
+
+        if (!numericCustomerId) {
+            return res.status(200).json({
+                message: "Addresses fetched successfully",
+                addresses: []
+            });
+        }
+
+        const addresses = await CustomerAddress.find({ customerid: numericCustomerId }).sort({ isDefault: -1, createdAt: -1 });
+        return res.status(200).json({
+            message: "Addresses fetched successfully",
+            addresses
+        });
+    } catch (error) {
+        console.error("Error fetching customer addresses:", error);
+        return res.status(500).json({ message: error.message || "Error fetching addresses" });
+    }
+};
+
+const add_address = async (req, res) => {
+    try {
+        const {
+            customerid,
+            customerId,
+            address,
+            pincode,
+            countryname,
+            countrycode,
+            statename,
+            statecode,
+            cityname,
+            title,
+            isDefault
+        } = req.body;
+
+        const targetCustId = customerid || customerId;
+        if (!targetCustId) {
+            return res.status(400).json({ message: "Customer ID is required" });
+        }
+
+        if (!address || !pincode || !countryname || !statename || !cityname) {
+            return res.status(400).json({ message: "Address, Pincode, Country, State, and City are required" });
+        }
+
+        let numericCustomerId = null;
+        if (!isNaN(targetCustId)) {
+            numericCustomerId = Number(targetCustId);
+        } else {
+            let foundCust = null;
+            try {
+                foundCust = await Customer.findById(targetCustId);
+            } catch {
+                // ignore
+            }
+            if (foundCust) {
+                numericCustomerId = foundCust.customerid;
+            }
+        }
+
+        if (!numericCustomerId) {
+            return res.status(404).json({ message: "Customer not found" });
+        }
+
+        const maxAddr = await CustomerAddress.findOne().sort({ addressid: -1 });
+        const nextAddressId = maxAddr && maxAddr.addressid ? parseInt(maxAddr.addressid) + 1 : 1;
+
+        const existingCount = await CustomerAddress.countDocuments({ customerid: numericCustomerId });
+        const shouldBeDefault = Boolean(isDefault) || existingCount === 0;
+
+        if (shouldBeDefault) {
+            await CustomerAddress.updateMany({ customerid: numericCustomerId }, { isDefault: false });
+        }
+
+        const newAddress = new CustomerAddress({
+            addressid: nextAddressId,
+            customerid: numericCustomerId,
+            title: title ? String(title).trim() : "Home",
+            address: String(address).trim(),
+            pincode: String(pincode).trim(),
+            countryname: String(countryname).trim(),
+            countrycode: countrycode ? String(countrycode).trim() : "",
+            statename: String(statename).trim(),
+            statecode: statecode ? String(statecode).trim() : "",
+            cityname: String(cityname).trim(),
+            isDefault: shouldBeDefault,
+            status: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+
+        await newAddress.save();
+
+        return res.status(201).json({
+            message: "Address added successfully",
+            address: newAddress
+        });
+    } catch (error) {
+        console.error("Error adding customer address:", error);
+        return res.status(500).json({ message: error.message || "Error adding address" });
+    }
+};
+
+const update_address = async (req, res) => {
+    try {
+        const { addressId } = req.params;
+        const {
+            address,
+            pincode,
+            countryname,
+            countrycode,
+            statename,
+            statecode,
+            cityname,
+            title,
+            isDefault
+        } = req.body;
+
+        if (!addressId) {
+            return res.status(400).json({ message: "Address ID is required" });
+        }
+
+        let addr = null;
+        if (!isNaN(addressId)) {
+            addr = await CustomerAddress.findOne({ addressid: Number(addressId) });
+        }
+        if (!addr) {
+            try {
+                addr = await CustomerAddress.findById(addressId);
+            } catch {
+                // ignore
+            }
+        }
+
+        if (!addr) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+
+        if (isDefault === true && !addr.isDefault) {
+            await CustomerAddress.updateMany({ customerid: addr.customerid }, { isDefault: false });
+            addr.isDefault = true;
+        } else if (isDefault === false && addr.isDefault) {
+            addr.isDefault = false;
+        }
+
+        if (address !== undefined) addr.address = String(address).trim();
+        if (pincode !== undefined) addr.pincode = String(pincode).trim();
+        if (countryname !== undefined) addr.countryname = String(countryname).trim();
+        if (countrycode !== undefined) addr.countrycode = String(countrycode).trim();
+        if (statename !== undefined) addr.statename = String(statename).trim();
+        if (statecode !== undefined) addr.statecode = String(statecode).trim();
+        if (cityname !== undefined) addr.cityname = String(cityname).trim();
+        if (title !== undefined) addr.title = String(title).trim();
+
+        addr.updatedAt = new Date().toISOString();
+        await addr.save();
+
+        return res.status(200).json({
+            message: "Address updated successfully",
+            address: addr
+        });
+    } catch (error) {
+        console.error("Error updating address:", error);
+        return res.status(500).json({ message: error.message || "Error updating address" });
+    }
+};
+
+const delete_address = async (req, res) => {
+    try {
+        const { addressId } = req.params;
+        if (!addressId) {
+            return res.status(400).json({ message: "Address ID is required" });
+        }
+
+        let addr = null;
+        if (!isNaN(addressId)) {
+            addr = await CustomerAddress.findOne({ addressid: Number(addressId) });
+        }
+        if (!addr) {
+            try {
+                addr = await CustomerAddress.findById(addressId);
+            } catch {
+                // ignore
+            }
+        }
+
+        if (!addr) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+
+        const wasDefault = addr.isDefault;
+        const customerId = addr.customerid;
+
+        await CustomerAddress.deleteOne({ _id: addr._id });
+
+        if (wasDefault) {
+            const nextAddr = await CustomerAddress.findOne({ customerid: customerId }).sort({ createdAt: -1 });
+            if (nextAddr) {
+                nextAddr.isDefault = true;
+                await nextAddr.save();
+            }
+        }
+
+        return res.status(200).json({
+            message: "Address deleted successfully",
+            addressId
+        });
+    } catch (error) {
+        console.error("Error deleting address:", error);
+        return res.status(500).json({ message: error.message || "Error deleting address" });
+    }
+};
+
+const set_default_address = async (req, res) => {
+    try {
+        const { addressId } = req.params;
+        if (!addressId) {
+            return res.status(400).json({ message: "Address ID is required" });
+        }
+
+        let addr = null;
+        if (!isNaN(addressId)) {
+            addr = await CustomerAddress.findOne({ addressid: Number(addressId) });
+        }
+        if (!addr) {
+            try {
+                addr = await CustomerAddress.findById(addressId);
+            } catch {
+                // ignore
+            }
+        }
+
+        if (!addr) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+
+        await CustomerAddress.updateMany({ customerid: addr.customerid }, { isDefault: false });
+        addr.isDefault = true;
+        addr.updatedAt = new Date().toISOString();
+        await addr.save();
+
+        return res.status(200).json({
+            message: "Default address updated",
+            address: addr
+        });
+    } catch (error) {
+        console.error("Error setting default address:", error);
+        return res.status(500).json({ message: error.message || "Error setting default address" });
+    }
+};
+
 module.exports = {
     signup,
     signin,
     verifyToken,
-    update_profile
+    update_profile,
+    get_addresses,
+    add_address,
+    update_address,
+    delete_address,
+    set_default_address
 };
