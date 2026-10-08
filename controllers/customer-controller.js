@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 
 const signup = async (req, res) => {
     try {
-        const { fullname, name, email, password, phone } = req.body;
+        const { fullname, email, password, phone } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required" });
@@ -17,8 +17,6 @@ const signup = async (req, res) => {
             return res.status(400).json({ message: "Email already exists. Please sign in instead." });
         }
 
-        const finalFullName = (fullname || name || cleanEmail.split("@")[0]).trim();
-
         const maxCustomer = await Customer.findOne().sort({ customerid: -1 });
         const nextCustomerId = maxCustomer && maxCustomer.customerid ? parseInt(maxCustomer.customerid) + 1 : 1;
 
@@ -26,7 +24,7 @@ const signup = async (req, res) => {
 
         const newCustomer = new Customer({
             customerid: nextCustomerId,
-            fullname: finalFullName,
+            fullname,
             email: cleanEmail,
             password: hashedPassword,
             phone: phone ? phone.trim() : "",
@@ -129,12 +127,12 @@ const verifyToken = async (req, res) => {
 const update_profile = async (req, res) => {
     try {
         const { customerId } = req.params;
-        const { fullname, name, phone } = req.body;
+        const { fullname, phone } = req.body;
 
         const customer = await Customer.findById(customerId);
         if (!customer) return res.status(404).json({ message: "Customer not found" });
 
-        if (fullname || name) customer.fullname = (fullname || name).trim();
+        if (fullname) customer.fullname = fullname.trim();
         if (phone !== undefined) customer.phone = phone;
         customer.updatedAt = new Date().toISOString();
 
