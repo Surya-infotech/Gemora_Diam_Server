@@ -1,10 +1,12 @@
-const express = require("express");
+﻿const express = require("express");
 const supportrouter = express.Router();
 const contactuscontroller = require("../../controllers/AdminPanel/Support/contactus-controller");
 const subscribercontroller = require("../../controllers/AdminPanel/Support/subscriber-controller");
 const faqcontroller = require("../../controllers/AdminPanel/Support/faq-controller");
 const policycontroller = require("../../controllers/AdminPanel/Support/policy-controller");
+const bannercontroller = require("../../controllers/AdminPanel/Support/banner-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
+const { uploadToS3 } = require("../../utils/s3Config-admin");
 
 // Contact Us Routes
 supportrouter.route("/GetContactUs").get(authMiddleware, contactuscontroller.get_contactus);
@@ -31,5 +33,14 @@ supportrouter.route("/EditPolicy/:policyid").get(authMiddleware, policycontrolle
 supportrouter.route("/UpdatePolicyStatus/:policyid").put(authMiddleware, policycontroller.update_policy_status);
 supportrouter.route("/UpdatePolicy/:policyid").put(authMiddleware, policycontroller.update_policy);
 supportrouter.route("/DeletePolicy/:policyid").delete(authMiddleware, policycontroller.delete_policy);
+
+// Banner Routes
+supportrouter.route("/GetBanners").get(authMiddleware, bannercontroller.get_banners);
+supportrouter.route("/GetActiveBanners").get(bannercontroller.get_active_banners);
+supportrouter.route("/AddBanner").post(authMiddleware, uploadToS3("banners"), bannercontroller.add_banner);
+supportrouter.route("/EditBanner/:bannerid").get(authMiddleware, bannercontroller.edit_banner);
+supportrouter.route("/UpdateBannerStatus/:bannerid").put(authMiddleware, bannercontroller.update_banner_status);
+supportrouter.route("/UpdateBanner/:bannerid").put(authMiddleware, uploadToS3("banners"), bannercontroller.update_banner);
+supportrouter.route("/DeleteBanner/:bannerid").delete(authMiddleware, bannercontroller.delete_banner);
 
 module.exports = supportrouter;
