@@ -130,6 +130,9 @@ const itemSchema = new mongoose.Schema({
                     metaltype: { type: String, default: "" },
                     stoneid: { type: Number },
                     stonename: { type: String, default: "" },
+                    hasCarat: { type: Boolean, default: true },
+                    stonePricingType: { type: String, default: "carat" },
+                    price: { type: Number, default: null },
                     caratPrices: [
                         {
                             diamondsizeid: { type: Number },
