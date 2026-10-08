@@ -1,5 +1,7 @@
-const GeneralSetting = require("../../../../models/AdminPanel/System/Setting/generalsetting-model");
+﻿const GeneralSetting = require("../../../../models/AdminPanel/System/Setting/generalsetting-model");
 const SocialMedia = require("../../../../models/AdminPanel/System/Setting/socialmedia-model");
+const MiscSetting = require("../../../../models/AdminPanel/System/Setting/miscsetting-model");
+const Currency = require("../../../../models/AdminPanel/System/currency-model");
 
 const get_general_setting = async (_req, res) => {
     try {
@@ -25,9 +27,20 @@ const get_general_setting_for_landingpage = async (_req, res) => {
             return res.status(404).json({ message: "General setting not found" });
         }
 
+        let currencyDetails = null;
+        try {
+            const miscSetting = await MiscSetting.findOne();
+            if (miscSetting && miscSetting.currencyid) {
+                currencyDetails = await Currency.findOne({ currencyid: Number(miscSetting.currencyid) });
+            }
+        } catch (currErr) {
+            console.log("Error retrieving currency details for landing page:", currErr);
+        }
+
         const response = {
             generalSetting: generalSetting,
-            socialMedia: socialMedia ? socialMedia.socialmedia : []
+            socialMedia: socialMedia ? socialMedia.socialmedia : [],
+            currency: currencyDetails || null
         };
         return res.status(200).json(response);
     } catch (error) {
@@ -63,7 +76,6 @@ const update_general_setting = async (req, res) => {
                 { returnDocument: 'after' }
             );
         } else {
-            // Create new setting if none exists
             if (!softwarename || !copyright || !maintainedby || !version || !phone || !email) {
                 return res.status(400).json({ message: "Software name, copyright, maintained by, version, phone, and email are required" });
             }
