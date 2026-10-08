@@ -17,7 +17,8 @@ const corsOptions = {
             "https://gemoradiam.com",
             "https://www.gemoradiam.com",
             "https://gemoraadminstone.gemoradiam.com",
-            "http://localhost:5177"
+            "http://localhost:5177",
+            "http://localhost:5178"
         ];
 
         if (!origin || allowedOrigins.includes(origin)) {
