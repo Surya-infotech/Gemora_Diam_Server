@@ -127,22 +127,65 @@ const verifyToken = async (req, res) => {
 const update_profile = async (req, res) => {
     try {
         const { customerId } = req.params;
-        const { fullname, phone } = req.body;
+        const { fullname, phone, email, currentPassword, newPassword } = req.body;
 
-        const customer = await Customer.findById(customerId);
-        if (!customer) return res.status(404).json({ message: "Customer not found" });
+        let customer = null;
+        if (customerId) {
+            try {
+                customer = await Customer.findById(customerId);
+            } catch {
+                // ignore
+            }
+            if (!customer) {
+                customer = await Customer.findOne({ customerid: customerId });
+            }
+        }
 
-        if (fullname) customer.fullname = fullname.trim();
-        if (phone !== undefined) customer.phone = phone;
+        if (!customer) {
+            return res.status(404).json({ message: "Customer not found" });
+        }
+
+        if (fullname !== undefined) {
+            customer.fullname = String(fullname).trim();
+        }
+        if (phone !== undefined) {
+            customer.phone = String(phone).trim();
+        }
+        if (email) {
+            const cleanEmail = String(email).toLowerCase().trim();
+            if (cleanEmail !== customer.email) {
+                const existing = await Customer.findOne({ email: cleanEmail });
+                if (existing) {
+                    return res.status(400).json({ message: "Email is already taken by another account" });
+                }
+                customer.email = cleanEmail;
+            }
+        }
+
+        if (newPassword) {
+            if (currentPassword) {
+                const isMatch = await bcrypt.compare(currentPassword, customer.password);
+                if (!isMatch) {
+                    return res.status(400).json({ message: "Current password is incorrect" });
+                }
+            }
+            customer.password = await bcrypt.hash(newPassword, 10);
+        }
+
         customer.updatedAt = new Date().toISOString();
-
         await customer.save();
+
         const customerData = customer.toObject();
         delete customerData.password;
 
-        return res.status(200).json({ message: "Profile updated", customer: customerData });
+        return res.status(200).json({
+            message: "Profile updated successfully",
+            customer_id: customer._id.toString(),
+            customer: customerData
+        });
     } catch (error) {
-        return res.status(500).json({ message: "Error updating profile" });
+        console.error("Error updating profile:", error);
+        return res.status(500).json({ message: error.message || "Error updating profile" });
     }
 };
 
