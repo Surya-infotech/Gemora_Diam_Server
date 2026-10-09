@@ -17,4 +17,9 @@ customerRouter.put("/UpdateAddress/:addressId", customerOrAdminAuth, customerCon
 customerRouter.delete("/DeleteAddress/:addressId", customerOrAdminAuth, customerController.delete_address);
 customerRouter.put("/SetDefaultAddress/:addressId", customerOrAdminAuth, customerController.set_default_address);
 
+
+// Order routes
+customerRouter.post("/CreateOrder", customerOrAdminAuth, customerController.create_order);
+customerRouter.get("/GetOrders/:customerId", customerOrAdminAuth, customerController.get_customer_orders);
+
 module.exports = customerRouter;

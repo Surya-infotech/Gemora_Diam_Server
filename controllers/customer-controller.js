@@ -1,5 +1,10 @@
 ﻿const Customer = require("../models/customer-model");
 const CustomerAddress = require("../models/customer-address-model");
+const Order = require("../models/order-model");
+const FiscalYear = require("../models/AdminPanel/System/Setting/fiscalyear-model");
+const Item = require("../models/AdminPanel/Products/item-model");
+const MiscSetting = require("../models/AdminPanel/System/Setting/miscsetting-model");
+const Currency = require("../models/AdminPanel/System/currency-model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -29,7 +34,6 @@ const signup = async (req, res) => {
             email: cleanEmail,
             password: hashedPassword,
             phone: phone ? phone.trim() : "",
-            status: true,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         });
@@ -300,7 +304,6 @@ const add_address = async (req, res) => {
             statecode: statecode ? String(statecode).trim() : "",
             cityname: String(cityname).trim(),
             isDefault: shouldBeDefault,
-            status: true,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         });
@@ -465,6 +468,273 @@ const set_default_address = async (req, res) => {
     }
 };
 
+
+// ==========================================
+// ORDER CONTROLLER METHODS
+// ==========================================
+
+const create_order = async (req, res) => {
+    try {
+        const {
+            customerid,
+            customerId,
+            items,
+            subtotal,
+            total,
+            currency,
+            shippingAddress,
+            shippingaddress,
+            paymentMethod,
+            paymentmethod
+        } = req.body;
+
+        let cust = req.customer;
+        let numericCustomerId = cust?.customerid;
+
+        if (!numericCustomerId) {
+            const targetCustId = customerid || customerId;
+            if (targetCustId && !isNaN(targetCustId)) {
+                numericCustomerId = Number(targetCustId);
+            }
+            if (!cust && targetCustId) {
+                try {
+                    cust = await Customer.findById(targetCustId);
+                } catch {
+                    // ignore
+                }
+                if (!cust && numericCustomerId) {
+                    cust = await Customer.findOne({ customerid: numericCustomerId });
+                }
+            }
+        }
+
+        if (!numericCustomerId && cust) {
+            numericCustomerId = cust.customerid;
+        }
+
+        if (!numericCustomerId && !cust) {
+            return res.status(400).json({ message: "Customer ID is required to place an order" });
+        }
+
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ message: "Order must contain at least one item" });
+        }
+
+        const addressData = shippingaddress || shippingAddress;
+        if (!addressData || !addressData.address) {
+            return res.status(400).json({ message: "Shipping address is required" });
+        }
+
+        const today = new Date().toISOString().split("T")[0];
+        let currentFiscalYear = await FiscalYear.findOne({
+            startdate: { $lte: today },
+            enddate: { $gte: today },
+            status: "Active"
+        }).lean();
+
+        if (!currentFiscalYear) {
+            currentFiscalYear = await FiscalYear.findOne({
+                startdate: { $lte: today },
+                enddate: { $gte: today }
+            }).lean();
+        }
+
+        if (!currentFiscalYear) {
+            currentFiscalYear = await FiscalYear.findOne({ status: "Active" }).sort({ fiscalyearid: -1 }).lean();
+        }
+
+        if (!currentFiscalYear) {
+            currentFiscalYear = await FiscalYear.findOne().sort({ fiscalyearid: -1 }).lean();
+        }
+
+        if (!currentFiscalYear) {
+            const currentYear = new Date().getFullYear();
+            currentFiscalYear = await FiscalYear.create({
+                fiscalyearid: 1,
+                fiscalyear: `${currentYear}-${currentYear + 1}`,
+                startdate: `${currentYear}-04-01`,
+                enddate: `${currentYear + 1}-03-31`,
+                status: "Active",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+        }
+
+        const fiscalyearid = currentFiscalYear ? currentFiscalYear.fiscalyearid : 1;
+
+        const maxOrder = await Order.findOne().sort({ orderid: -1 });
+        const nextOrderId = maxOrder && maxOrder.orderid ? parseInt(maxOrder.orderid) + 1 : 1;
+
+        // Fiscal year wise sequential order number
+        const maxOrderByFiscalYear = await Order.findOne({ fiscalyearid }).sort({ ordernumber: -1 });
+        const nextOrderNumber = maxOrderByFiscalYear && maxOrderByFiscalYear.ordernumber
+            ? parseInt(maxOrderByFiscalYear.ordernumber) + 1
+            : 1;
+
+        const ordernumber = nextOrderNumber;
+
+        const formattedItems = await Promise.all(items.map(async (it) => {
+            const itemPrice = Number(it.price) || 0;
+            const itemQty = Number(it.qty) || 1;
+
+            let numericItemId = null;
+            if (it.itemid !== undefined && it.itemid !== null && it.itemid !== "" && !isNaN(it.itemid)) {
+                numericItemId = Number(it.itemid);
+            } else if (it.productId !== undefined && it.productId !== null && it.productId !== "" && !isNaN(it.productId)) {
+                numericItemId = Number(it.productId);
+            } else if (it.id !== undefined && it.id !== null && it.id !== "" && !isNaN(it.id)) {
+                numericItemId = Number(it.id);
+            }
+
+            if (!numericItemId && (it.productId || it.id || it.itemid)) {
+                try {
+                    const lookupKey = it.productId || it.id || it.itemid;
+                    const foundItem = await Item.findById(lookupKey).lean();
+                    if (foundItem && foundItem.itemid !== undefined && foundItem.itemid !== null) {
+                        numericItemId = Number(foundItem.itemid);
+                    }
+                } catch {
+                    // ignore lookup error
+                }
+            }
+
+            if (!numericItemId) {
+                numericItemId = 1;
+            }
+
+            return {
+                itemid: numericItemId,
+                itemname: it.itemname || it.name || "Fine Jewelry Piece",
+                image: it.image || "",
+                metalname: it.metalname || it.metal || "",
+                stonename: it.stonename || it.stone || "",
+                diamondsize: it.diamondsize || it.carat || "",
+                shapename: it.shapename || it.shape || "",
+                clarityname: it.clarityname || it.clarity || "",
+                diamondcolor: it.diamondcolor || it.diamondColor || it.diamondcolorname || "",
+                bandcolor: it.bandcolor || it.bandColor || it.bandcolorname || "",
+                specialinstruction: it.specialinstruction || it.specialInstruction || it.specialinstructions || it.instructions || "",
+                price: itemPrice,
+                qty: itemQty,
+                totalprice: Number(it.totalprice) || (itemPrice * itemQty)
+            };
+        }));
+
+        const totalitems = formattedItems.reduce((acc, curr) => acc + curr.qty, 0);
+
+                let activeCurrencyDetails = null;
+        try {
+            const miscSetting = await MiscSetting.findOne().lean();
+            if (miscSetting && miscSetting.currencyid) {
+                const currDoc = await Currency.findOne({ currencyid: Number(miscSetting.currencyid) }).lean();
+                if (currDoc) {
+                    activeCurrencyDetails = {
+                        currencyid: currDoc.currencyid,
+                        countryname: currDoc.countryname || "",
+                        currency: currDoc.currency || "INR",
+                        currencysymbol: currDoc.currencysymbol || "₹",
+                        currencyposition: currDoc.currencyposition || "left",
+                        thousandseparator: currDoc.thousandseparator !== undefined && currDoc.thousandseparator !== null ? currDoc.thousandseparator : ",",
+                        decimalseparator: currDoc.decimalseparator || ".",
+                        decimal: currDoc.decimal !== undefined ? currDoc.decimal : 2
+                    };
+                }
+            }
+        } catch (currErr) {
+            console.log("Error retrieving currency details from misc setting:", currErr);
+        }
+
+        if (!activeCurrencyDetails) {
+            if (req.body.currencydetails && typeof req.body.currencydetails === 'object') {
+                activeCurrencyDetails = req.body.currencydetails;
+            } else {
+                activeCurrencyDetails = {
+                    currencyid: 1,
+                    countryname: "India",
+                    currency: "INR",
+                    currencysymbol: "₹",
+                    currencyposition: "left",
+                    thousandseparator: ",",
+                    decimalseparator: ".",
+                    decimal: 2
+                };
+            }
+        }
+
+        const newOrder = new Order({
+            orderid: nextOrderId,
+            fiscalyearid,
+            ordernumber,
+            customerid: numericCustomerId,
+            customername: cust?.fullname || req.body.customername || req.body.customerName || "",
+            customeremail: cust?.email || req.body.customeremail || req.body.customerEmail || "",
+            customerphone: cust?.phone || req.body.customerphone || req.body.customerPhone || "",
+            items: formattedItems,
+            totalitems,
+            subtotal: Number(subtotal) || 0,
+            total: Number(total) || Number(subtotal) || 0,
+            currencydetails: activeCurrencyDetails,
+            shippingaddress: {
+                addressid: addressData.addressid || null,
+                title: addressData.title || "Home",
+                address: String(addressData.address).trim(),
+                pincode: String(addressData.pincode).trim(),
+                countryname: addressData.countryname ? String(addressData.countryname).trim() : "",
+                countrycode: addressData.countrycode ? String(addressData.countrycode).trim() : "",
+                statename: addressData.statename ? String(addressData.statename).trim() : "",
+                statecode: addressData.statecode ? String(addressData.statecode).trim() : "",
+                cityname: addressData.cityname ? String(addressData.cityname).trim() : ""
+            },
+            orderstatus: "Confirmed",
+            paymentstatus: "Paid",
+            paymentmethod: paymentmethod || paymentMethod || "Credit/Debit Card",
+            status: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+
+        await newOrder.save();
+
+        return res.status(201).json({
+            message: "Order placed successfully",
+            order: newOrder
+        });
+    } catch (error) {
+        console.error("Error creating order:", error);
+        return res.status(500).json({ message: error.message || "Failed to create order" });
+    }
+};
+
+const get_customer_orders = async (req, res) => {
+    try {
+        const { customerId } = req.params;
+        let numericId = null;
+        if (!isNaN(customerId)) {
+            numericId = Number(customerId);
+        } else {
+            const cust = await Customer.findById(customerId);
+            if (cust) numericId = cust.customerid;
+        }
+
+        if (!numericId && req.customer?.customerid) {
+            numericId = req.customer.customerid;
+        }
+
+        if (!numericId) {
+            return res.status(200).json({ orders: [] });
+        }
+
+        const orders = await Order.find({ customerid: numericId }).sort({ orderid: -1 });
+        return res.status(200).json({
+            message: "Orders fetched successfully",
+            orders
+        });
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+        return res.status(500).json({ message: error.message || "Error fetching orders" });
+    }
+};
+
 module.exports = {
     signup,
     signin,
@@ -474,5 +744,7 @@ module.exports = {
     add_address,
     update_address,
     delete_address,
-    set_default_address
+    set_default_address,
+    create_order,
+    get_customer_orders
 };
