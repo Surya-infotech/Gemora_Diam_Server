@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Customer = require("../../../models/customer-model");
 const CustomerAddress = require("../../../models/customer-address-model");
 
@@ -47,7 +48,10 @@ const update_customer_status = async (req, res) => {
             return res.status(400).json({ message: "Customer ID is required" });
         }
 
-        let customer = await Customer.findOne({ _id: customerId });
+        let customer = null;
+        if (mongoose.Types.ObjectId.isValid(customerId)) {
+            customer = await Customer.findById(customerId);
+        }
         if (!customer && !isNaN(customerId)) {
             customer = await Customer.findOne({ customerid: Number(customerId) });
         }
