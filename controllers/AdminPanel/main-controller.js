@@ -33,14 +33,23 @@ const get_dashboard = async (req, res) => {
             Customer.countDocuments()
         ]);
 
-        const filteredOrdersCount = orders.length;
-        const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
-        const totalSubtotalSum = orders.reduce((sum, o) => sum + (Number(o.subtotal) || 0), 0);
-        const totalTaxSum = orders.reduce((sum, o) => sum + (Number(o.tax) || Number(o.totaltax) || 0), 0);
+        // Filter for orders where Order Status is 'Delivered' AND Payment Status is 'Paid'
+        const isDeliveredAndPaid = (o) => {
+            const oStatus = String(o.orderstatus || "").trim().toLowerCase();
+            const pStatus = String(o.paymentstatus || "").trim().toLowerCase();
+            return oStatus === "delivered" && pStatus === "paid";
+        };
 
+        const deliveredPaidOrders = orders.filter(isDeliveredAndPaid);
+        const deliveredPaidOrdersCount = deliveredPaidOrders.length;
+        const totalRevenue = deliveredPaidOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+        const totalSubtotalSum = deliveredPaidOrders.reduce((sum, o) => sum + (Number(o.subtotal) || 0), 0);
+        const totalTaxSum = deliveredPaidOrders.reduce((sum, o) => sum + (Number(o.tax) || Number(o.totaltax) || 0), 0);
+
+        // Monthly breakdown: strictly calculate revenue and order counts for Delivered & Paid orders
         const monthlySummary = Array.from({ length: 12 }, (_, i) => {
             const monthNum = i + 1;
-            const monthOrders = orders.filter(o => {
+            const monthOrders = deliveredPaidOrders.filter(o => {
                 if (!o.createdAt) return false;
                 const d = new Date(o.createdAt);
                 return !isNaN(d.getTime()) && (d.getMonth() + 1) === monthNum;
@@ -55,15 +64,19 @@ const get_dashboard = async (req, res) => {
         });
 
         const orderStatusCounts = {
-            Pending: orders.filter(o => o.orderstatus === "Pending").length,
-            Confirmed: orders.filter(o => o.orderstatus === "Confirmed").length,
-            Processing: orders.filter(o => o.orderstatus === "Processing").length,
-            Shipped: orders.filter(o => o.orderstatus === "Shipped").length,
-            Delivered: orders.filter(o => o.orderstatus === "Delivered").length,
-            Cancelled: orders.filter(o => o.orderstatus === "Cancelled").length
+            Pending: orders.filter(o => (o.orderstatus || "").toLowerCase() === "pending").length,
+            Confirmed: orders.filter(o => (o.orderstatus || "").toLowerCase() === "confirmed").length,
+            Processing: orders.filter(o => (o.orderstatus || "").toLowerCase() === "processing").length,
+            Shipped: orders.filter(o => (o.orderstatus || "").toLowerCase() === "shipped").length,
+            Delivered: orders.filter(o => (o.orderstatus || "").toLowerCase() === "delivered").length,
+            Cancelled: orders.filter(o => (o.orderstatus || "").toLowerCase() === "cancelled").length
         };
 
-        const recentOrdersRaw = await Order.find()
+        // Recent Orders: show only orders that are Delivered & Paid
+        const recentOrdersRaw = await Order.find({
+            orderstatus: { $regex: /^delivered$/i },
+            paymentstatus: { $regex: /^paid$/i }
+        })
             .sort({ ordernumber: -1, orderid: -1, createdAt: -1 })
             .limit(5)
             .lean();
@@ -76,7 +89,7 @@ const get_dashboard = async (req, res) => {
             customeremail: o.customeremail || "",
             total: o.total || 0,
             subtotal: o.subtotal || 0,
-            orderstatus: o.orderstatus || "Confirmed",
+            orderstatus: o.orderstatus || "Delivered",
             paymentstatus: o.paymentstatus || "Paid",
             paymentmethod: o.paymentmethod || "Online",
             totalitems: o.totalitems || (o.items ? o.items.length : 1),
@@ -118,7 +131,7 @@ const get_dashboard = async (req, res) => {
 
         let currencyDetails = {
             currency: "INR",
-            currencysymbol: "₹",
+            currencysymbol: "\u20B9",
             currencyposition: "right",
             thousandseparator: ",",
             decimalseparator: ".",
@@ -133,7 +146,7 @@ const get_dashboard = async (req, res) => {
                     currencyDetails = {
                         currencyid: curr.currencyid,
                         currency: curr.currency || "INR",
-                        currencysymbol: curr.currencysymbol || "₹",
+                        currencysymbol: curr.currencysymbol || "\u20B9",
                         currencyposition: curr.currencyposition || "right",
                         thousandseparator: curr.thousandseparator || ",",
                         decimalseparator: curr.decimalseparator || ".",
@@ -147,7 +160,7 @@ const get_dashboard = async (req, res) => {
 
         return res.status(200).json({
             message: "Dashboard data fetched successfully",
-            totalOrdersCount: filteredOrdersCount,
+            totalOrdersCount: deliveredPaidOrdersCount,
             allOrdersCount,
             totalRevenue,
             totalSubtotalSum,
@@ -162,14 +175,14 @@ const get_dashboard = async (req, res) => {
             recentProducts,
             currencyDetails,
             kpiDifferences: {
-                ordersDifference: filteredOrdersCount > 0 ? "+100%" : "0%",
+                ordersDifference: deliveredPaidOrdersCount > 0 ? "+100%" : "0%",
                 revenueDifference: totalRevenue > 0 ? "+100%" : "0%",
                 productsDifference: totalProductsCount > 0 ? `+${totalProductsCount}` : "0",
                 customersDifference: totalCustomersCount > 0 ? `+${totalCustomersCount}` : "0"
             },
             totalOwnerCount: totalCustomersCount,
             totalPriceSum: totalRevenue,
-            activeSubscriptionCount: filteredOrdersCount,
+            activeSubscriptionCount: deliveredPaidOrdersCount,
             totalSubscriptionCount: allOrdersCount
         });
     } catch (error) {
