@@ -55,6 +55,7 @@ app.use("/Support", supportrouteradmin);
 app.use("/Products", productsrouteradmin);
 app.use("/User", userrouteradmin);
 app.use("/Customer", customerRouter);
+app.use("/Order", customerRouter);
 
 const PORT = process.env.PORT || 8081;
 

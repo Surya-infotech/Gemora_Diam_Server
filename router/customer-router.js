@@ -21,5 +21,10 @@ customerRouter.put("/SetDefaultAddress/:addressId", customerOrAdminAuth, custome
 // Order routes
 customerRouter.post("/CreateOrder", customerOrAdminAuth, customerController.create_order);
 customerRouter.get("/GetOrders/:customerId", customerOrAdminAuth, customerController.get_customer_orders);
+// Order list & management for Admin Panel and User
+customerRouter.get("/GetOrdersByFiscalYear/:fiscalYearId", customerOrAdminAuth, customerController.get_orders_by_fiscal_year);
+customerRouter.get("/GetAllOrders", customerOrAdminAuth, customerController.get_orders_by_fiscal_year);
+customerRouter.put("/UpdateOrderStatus/:orderId", customerOrAdminAuth, customerController.update_order_status);
+customerRouter.delete("/DeleteOrder/:orderId", customerOrAdminAuth, customerController.delete_order);
 
 module.exports = customerRouter;

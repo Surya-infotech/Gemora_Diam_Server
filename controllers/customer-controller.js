@@ -735,6 +735,72 @@ const get_customer_orders = async (req, res) => {
     }
 };
 
+const get_orders_by_fiscal_year = async (req, res) => {
+    try {
+        const { fiscalYearId } = req.params;
+        let query = {};
+        if (fiscalYearId && fiscalYearId !== "all" && fiscalYearId !== "undefined" && fiscalYearId !== "null" && fiscalYearId !== "default") {
+            const numericFy = Number(fiscalYearId);
+            if (!isNaN(numericFy)) {
+                query.fiscalyearid = numericFy;
+            }
+        }
+
+        const orders = await Order.find(query).sort({ ordernumber: -1, orderid: -1, createdAt: -1 });
+        return res.status(200).json({
+            message: "Orders fetched successfully",
+            orders
+        });
+    } catch (error) {
+        console.error("Error fetching orders by fiscal year:", error);
+        return res.status(500).json({ message: error.message || "Error fetching orders" });
+    }
+};
+
+const update_order_status = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { orderstatus, paymentstatus, status } = req.body;
+
+        let query = isNaN(orderId) ? { _id: orderId } : { $or: [{ orderid: Number(orderId) }, { _id: orderId }] };
+        const order = await Order.findOne(query);
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        if (orderstatus !== undefined) order.orderstatus = orderstatus;
+        if (paymentstatus !== undefined) order.paymentstatus = paymentstatus;
+        if (status !== undefined) order.status = status;
+        order.updatedAt = new Date().toISOString();
+
+        await order.save();
+        return res.status(200).json({
+            message: "Order updated successfully",
+            order
+        });
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        return res.status(500).json({ message: error.message || "Failed to update order" });
+    }
+};
+
+const delete_order = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        let query = isNaN(orderId) ? { _id: orderId } : { $or: [{ orderid: Number(orderId) }, { _id: orderId }] };
+        const order = await Order.findOneAndDelete(query);
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+        return res.status(200).json({
+            message: "Order deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting order:", error);
+        return res.status(500).json({ message: error.message || "Failed to delete order" });
+    }
+};
+
 module.exports = {
     signup,
     signin,
@@ -746,5 +812,8 @@ module.exports = {
     delete_address,
     set_default_address,
     create_order,
-    get_customer_orders
+    get_customer_orders,
+    get_orders_by_fiscal_year,
+    update_order_status,
+    delete_order
 };
