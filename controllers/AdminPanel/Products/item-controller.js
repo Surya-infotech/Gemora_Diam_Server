@@ -1065,5 +1065,3 @@ module.exports = {
     delete_item_video,
     upload_item_videos
 };
-
-// Added update_item_status

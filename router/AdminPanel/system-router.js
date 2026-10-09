@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const systemrouter = express.Router();
 const currencycontroller = require("../../controllers/AdminPanel/System/currency-controller");
 const taxcontroller = require("../../controllers/AdminPanel/System/tax-controller");
@@ -50,6 +50,7 @@ systemrouter.route("/UpdateMiscSetting").put(authMiddleware, miscsettingcontroll
 
 // Invoice Setting Routes
 systemrouter.route("/GetInvoiceSetting").get(authMiddleware, invoicesettingcontroller.get_invoice_setting);
+systemrouter.route("/GetInvoiceSetting_landingpage").get(invoicesettingcontroller.get_invoice_setting);
 systemrouter.route("/UpdateInvoiceSetting").put(authMiddleware, invoicesettingcontroller.update_invoice_setting);
 
 module.exports = systemrouter;

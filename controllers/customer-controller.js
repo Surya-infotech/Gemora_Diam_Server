@@ -1,4 +1,4 @@
-﻿const Customer = require("../models/customer-model");
+const Customer = require("../models/customer-model");
 const CustomerAddress = require("../models/customer-address-model");
 const Order = require("../models/order-model");
 const FiscalYear = require("../models/AdminPanel/System/Setting/fiscalyear-model");
@@ -124,7 +124,7 @@ const verifyToken = async (req, res) => {
             customer_id: customer._id.toString(),
             customer: customerData
         });
-    } catch (error) {
+    } catch {
         return res.status(401).json({ message: "Token expired or invalid" });
     }
 };
@@ -481,7 +481,6 @@ const create_order = async (req, res) => {
             items,
             subtotal,
             total,
-            currency,
             shippingAddress,
             shippingaddress,
             paymentMethod,

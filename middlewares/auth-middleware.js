@@ -173,6 +173,5 @@ const customerOrAdminAuth = async (req, res, next) => {
 
 module.exports = {
     authMiddleware,
-    customerOrAdminAuth,
-    userOrAdminAuth: customerOrAdminAuth
+    customerOrAdminAuth
 };
