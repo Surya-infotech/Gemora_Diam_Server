@@ -9,6 +9,7 @@ const supportrouteradmin = require("./router/AdminPanel/support-router");
 const productsrouteradmin = require("./router/AdminPanel/products-router");
 const userrouteradmin = require("./router/AdminPanel/user-router");
 const customerRouter = require("./router/customer-router");
+const mainrouteradmin = require("./router/AdminPanel/main-router");
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.get("/Status", (_req, res) => {
 });
 
 app.use("/admin", adminRouter);
+app.use("/Main", mainrouteradmin);
 app.use("/System", systemrouteradmin);
 app.use("/Attributes", attributesrouteradmin);
 app.use("/Support", supportrouteradmin);
