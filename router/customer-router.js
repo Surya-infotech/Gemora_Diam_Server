@@ -24,6 +24,7 @@ customerRouter.get("/GetOrders/:customerId", customerOrAdminAuth, customerContro
 // Order list & management for Admin Panel and User
 customerRouter.get("/GetOrdersByFiscalYear/:fiscalYearId", customerOrAdminAuth, customerController.get_orders_by_fiscal_year);
 customerRouter.get("/GetAllOrders", customerOrAdminAuth, customerController.get_orders_by_fiscal_year);
+customerRouter.get("/GetOrderDetails/:orderId", customerOrAdminAuth, customerController.get_order_details);
 customerRouter.put("/UpdateOrderStatus/:orderId", customerOrAdminAuth, customerController.update_order_status);
 customerRouter.delete("/DeleteOrder/:orderId", customerOrAdminAuth, customerController.delete_order);
 
