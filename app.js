@@ -30,7 +30,7 @@ const corsOptions = {
     },
     methods: "GET,POST,PUT,DELETE,PATCH,HEAD",
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-user", "X-User"],
     preflightContinue: false,
     optionsSuccessStatus: 204
 };
