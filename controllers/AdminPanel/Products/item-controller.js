@@ -122,19 +122,6 @@ const add_item = async (req, res) => {
             const maxItem = await Item.findOne().sort({ itemid: -1 });
             const nextItemId = maxItem ? parseInt(maxItem.itemid) + 1 : 1;
 
-            let parsedRingSizes = [];
-            if (req.body.ringsizes) {
-                try {
-                    parsedRingSizes = typeof req.body.ringsizes === "string" ? JSON.parse(req.body.ringsizes) : req.body.ringsizes;
-                } catch {
-                    parsedRingSizes = [];
-                }
-            }
-            const formattedRingSizes = Array.isArray(parsedRingSizes) ? parsedRingSizes.map(r => ({
-                ringsizeid: Number(r.ringsizeid || r.value),
-                ringsize: String(r.ringsize || r.label || "")
-            })) : [];
-
             let parsedShapes = [];
             if (req.body.shapes) {
                 try {
@@ -213,13 +200,6 @@ const add_item = async (req, res) => {
                 stylename: String(st.stylename || st.label || "")
             })) : [];
 
-            if (!formattedRingSizes || formattedRingSizes.length === 0) {
-                if (req.file && req.file.location) {
-                    await deleteImageFromS3(req.file.location, "item");
-                }
-                return res.status(400).json({ message: "Ring Size is required" });
-            }
-
             if (!formattedShapes || formattedShapes.length === 0) {
                 if (req.file && req.file.location) {
                     await deleteImageFromS3(req.file.location, "item");
@@ -273,7 +253,6 @@ const add_item = async (req, res) => {
                 categoryname: categoryNameResolved,
                 subcategoryid: subcategoryIdResolved,
                 subcategoryname: subcategoryNameResolved,
-                ringsizes: formattedRingSizes,
                 shapes: formattedShapes,
                 clarities: formattedClarities,
                 diamondcolors: formattedDiamondColors,
@@ -431,20 +410,6 @@ const update_item = async (req, res) => {
             existingItem.sku = trimmedSku;
             existingItem.itemname = trimmedName;
             existingItem.description = description.trim();
-            if (req.body.ringsizes !== undefined) {
-                let parsedRingSizes = [];
-                try {
-                    parsedRingSizes = typeof req.body.ringsizes === "string" ? JSON.parse(req.body.ringsizes) : req.body.ringsizes;
-                } catch {
-                    parsedRingSizes = [];
-                }
-                const formattedRingSizes = Array.isArray(parsedRingSizes) ? parsedRingSizes.map(r => ({
-                    ringsizeid: Number(r.ringsizeid || r.value),
-                    ringsize: String(r.ringsize || r.label || "")
-                })) : [];
-
-                existingItem.ringsizes = formattedRingSizes;
-            }
             if (req.body.shapes !== undefined) {
                 let parsedShapes = [];
                 try {
@@ -528,13 +493,6 @@ const update_item = async (req, res) => {
                 })) : [];
 
                 existingItem.styles = formattedStyles;
-            }
-
-            if (!existingItem.ringsizes || existingItem.ringsizes.length === 0) {
-                if (req.file && req.file.location) {
-                    await deleteImageFromS3(req.file.location, "item");
-                }
-                return res.status(400).json({ message: "Ring Size is required" });
             }
 
             if (!existingItem.shapes || existingItem.shapes.length === 0) {

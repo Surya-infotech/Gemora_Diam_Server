@@ -8,15 +8,6 @@ const itemSchema = new mongoose.Schema({
     categoryname: { type: String, default: "" },
     subcategoryid: { type: Number, default: null },
     subcategoryname: { type: String, default: "" },
-    ringsizes: {
-        type: [
-            {
-                ringsizeid: { type: Number },
-                ringsize: { type: String }
-            }
-        ],
-        default: []
-    },
     shapes: {
         type: [
             {

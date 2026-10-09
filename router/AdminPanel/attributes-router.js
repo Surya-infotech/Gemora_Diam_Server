@@ -2,7 +2,6 @@ const express = require("express");
 const attributesRouter = express.Router();
 const metalcontroller = require("../../controllers/AdminPanel/Attributes/metal-controller");
 const diamondsizecontroller = require("../../controllers/AdminPanel/Attributes/diamondsize-controller");
-const ringsizecontroller = require("../../controllers/AdminPanel/Attributes/ringsize-controller");
 const shapecontroller = require("../../controllers/AdminPanel/Attributes/shape-controller");
 const claritycontroller = require("../../controllers/AdminPanel/Attributes/clarity-controller");
 const colorcontroller = require("../../controllers/AdminPanel/Attributes/color-controller");
@@ -31,15 +30,6 @@ attributesRouter.route("/UpdateDiamondSizeStatus/:diamondsizeid").put(authMiddle
 attributesRouter.route("/UpdateDiamondSize/:diamondsizeid").put(authMiddleware, diamondsizecontroller.update_diamond_size);
 attributesRouter.route("/DeleteDiamondSize/:diamondsizeid").delete(authMiddleware, diamondsizecontroller.delete_diamond_size);
 
-
-// Ring Size Routes
-attributesRouter.route("/GetRingSizes").get(authMiddleware, ringsizecontroller.get_ring_sizes);
-attributesRouter.route("/GetActiveRingSizes").get(ringsizecontroller.get_active_ring_sizes);
-attributesRouter.route("/AddRingSize").post(authMiddleware, ringsizecontroller.add_ring_size);
-attributesRouter.route("/EditRingSize/:ringsizeid").get(authMiddleware, ringsizecontroller.edit_ring_size);
-attributesRouter.route("/UpdateRingSizeStatus/:ringsizeid").put(authMiddleware, ringsizecontroller.update_ring_size_status);
-attributesRouter.route("/UpdateRingSize/:ringsizeid").put(authMiddleware, ringsizecontroller.update_ring_size);
-attributesRouter.route("/DeleteRingSize/:ringsizeid").delete(authMiddleware, ringsizecontroller.delete_ring_size);
 
 
 // Shape Routes
