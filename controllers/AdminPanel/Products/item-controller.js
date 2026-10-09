@@ -49,11 +49,25 @@ const add_item = async (req, res) => {
                 return res.status(400).json({ message: "Item Name is required" });
             }
 
+            if (!description || !description.trim()) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Description is required" });
+            }
+
             if (!categoryid) {
                 if (req.file && req.file.location) {
                     await deleteImageFromS3(req.file.location, "item");
                 }
                 return res.status(400).json({ message: "Category is required" });
+            }
+
+            if (!req.body.subcategoryid) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Sub Category is required" });
             }
 
             if (!req.file || !req.file.location) {
@@ -199,6 +213,55 @@ const add_item = async (req, res) => {
                 stylename: String(st.stylename || st.label || "")
             })) : [];
 
+            if (!formattedRingSizes || formattedRingSizes.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Ring Size is required" });
+            }
+
+            if (!formattedShapes || formattedShapes.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Shape is required" });
+            }
+
+            if (!formattedClarities || formattedClarities.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Clarity is required" });
+            }
+
+            if (!formattedStones || formattedStones.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Stone is required" });
+            }
+
+            if (!formattedStyles || formattedStyles.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Style is required" });
+            }
+
+            if (!formattedDiamondColors || formattedDiamondColors.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Diamond Color is required" });
+            }
+
+            if (!formattedBandColors || formattedBandColors.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Band Color is required" });
+            }
+
             const now = new Date().toISOString();
             const imageUrl = req.file ? req.file.location : (req.body.image || "");
 
@@ -300,6 +363,13 @@ const update_item = async (req, res) => {
                 return res.status(400).json({ message: "Item Name is required" });
             }
 
+            if (!description || !description.trim()) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Description is required" });
+            }
+
             const trimmedSku = sku.trim();
             const trimmedName = itemname.trim();
 
@@ -325,39 +395,42 @@ const update_item = async (req, res) => {
                 return res.status(400).json({ message: "Item Already Exists" });
             }
 
-            if (categoryid) {
-                const isCatObjectId = mongoose.Types.ObjectId.isValid(categoryid);
-                const catQuery = isCatObjectId ? { _id: categoryid } : { categoryid: Number(categoryid) };
-                const categoryDoc = await Category.findOne(catQuery);
-                if (categoryDoc) {
-                    existingItem.categoryid = categoryDoc.categoryid;
-                    existingItem.categoryname = categoryDoc.categoryname;
+            if (!categoryid) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
                 }
+                return res.status(400).json({ message: "Category is required" });
             }
 
-            if (req.body.subcategoryid !== undefined) {
-                if (req.body.subcategoryid) {
-                    const isSubCatObjectId = mongoose.Types.ObjectId.isValid(req.body.subcategoryid);
-                    const subCatQuery = isSubCatObjectId ? { _id: req.body.subcategoryid } : { subcategoryid: Number(req.body.subcategoryid) };
-                    const subCategoryDoc = await SubCategory.findOne(subCatQuery);
-                    if (subCategoryDoc && subCategoryDoc.categoryid === existingItem.categoryid) {
-                        existingItem.subcategoryid = subCategoryDoc.subcategoryid;
-                        existingItem.subcategoryname = subCategoryDoc.subcategoryname;
-                    } else {
-                        existingItem.subcategoryid = null;
-                        existingItem.subcategoryname = "";
-                    }
-                } else {
-                    existingItem.subcategoryid = null;
-                    existingItem.subcategoryname = "";
+            if (!req.body.subcategoryid) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
                 }
+                return res.status(400).json({ message: "Sub Category is required" });
+            }
+
+            const isCatObjectId = mongoose.Types.ObjectId.isValid(categoryid);
+            const catQuery = isCatObjectId ? { _id: categoryid } : { categoryid: Number(categoryid) };
+            const categoryDoc = await Category.findOne(catQuery);
+            if (categoryDoc) {
+                existingItem.categoryid = categoryDoc.categoryid;
+                existingItem.categoryname = categoryDoc.categoryname;
+            }
+
+            const isSubCatObjectId = mongoose.Types.ObjectId.isValid(req.body.subcategoryid);
+            const subCatQuery = isSubCatObjectId ? { _id: req.body.subcategoryid } : { subcategoryid: Number(req.body.subcategoryid) };
+            const subCategoryDoc = await SubCategory.findOne(subCatQuery);
+            if (subCategoryDoc && subCategoryDoc.categoryid === existingItem.categoryid) {
+                existingItem.subcategoryid = subCategoryDoc.subcategoryid;
+                existingItem.subcategoryname = subCategoryDoc.subcategoryname;
+            } else {
+                existingItem.subcategoryid = null;
+                existingItem.subcategoryname = "";
             }
 
             existingItem.sku = trimmedSku;
             existingItem.itemname = trimmedName;
-            if (description !== undefined) {
-                existingItem.description = description ? description.trim() : "";
-            }
+            existingItem.description = description.trim();
             if (req.body.ringsizes !== undefined) {
                 let parsedRingSizes = [];
                 try {
@@ -455,6 +528,55 @@ const update_item = async (req, res) => {
                 })) : [];
 
                 existingItem.styles = formattedStyles;
+            }
+
+            if (!existingItem.ringsizes || existingItem.ringsizes.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Ring Size is required" });
+            }
+
+            if (!existingItem.shapes || existingItem.shapes.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Shape is required" });
+            }
+
+            if (!existingItem.clarities || existingItem.clarities.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Clarity is required" });
+            }
+
+            if (!existingItem.stones || existingItem.stones.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Stone is required" });
+            }
+
+            if (!existingItem.styles || existingItem.styles.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Style is required" });
+            }
+
+            if (!existingItem.diamondcolors || existingItem.diamondcolors.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Diamond Color is required" });
+            }
+
+            if (!existingItem.bandcolors || existingItem.bandcolors.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Band Color is required" });
             }
 
             if (req.file && req.file.location) {
