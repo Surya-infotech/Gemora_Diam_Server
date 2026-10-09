@@ -33,7 +33,7 @@ const get_dashboard = async (req, res) => {
             Customer.countDocuments()
         ]);
 
-        // Filter for orders where Order Status is 'Delivered' AND Payment Status is 'Paid'
+        // Revenue details & counts strictly calculated for orders with Order Status 'Delivered' AND Payment Status 'Paid'
         const isDeliveredAndPaid = (o) => {
             const oStatus = String(o.orderstatus || "").trim().toLowerCase();
             const pStatus = String(o.paymentstatus || "").trim().toLowerCase();
@@ -72,13 +72,14 @@ const get_dashboard = async (req, res) => {
             Cancelled: orders.filter(o => (o.orderstatus || "").toLowerCase() === "cancelled").length
         };
 
-        // Recent Orders: show only orders that are Delivered & Paid
+        // Recent Orders section: show orders where order status is NOT 'Delivered' and NOT 'Cancelled'
         const recentOrdersRaw = await Order.find({
-            orderstatus: { $regex: /^delivered$/i },
-            paymentstatus: { $regex: /^paid$/i }
+            orderstatus: {
+                $nin: ["Delivered", "Cancelled", "delivered", "cancelled"]
+            }
         })
             .sort({ ordernumber: -1, orderid: -1, createdAt: -1 })
-            .limit(5)
+            .limit(10)
             .lean();
 
         const recentOrders = recentOrdersRaw.map(o => ({
@@ -89,7 +90,7 @@ const get_dashboard = async (req, res) => {
             customeremail: o.customeremail || "",
             total: o.total || 0,
             subtotal: o.subtotal || 0,
-            orderstatus: o.orderstatus || "Delivered",
+            orderstatus: o.orderstatus || "Confirmed",
             paymentstatus: o.paymentstatus || "Paid",
             paymentmethod: o.paymentmethod || "Online",
             totalitems: o.totalitems || (o.items ? o.items.length : 1),
