@@ -70,11 +70,8 @@ const aboutUsSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
-
-    updatedAt: {
-        type: String
-    }
-}, { timestamps: true });
+    updatedAt: { type: String, required: true }
+});
 
 const AboutUs = mongoose.model("AboutUs", aboutUsSchema);
 module.exports = AboutUs;
