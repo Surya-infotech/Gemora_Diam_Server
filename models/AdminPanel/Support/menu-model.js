@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 
 const menuItemSchema = new mongoose.Schema({
     label: { type: String, default: "" },
@@ -26,16 +26,16 @@ const menuSchema = new mongoose.Schema({
     column2: { type: menuColumnSchema, default: () => ({}) },
     column3: { type: menuColumnSchema, default: () => ({}) },
     banner: {
-        eyebrow: { type: String, default: "FEATURED ATELIER" },
+        eyebrow: { type: String, default: "" },
         title: { type: String, default: "" },
         description: { type: String, default: "" },
         image: { type: String, default: "" },
-        buttonText: { type: String, default: "EXPLORE COLLECTION" },
-        buttonLink: { type: String, default: "/collections" }
+        buttonText: { type: String, default: "" },
+        buttonLink: { type: String, default: "" }
     },
     bottomBar: {
         text: { type: String, default: "" },
-        link: { type: String, default: "/contact" }
+        link: { type: String, default: "" }
     },
     createdAt: { type: String, required: true },
     updatedAt: { type: String, required: true }
