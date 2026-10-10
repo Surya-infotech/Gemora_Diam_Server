@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const menuItemSchema = new mongoose.Schema({
     label: { type: String, default: "" },
@@ -6,7 +6,7 @@ const menuItemSchema = new mongoose.Schema({
     shape: { type: String, default: "" },
     badge: { type: String, default: "" },
     filterType: { type: String, default: "style" }, // style, category, shape, search, all
-    filterValue: { type: String, default: "" }
+    filterValue: { type: mongoose.Schema.Types.Mixed, default: "" }
 }, { _id: false });
 
 const menuColumnSchema = new mongoose.Schema({
