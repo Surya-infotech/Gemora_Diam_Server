@@ -54,8 +54,8 @@ const add_collection_banner = async (req, res) => {
             title: title.trim(),
             description: description ? description.trim() : "",
             image: imageUrl,
-            buttonText: buttonText ? buttonText.trim() : "SHOP COLLECTION",
-            buttonLink: buttonLink ? buttonLink.trim() : "/shop",
+            buttonText: buttonText ? buttonText.trim() : "EXPLORE COLLECTION",
+            buttonLink: buttonLink ? buttonLink.trim() : "/collections",
             position: position === "right" ? "right" : "left",
             order: order ? Number(order) : 1,
             status: true,
@@ -155,8 +155,8 @@ const update_collection_banner = async (req, res) => {
         existing.title = title.trim();
         existing.description = description ? description.trim() : "";
         existing.image = newImageUrl;
-        existing.buttonText = buttonText ? buttonText.trim() : "SHOP COLLECTION";
-        existing.buttonLink = buttonLink ? buttonLink.trim() : "/shop";
+        existing.buttonText = buttonText ? buttonText.trim() : "EXPLORE COLLECTION";
+        existing.buttonLink = buttonLink ? buttonLink.trim() : "/collections";
         existing.position = position === "right" ? "right" : "left";
         if (order !== undefined) existing.order = Number(order) || 1;
         if (status !== undefined) {
