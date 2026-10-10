@@ -7,6 +7,7 @@ const policycontroller = require("../../controllers/AdminPanel/Support/policy-co
 const bannercontroller = require("../../controllers/AdminPanel/Support/banner-controller");
 const collectionbannercontroller = require("../../controllers/AdminPanel/Support/collectionbanner-controller");
 const aboutuscontroller = require("../../controllers/AdminPanel/Support/aboutus-controller");
+const menucontroller = require("../../controllers/AdminPanel/Support/menu-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 const { uploadToS3 } = require("../../utils/s3Config-admin");
 
@@ -59,5 +60,15 @@ supportrouter.route("/GetAboutUs").get(authMiddleware, aboutuscontroller.get_abo
 supportrouter.route("/GetActiveAboutUs").get(aboutuscontroller.get_active_about_us);
 supportrouter.route("/UpdateAboutUs").put(authMiddleware, uploadToS3("aboutus"), aboutuscontroller.update_about_us);
 supportrouter.route("/AddAboutUs").post(authMiddleware, uploadToS3("aboutus"), aboutuscontroller.update_about_us);
+
+
+// Menu Routes (Dynamic Mega Menu)
+supportrouter.route("/GetMenus").get(authMiddleware, menucontroller.get_menus);
+supportrouter.route("/GetActiveMenus").get(menucontroller.get_active_menus);
+supportrouter.route("/AddMenu").post(authMiddleware, uploadToS3("menus"), menucontroller.add_menu);
+supportrouter.route("/EditMenu/:menuid").get(authMiddleware, menucontroller.edit_menu);
+supportrouter.route("/UpdateMenuStatus/:menuid").put(authMiddleware, menucontroller.update_menu_status);
+supportrouter.route("/UpdateMenu/:menuid").put(authMiddleware, uploadToS3("menus"), menucontroller.update_menu);
+supportrouter.route("/DeleteMenu/:menuid").delete(authMiddleware, menucontroller.delete_menu);
 
 module.exports = supportrouter;
