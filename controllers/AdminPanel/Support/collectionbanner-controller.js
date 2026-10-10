@@ -94,9 +94,10 @@ const update_collection_banner_status = async (req, res) => {
     try {
         const isObjectId = mongoose.Types.ObjectId.isValid(bannerid);
         const query = isObjectId ? { _id: bannerid } : { bannerid: Number(bannerid) };
+        const isStatusActive = status === true || status === "true" || status === 1 || status === "1";
         const updated = await CollectionBanner.findOneAndUpdate(
             query,
-            { status: Boolean(status), updatedAt: new Date().toISOString() },
+            { status: isStatusActive, updatedAt: new Date().toISOString() },
             { returnDocument: "after" }
         );
 
@@ -158,7 +159,9 @@ const update_collection_banner = async (req, res) => {
         existing.buttonLink = buttonLink ? buttonLink.trim() : "/shop";
         existing.position = position === "right" ? "right" : "left";
         if (order !== undefined) existing.order = Number(order) || 1;
-        if (status !== undefined) existing.status = Boolean(status);
+        if (status !== undefined) {
+            existing.status = (status === true || status === "true" || status === 1 || status === "1");
+        }
         existing.updatedAt = new Date().toISOString();
 
         await existing.save();
