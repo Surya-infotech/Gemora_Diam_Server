@@ -1,4 +1,4 @@
-const Category = require("../../../models/AdminPanel/Attributes/category-model");
+﻿const Category = require("../../../models/AdminPanel/Attributes/category-model");
 const Item = require("../../../models/AdminPanel/Products/item-model");
 const SubCategory = require("../../../models/AdminPanel/Attributes/subcategory-model");
 const mongoose = require("mongoose");
@@ -25,13 +25,18 @@ const get_active_categories = async (_req, res) => {
 
 const add_category = async (req, res) => {
     try {
-        const { categoryname } = req.body;
+        const { categoryname, description } = req.body;
 
-        if (!categoryname || !categoryname.trim()) {
+        if (!categoryname || !categoryname.trim() || !description || !description.trim()) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
         const trimmedName = categoryname.trim();
+        const trimmedDesc = description.trim();
+
+        if (trimmedDesc.length > 120) {
+            return res.status(400).json({ message: "Description cannot exceed 120 characters" });
+        }
 
         const existing = await Category.findOne({
             categoryname: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i") }
@@ -47,6 +52,7 @@ const add_category = async (req, res) => {
         const newCategory = new Category({
             categoryid: nextId,
             categoryname: trimmedName,
+            description: trimmedDesc,
             status: true,
             createdAt: now,
             updatedAt: now
@@ -101,11 +107,18 @@ const update_category_status = async (req, res) => {
 
 const update_category = async (req, res) => {
     const { categoryid } = req.params;
-    const { categoryname, status } = req.body;
+    const { categoryname, description, status } = req.body;
 
     try {
-        if (!categoryname || !categoryname.trim()) {
+        if (!categoryname || !categoryname.trim() || !description || !description.trim()) {
             return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const trimmedName = categoryname.trim();
+        const trimmedDesc = description.trim();
+
+        if (trimmedDesc.length > 120) {
+            return res.status(400).json({ message: "Description cannot exceed 120 characters" });
         }
 
         const isObjectId = mongoose.Types.ObjectId.isValid(categoryid);
@@ -115,8 +128,6 @@ const update_category = async (req, res) => {
         if (!existingSelf) {
             return res.status(404).json({ message: "Category not found" });
         }
-
-        const trimmedName = categoryname.trim();
 
         const duplicateQuery = {
             _id: { $ne: existingSelf._id },
@@ -128,6 +139,7 @@ const update_category = async (req, res) => {
         }
 
         existingSelf.categoryname = trimmedName;
+        existingSelf.description = trimmedDesc;
         if (status !== undefined) {
             existingSelf.status = Boolean(status);
         }
