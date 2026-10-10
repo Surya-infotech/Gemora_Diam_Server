@@ -621,7 +621,7 @@ const create_order = async (req, res) => {
 
         const totalitems = formattedItems.reduce((acc, curr) => acc + curr.qty, 0);
 
-                let activeCurrencyDetails = null;
+        let activeCurrencyDetails = null;
         try {
             const miscSetting = await MiscSetting.findOne().lean();
             if (miscSetting && miscSetting.currencyid) {
@@ -791,24 +791,32 @@ const update_order_status = async (req, res) => {
             const hasChanged = order.orderstatus !== orderstatus;
             order.orderstatus = orderstatus;
 
+            let finalCancelReason = "";
+            if (orderstatus === "Cancelled") {
+                finalCancelReason = (cancelreason && cancelreason.trim()) || order.cancelreason || "";
+                order.cancelledby = updaterName;
+                order.cancelledat = now;
+                order.cancelreason = finalCancelReason;
+            } else if (hasChanged) {
+                order.cancelreason = "";
+                order.cancelledby = "";
+                order.cancelledat = null;
+            }
+
             if (!Array.isArray(order.statusLogs)) {
                 order.statusLogs = [];
             }
 
             if (hasChanged || order.statusLogs.length === 0) {
-                order.statusLogs.push({
+                const logEntry = {
                     newStatus: orderstatus,
                     updatedBy: updaterName,
                     updatedAt: now
-                });
-            }
-
-            if (orderstatus === "Cancelled") {
-                order.cancelledby = updaterName;
-                order.cancelledat = now;
-                if (cancelreason && cancelreason.trim()) {
-                    order.cancelreason = cancelreason.trim();
+                };
+                if (orderstatus === "Cancelled" && finalCancelReason) {
+                    logEntry.reason = finalCancelReason;
                 }
+                order.statusLogs.push(logEntry);
             }
         }
 
