@@ -6,6 +6,7 @@ const faqcontroller = require("../../controllers/AdminPanel/Support/faq-controll
 const policycontroller = require("../../controllers/AdminPanel/Support/policy-controller");
 const bannercontroller = require("../../controllers/AdminPanel/Support/banner-controller");
 const collectionbannercontroller = require("../../controllers/AdminPanel/Support/collectionbanner-controller");
+const aboutuscontroller = require("../../controllers/AdminPanel/Support/aboutus-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 const { uploadToS3 } = require("../../utils/s3Config-admin");
 
@@ -52,5 +53,11 @@ supportrouter.route("/EditCollectionBanner/:bannerid").get(authMiddleware, colle
 supportrouter.route("/UpdateCollectionBannerStatus/:bannerid").put(authMiddleware, collectionbannercontroller.update_collection_banner_status);
 supportrouter.route("/UpdateCollectionBanner/:bannerid").put(authMiddleware, uploadToS3("collectionbanners"), collectionbannercontroller.update_collection_banner);
 supportrouter.route("/DeleteCollectionBanner/:bannerid").delete(authMiddleware, collectionbannercontroller.delete_collection_banner);
+
+// About Us Routes
+supportrouter.route("/GetAboutUs").get(authMiddleware, aboutuscontroller.get_about_us);
+supportrouter.route("/GetActiveAboutUs").get(aboutuscontroller.get_active_about_us);
+supportrouter.route("/UpdateAboutUs").put(authMiddleware, uploadToS3("aboutus"), aboutuscontroller.update_about_us);
+supportrouter.route("/AddAboutUs").post(authMiddleware, uploadToS3("aboutus"), aboutuscontroller.update_about_us);
 
 module.exports = supportrouter;
