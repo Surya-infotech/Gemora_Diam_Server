@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 
 const orderItemSchema = new mongoose.Schema({
     itemid: {
@@ -108,31 +108,38 @@ const orderAddressSchema = new mongoose.Schema({
 const orderCurrencySchema = new mongoose.Schema({
     currencyid: {
         type: Number,
-        default: null
+        default: null,
+        required: true
     },
     countryname: {
         type: String,
-        default: ""
+        default: "",
+        required: true
     },
     currency: {
         type: String,
-        default: "INR"
+        default: "",
+        required: true
     },
     currencysymbol: {
         type: String,
-        default: "₹"
+        default: "",
+        required: true
     },
     currencyposition: {
         type: String,
-        default: "left"
+        default: "",
+        required: true
     },
     thousandseparator: {
         type: String,
-        default: ""
+        default: "",
+        required: true
     },
     decimalseparator: {
         type: String,
-        default: "."
+        default: "",
+        required: true
     },
     decimal: {
         type: Number,
@@ -203,6 +210,34 @@ const orderSchema = new mongoose.Schema({
         enum: ["Pending", "Confirmed", "Processing", "Shipped", "Delivered", "Cancelled"],
         default: "Confirmed"
     },
+    cancelreason: {
+        type: String,
+        default: "",
+    },
+    cancelledby: {
+        type: String,
+        default: "",
+    },
+    cancelledat: {
+        type: String,
+        default: null,
+    },
+    statusLogs: [
+        {
+            newStatus: {
+                type: String,
+                required: true
+            },
+            updatedBy: {
+                type: String,
+                default: null
+            },
+            updatedAt: {
+                type: String,
+                required: true
+            }
+        }
+    ],
     paymentstatus: {
         type: String,
         enum: ["Pending", "Paid", "Failed", "Refunded"],
@@ -224,7 +259,7 @@ const orderSchema = new mongoose.Schema({
 
 orderSchema.index({ fiscalyearid: 1, ordernumber: 1 }, { unique: true });
 
-orderSchema.virtual('currency').get(function() {
+orderSchema.virtual('currency').get(function () {
     return this.currencydetails?.currency || "INR";
 });
 orderSchema.set('toJSON', { virtuals: true });

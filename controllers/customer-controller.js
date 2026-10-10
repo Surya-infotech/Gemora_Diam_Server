@@ -685,6 +685,13 @@ const create_order = async (req, res) => {
                 cityname: addressData.cityname ? String(addressData.cityname).trim() : ""
             },
             orderstatus: "Confirmed",
+            statusLogs: [
+                {
+                    newStatus: "Confirmed",
+                    updatedBy: cust?.fullname || req.body.customername || "Customer",
+                    updatedAt: new Date().toISOString()
+                }
+            ],
             paymentstatus: "Paid",
             paymentmethod: paymentmethod || paymentMethod || "Credit/Debit Card",
             status: true,
@@ -759,7 +766,7 @@ const get_orders_by_fiscal_year = async (req, res) => {
 const update_order_status = async (req, res) => {
     try {
         const { orderId } = req.params;
-        const { orderstatus, paymentstatus, status } = req.body;
+        const { orderstatus, paymentstatus, status, cancelreason, employeename } = req.body;
 
         let query = isNaN(orderId) ? { _id: orderId } : { $or: [{ orderid: Number(orderId) }, { _id: orderId }] };
         const order = await Order.findOne(query);
@@ -767,10 +774,47 @@ const update_order_status = async (req, res) => {
             return res.status(404).json({ message: "Order not found" });
         }
 
-        if (orderstatus !== undefined) order.orderstatus = orderstatus;
+        let updaterName = (employeename && employeename.trim()) || "";
+        if (!updaterName) {
+            if (req.employee) {
+                updaterName = [req.employee.firstname, req.employee.lastname].filter(Boolean).join(" ").trim() || req.employee.email || "Employee";
+            } else if (req.user) {
+                updaterName = [req.user.firstname, req.user.lastname].filter(Boolean).join(" ").trim() || req.user.name || req.user.email || "User";
+            } else {
+                updaterName = "Admin";
+            }
+        }
+
+        const now = new Date().toISOString();
+
+        if (orderstatus !== undefined) {
+            const hasChanged = order.orderstatus !== orderstatus;
+            order.orderstatus = orderstatus;
+
+            if (!Array.isArray(order.statusLogs)) {
+                order.statusLogs = [];
+            }
+
+            if (hasChanged || order.statusLogs.length === 0) {
+                order.statusLogs.push({
+                    newStatus: orderstatus,
+                    updatedBy: updaterName,
+                    updatedAt: now
+                });
+            }
+
+            if (orderstatus === "Cancelled") {
+                order.cancelledby = updaterName;
+                order.cancelledat = now;
+                if (cancelreason && cancelreason.trim()) {
+                    order.cancelreason = cancelreason.trim();
+                }
+            }
+        }
+
         if (paymentstatus !== undefined) order.paymentstatus = paymentstatus;
         if (status !== undefined) order.status = status;
-        order.updatedAt = new Date().toISOString();
+        order.updatedAt = now;
 
         await order.save();
         return res.status(200).json({
