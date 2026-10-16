@@ -873,7 +873,342 @@ const get_order_details = async (req, res) => {
     }
 };
 
+const saveOrderDocument = async ({ req, orderData }) => {
+    const {
+        customerid,
+        customerId,
+        items,
+        subtotal,
+        total,
+        shippingAddress,
+        shippingaddress,
+        paymentMethod,
+        paymentmethod,
+        paymentstatus,
+        transactionid,
+        paymentdetails,
+        currencydetails,
+        customername,
+        customerName,
+        customeremail,
+        customerEmail,
+        customerphone,
+        customerPhone
+    } = orderData;
+
+    let cust = req.customer;
+    let numericCustomerId = cust?.customerid;
+
+    if (!numericCustomerId) {
+        const targetCustId = customerid || customerId;
+        if (targetCustId && !isNaN(targetCustId)) {
+            numericCustomerId = Number(targetCustId);
+        }
+        if (!cust && targetCustId) {
+            try {
+                cust = await Customer.findById(targetCustId);
+            } catch {
+                // ignore
+            }
+            if (!cust && numericCustomerId) {
+                cust = await Customer.findOne({ customerid: numericCustomerId });
+            }
+        }
+    }
+
+    if (!numericCustomerId && cust) {
+        numericCustomerId = cust.customerid;
+    }
+
+    if (!numericCustomerId && !cust) {
+        throw new Error("Customer ID is required to place an order");
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+        throw new Error("Order must contain at least one item");
+    }
+
+    const addressData = shippingaddress || shippingAddress;
+    if (!addressData || !addressData.address) {
+        throw new Error("Shipping address is required");
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    let currentFiscalYear = await FiscalYear.findOne({
+        startdate: { $lte: today },
+        enddate: { $gte: today },
+        status: "Active"
+    }).lean();
+
+    if (!currentFiscalYear) {
+        currentFiscalYear = await FiscalYear.findOne({
+            startdate: { $lte: today },
+            enddate: { $gte: today }
+        }).lean();
+    }
+
+    if (!currentFiscalYear) {
+        currentFiscalYear = await FiscalYear.findOne({ status: "Active" }).sort({ fiscalyearid: -1 }).lean();
+    }
+
+    if (!currentFiscalYear) {
+        currentFiscalYear = await FiscalYear.findOne().sort({ fiscalyearid: -1 }).lean();
+    }
+
+    if (!currentFiscalYear) {
+        const currentYear = new Date().getFullYear();
+        currentFiscalYear = await FiscalYear.create({
+            fiscalyearid: 1,
+            fiscalyear: `${currentYear}-${currentYear + 1}`,
+            startdate: `${currentYear}-04-01`,
+            enddate: `${currentYear + 1}-03-31`,
+            status: "Active",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+    }
+
+    const fiscalyearid = currentFiscalYear ? currentFiscalYear.fiscalyearid : 1;
+
+    const maxOrder = await Order.findOne().sort({ orderid: -1 });
+    const nextOrderId = maxOrder && maxOrder.orderid ? parseInt(maxOrder.orderid) + 1 : 1;
+
+    const maxOrderByFiscalYear = await Order.findOne({ fiscalyearid }).sort({ ordernumber: -1 });
+    const nextOrderNumber = maxOrderByFiscalYear && maxOrderByFiscalYear.ordernumber
+        ? parseInt(maxOrderByFiscalYear.ordernumber) + 1
+        : 1;
+
+    const formattedItems = await Promise.all(items.map(async (it) => {
+        const itemPrice = Number(it.price) || 0;
+        const itemQty = Number(it.qty) || 1;
+
+        let numericItemId = null;
+        if (it.itemid !== undefined && it.itemid !== null && it.itemid !== "" && !isNaN(it.itemid)) {
+            numericItemId = Number(it.itemid);
+        } else if (it.productId !== undefined && it.productId !== null && it.productId !== "" && !isNaN(it.productId)) {
+            numericItemId = Number(it.productId);
+        } else if (it.id !== undefined && it.id !== null && it.id !== "" && !isNaN(it.id)) {
+            numericItemId = Number(it.id);
+        }
+
+        if (!numericItemId && (it.productId || it.id || it.itemid)) {
+            try {
+                const lookupKey = it.productId || it.id || it.itemid;
+                const foundItem = await Item.findById(lookupKey).lean();
+                if (foundItem && foundItem.itemid !== undefined && foundItem.itemid !== null) {
+                    numericItemId = Number(foundItem.itemid);
+                }
+            } catch {
+                // ignore
+            }
+        }
+
+        if (!numericItemId) {
+            numericItemId = 1;
+        }
+
+        return {
+            itemid: numericItemId,
+            itemname: it.itemname || it.name || "Fine Jewelry Piece",
+            image: it.image || "",
+            metalname: it.metalname || it.metal || "",
+            stonename: it.stonename || it.stone || "",
+            diamondsize: it.diamondsize || it.carat || "",
+            shapename: it.shapename || it.shape || "",
+            clarityname: it.clarityname || it.clarity || "",
+            diamondcolor: it.diamondcolor || it.diamondColor || it.diamondcolorname || "",
+            bandcolor: it.bandcolor || it.bandColor || it.bandcolorname || "",
+            specialinstruction: it.specialinstruction || it.specialInstruction || it.specialinstructions || it.instructions || "",
+            price: itemPrice,
+            qty: itemQty,
+            totalprice: Number(it.totalprice) || (itemPrice * itemQty)
+        };
+    }));
+
+    const totalitems = formattedItems.reduce((acc, curr) => acc + curr.qty, 0);
+
+    let activeCurrencyDetails = null;
+    try {
+        const miscSetting = await MiscSetting.findOne().lean();
+        if (miscSetting && miscSetting.currencyid) {
+            const currDoc = await Currency.findOne({ currencyid: Number(miscSetting.currencyid) }).lean();
+            if (currDoc) {
+                activeCurrencyDetails = {
+                    currencyid: currDoc.currencyid,
+                    countryname: currDoc.countryname || "",
+                    currency: currDoc.currency || "INR",
+                    currencysymbol: currDoc.currencysymbol || "$",
+                    currencyposition: currDoc.currencyposition || "left",
+                    thousandseparator: currDoc.thousandseparator !== undefined && currDoc.thousandseparator !== null ? currDoc.thousandseparator : ",",
+                    decimalseparator: currDoc.decimalseparator || ".",
+                    decimal: currDoc.decimal !== undefined ? currDoc.decimal : 2
+                };
+            }
+        }
+    } catch (currErr) {
+        console.log("Error retrieving currency details from misc setting:", currErr);
+    }
+
+    if (!activeCurrencyDetails) {
+        if (currencydetails && typeof currencydetails === 'object') {
+            activeCurrencyDetails = currencydetails;
+        } else {
+            activeCurrencyDetails = {
+                currencyid: 1,
+                countryname: "United States",
+                currency: "USD",
+                currencysymbol: "$",
+                currencyposition: "left",
+                thousandseparator: ",",
+                decimalseparator: ".",
+                decimal: 2
+            };
+        }
+    }
+
+    const newOrder = new Order({
+        orderid: nextOrderId,
+        fiscalyearid,
+        ordernumber: nextOrderNumber,
+        customerid: numericCustomerId,
+        customername: cust?.fullname || customername || customerName || "",
+        customeremail: cust?.email || customeremail || customerEmail || "",
+        customerphone: cust?.phone || customerphone || customerPhone || "",
+        items: formattedItems,
+        totalitems,
+        subtotal: Number(subtotal) || 0,
+        total: Number(total) || Number(subtotal) || 0,
+        currencydetails: activeCurrencyDetails,
+        shippingaddress: {
+            addressid: addressData.addressid || null,
+            title: addressData.title || "Home",
+            address: String(addressData.address).trim(),
+            pincode: String(addressData.pincode).trim(),
+            countryname: addressData.countryname ? String(addressData.countryname).trim() : "",
+            countrycode: addressData.countrycode ? String(addressData.countrycode).trim() : "",
+            statename: addressData.statename ? String(addressData.statename).trim() : "",
+            statecode: addressData.statecode ? String(addressData.statecode).trim() : "",
+            cityname: addressData.cityname ? String(addressData.cityname).trim() : ""
+        },
+        orderstatus: "Confirmed",
+        statusLogs: [
+            {
+                newStatus: "Confirmed",
+                updatedBy: cust?.fullname || customername || "Customer",
+                updatedAt: new Date().toISOString()
+            }
+        ],
+        paymentstatus: paymentstatus || "Paid",
+        paymentmethod: paymentmethod || paymentMethod || "PayPal",
+        transactionid: transactionid || "",
+        paymentdetails: paymentdetails || null,
+        status: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    });
+
+    await newOrder.save();
+    return newOrder;
+};
+
+// PayPal controller handlers
+const get_paypal_client_id = async (req, res) => {
+    try {
+        const paypalUtil = require("../utils/paypal");
+        const { clientId, mode } = paypalUtil.getPayPalCredentials();
+        return res.status(200).json({
+            success: true,
+            clientId,
+            mode
+        });
+    } catch (err) {
+        console.error("PayPal credentials error:", err);
+        return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+const create_paypal_order = async (req, res) => {
+    try {
+        const { amount, currency = "USD", description } = req.body;
+        const paypalUtil = require("../utils/paypal");
+        const order = await paypalUtil.createPayPalOrder({
+            amount: Number(amount) || 0,
+            currency: currency || "USD",
+            description: description || "Gemora Diam Atelier Purchase"
+        });
+        return res.status(200).json({
+            success: true,
+            id: order.id,
+            status: order.status
+        });
+    } catch (error) {
+        console.error("Error creating PayPal order:", error);
+        return res.status(500).json({ success: false, message: error.message || "Failed to create PayPal order" });
+    }
+};
+
+const capture_paypal_order = async (req, res) => {
+    try {
+        const { paypalOrderId, orderData } = req.body;
+
+        if (!paypalOrderId) {
+            return res.status(400).json({ success: false, message: "PayPal Order ID is required" });
+        }
+
+        if (!orderData) {
+            return res.status(400).json({ success: false, message: "Order data is required to finalize order" });
+        }
+
+        const paypalUtil = require("../utils/paypal");
+        const captureData = await paypalUtil.capturePayPalOrder(paypalOrderId);
+
+        // Strict verification: only save order if PayPal status is COMPLETED
+        const isCompleted = captureData.status === "COMPLETED" ||
+            (captureData.purchase_units?.[0]?.payments?.captures?.[0]?.status === "COMPLETED");
+
+        if (!isCompleted) {
+            console.warn("PayPal capture returned non-completed status:", captureData.status);
+            return res.status(400).json({
+                success: false,
+                message: "PayPal payment was not completed. Order was NOT created in the database.",
+                status: captureData.status
+            });
+        }
+
+        const capture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+        const transactionId = capture?.id || captureData.id;
+
+        // Save order ONLY after successful capture
+        const savedOrder = await saveOrderDocument({
+            req,
+            orderData: {
+                ...orderData,
+                paymentmethod: "PayPal",
+                paymentstatus: "Paid",
+                transactionid: transactionId,
+                paymentdetails: captureData
+            }
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Payment received and order created successfully!",
+            order: savedOrder,
+            transactionId
+        });
+    } catch (error) {
+        console.error("Error capturing PayPal order:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "PayPal capture failed. Order was not created."
+        });
+    }
+};
+
 module.exports = {
+    get_paypal_client_id,
+    create_paypal_order,
+    capture_paypal_order,
     signup,
     signin,
     verifyToken,

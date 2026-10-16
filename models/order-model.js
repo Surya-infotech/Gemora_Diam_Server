@@ -243,6 +243,14 @@ const orderSchema = new mongoose.Schema({
         enum: ["Pending", "Paid", "Failed", "Refunded"],
         default: "Paid"
     },
+    transactionid: {
+        type: String,
+        default: ""
+    },
+    paymentdetails: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null
+    },
     paymentmethod: {
         type: String,
         default: "Credit/Debit Card"

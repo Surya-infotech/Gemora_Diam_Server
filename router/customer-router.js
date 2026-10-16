@@ -18,6 +18,11 @@ customerRouter.delete("/DeleteAddress/:addressId", customerOrAdminAuth, customer
 customerRouter.put("/SetDefaultAddress/:addressId", customerOrAdminAuth, customerController.set_default_address);
 
 
+// PayPal Payment routes
+customerRouter.get("/paypal-client-id", customerController.get_paypal_client_id);
+customerRouter.post("/create-paypal-order", customerOrAdminAuth, customerController.create_paypal_order);
+customerRouter.post("/capture-paypal-order", customerOrAdminAuth, customerController.capture_paypal_order);
+
 // Order routes
 customerRouter.post("/CreateOrder", customerOrAdminAuth, customerController.create_order);
 customerRouter.get("/GetOrders/:customerId", customerOrAdminAuth, customerController.get_customer_orders);
