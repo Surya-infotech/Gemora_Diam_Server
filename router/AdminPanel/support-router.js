@@ -8,6 +8,8 @@ const bannercontroller = require("../../controllers/AdminPanel/Support/banner-co
 const collectionbannercontroller = require("../../controllers/AdminPanel/Support/collectionbanner-controller");
 const aboutuscontroller = require("../../controllers/AdminPanel/Support/aboutus-controller");
 const menucontroller = require("../../controllers/AdminPanel/Support/menu-controller");
+const shapesectioncontroller = require("../../controllers/AdminPanel/Support/shapesection-controller");
+
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 const { uploadToS3 } = require("../../utils/s3Config-admin");
 
@@ -70,5 +72,11 @@ supportrouter.route("/EditMenu/:menuid").get(authMiddleware, menucontroller.edit
 supportrouter.route("/UpdateMenuStatus/:menuid").put(authMiddleware, menucontroller.update_menu_status);
 supportrouter.route("/UpdateMenu/:menuid").put(authMiddleware, uploadToS3("menus"), menucontroller.update_menu);
 supportrouter.route("/DeleteMenu/:menuid").delete(authMiddleware, menucontroller.delete_menu);
+
+// Shape Section Routes (Dynamic Shop By Shape Dial)
+supportrouter.route("/GetShapeSection").get(authMiddleware, shapesectioncontroller.get_shape_section);
+supportrouter.route("/GetActiveShapeSection").get(shapesectioncontroller.get_active_shape_section);
+supportrouter.route("/UpdateShapeSection").put(authMiddleware, shapesectioncontroller.update_shape_section);
+supportrouter.route("/UploadShapeAsset").post(authMiddleware, uploadToS3("shapes"), shapesectioncontroller.upload_shape_asset);
 
 module.exports = supportrouter;
