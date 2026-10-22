@@ -9,6 +9,7 @@ const collectionbannercontroller = require("../../controllers/AdminPanel/Support
 const aboutuscontroller = require("../../controllers/AdminPanel/Support/aboutus-controller");
 const menucontroller = require("../../controllers/AdminPanel/Support/menu-controller");
 const shapesectioncontroller = require("../../controllers/AdminPanel/Support/shapesection-controller");
+const couplesectioncontroller = require("../../controllers/AdminPanel/Support/couplesection-controller");
 
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 const { uploadToS3 } = require("../../utils/s3Config-admin");
@@ -78,5 +79,12 @@ supportrouter.route("/GetShapeSection").get(authMiddleware, shapesectioncontroll
 supportrouter.route("/GetActiveShapeSection").get(shapesectioncontroller.get_active_shape_section);
 supportrouter.route("/UpdateShapeSection").put(authMiddleware, shapesectioncontroller.update_shape_section);
 supportrouter.route("/UploadShapeAsset").post(authMiddleware, uploadToS3("shapes"), shapesectioncontroller.upload_shape_asset);
+
+
+// Couple Section Routes (Loved By Couples / Real Love Stories)
+supportrouter.route("/GetCoupleSection").get(authMiddleware, couplesectioncontroller.get_couple_section);
+supportrouter.route("/GetActiveCoupleSection").get(couplesectioncontroller.get_active_couple_section);
+supportrouter.route("/UpdateCoupleSection").put(authMiddleware, couplesectioncontroller.update_couple_section);
+supportrouter.route("/UploadCoupleAsset").post(authMiddleware, uploadToS3("couples"), couplesectioncontroller.upload_couple_asset);
 
 module.exports = supportrouter;
