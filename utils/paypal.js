@@ -4,15 +4,15 @@
  */
 
 const getPayPalCredentials = () => {
-    const clientId = process.env.CLIENT_ID;
-    const clientSecret = process.env.SECRET_KEY;
-    const mode = (process.env.PAYPAL_ENV || "sandbox").toLowerCase();
+    const clientId = process.env.CLIENT_ID || process.env.Client_ID || process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.SECRET_KEY || process.env.Secret_key || process.env.PAYPAL_SECRET_KEY;
+    const mode = (process.env.PAYPAL_ENV || process.env.PAYPAL_MODE || "sandbox").toLowerCase();
     const baseUrl = mode === "live" || mode === "production"
         ? "https://api-m.paypal.com"
         : "https://api-m.sandbox.paypal.com";
 
     if (!clientId || !clientSecret) {
-        throw new Error("PayPal credentials (Client_ID and Secret_key) not found in server environment variables.");
+        throw new Error("PayPal credentials (CLIENT_ID and SECRET_KEY) not found in server environment variables.");
     }
 
     return { clientId: clientId.trim(), clientSecret: clientSecret.trim(), baseUrl, mode };
@@ -45,7 +45,8 @@ const getPayPalAccessToken = async () => {
     const data = await response.json();
     if (!response.ok || !data.access_token) {
         console.error("PayPal OAuth failed:", data);
-        throw new Error(data.error_description || data.message || "Failed to authenticate with PayPal");
+        const detail = data.error_description || data.message || "Failed to authenticate with PayPal";
+        throw new Error(`PayPal Authentication Error: ${detail}`);
     }
 
     cachedToken = data.access_token;
@@ -57,7 +58,7 @@ const getPayPalAccessToken = async () => {
  * Create a PayPal Order with intent CAPTURE
  */
 const createPayPalOrder = async ({ amount, currency = "USD", description = "Gemora Diam Fine Jewelry" }) => {
-    const { baseUrl } = getPayPalCredentials();
+    const { baseUrl, mode } = getPayPalCredentials();
     const accessToken = await getPayPalAccessToken();
 
     const numericAmount = Number(amount);
@@ -95,8 +96,17 @@ const createPayPalOrder = async ({ amount, currency = "USD", description = "Gemo
 
     const order = await response.json();
     if (!response.ok || !order.id) {
-        console.error("PayPal Create Order Failed:", order);
-        throw new Error(order.message || order.details?.[0]?.description || "Failed to create PayPal order");
+        console.error("PayPal Create Order Failed:", JSON.stringify(order, null, 2));
+        const detail = order.details?.[0];
+        let errMsg = order.message || "Failed to create PayPal order";
+        if (detail) {
+            if (detail.issue === "PAYEE_ACCOUNT_RESTRICTED") {
+                errMsg = "Your live PayPal merchant account is restricted by PayPal (PAYEE_ACCOUNT_RESTRICTED). Please complete account verification / KYC / export purpose code in your PayPal Business Dashboard, or switch to Sandbox mode for testing.";
+            } else {
+                errMsg = `${detail.issue ? detail.issue + ": " : ""}${detail.description || ""}`;
+            }
+        }
+        throw new Error(errMsg);
     }
 
     return order;
@@ -123,8 +133,13 @@ const capturePayPalOrder = async (paypalOrderId) => {
 
     const captureData = await response.json();
     if (!response.ok) {
-        console.error("PayPal Capture Failed:", captureData);
-        throw new Error(captureData.message || captureData.details?.[0]?.description || "Failed to capture PayPal payment");
+        console.error("PayPal Capture Failed:", JSON.stringify(captureData, null, 2));
+        const detail = captureData.details?.[0];
+        let errMsg = captureData.message || "Failed to capture PayPal payment";
+        if (detail) {
+            errMsg = `${detail.issue ? detail.issue + ": " : ""}${detail.description || ""}`;
+        }
+        throw new Error(errMsg);
     }
 
     return captureData;

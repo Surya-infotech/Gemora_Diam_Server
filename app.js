@@ -59,7 +59,7 @@ app.use("/User", userrouteradmin);
 app.use("/Customer", customerRouter);
 app.use("/Order", customerRouter);
 
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT;
 
 connectDB().then(() => {
     app.listen(PORT, () => {
