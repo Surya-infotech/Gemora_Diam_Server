@@ -20,7 +20,6 @@ systemrouter.route("/DeleteCurrency/:currencyid").delete(authMiddleware, currenc
 
 // Tax Routes
 systemrouter.route("/GetTaxes").get(authMiddleware, taxcontroller.get_taxes);
-systemrouter.route("/GetActiveTaxes").get(authMiddleware, taxcontroller.get_active_taxes);
 systemrouter.route("/AddTax").post(authMiddleware, taxcontroller.add_tax);
 systemrouter.route("/EditTax/:taxId").get(authMiddleware, taxcontroller.edit_tax);
 systemrouter.route("/UpdateTaxStatus/:taxId").put(authMiddleware, taxcontroller.update_tax_status);

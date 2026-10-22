@@ -53,16 +53,6 @@ const get_taxes = async (_req, res) => {
     }
 };
 
-const get_active_taxes = async (_req, res) => {
-    try {
-        const activeTaxes = await Tax.find({ status: true }).sort({ updatedAt: -1 });
-        return res.status(200).json(activeTaxes);
-    } catch (error) {
-        console.log("Error fetching active taxes:", error);
-        return res.status(500).json({ message: "Server error" });
-    }
-};
-
 const add_tax = async (req, res) => {
     try {
         const { taxname, taxtype, price, taxcomputation, country } = req.body;
@@ -241,4 +231,4 @@ const delete_tax = async (req, res) => {
     }
 };
 
-module.exports = { get_taxes, get_active_taxes, add_tax, edit_tax, update_tax_status, update_tax, delete_tax };
+module.exports = { get_taxes, add_tax, edit_tax, update_tax_status, update_tax, delete_tax };

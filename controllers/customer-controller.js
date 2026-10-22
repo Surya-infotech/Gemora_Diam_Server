@@ -835,24 +835,6 @@ const update_order_status = async (req, res) => {
     }
 };
 
-const delete_order = async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        let query = isNaN(orderId) ? { _id: orderId } : { $or: [{ orderid: Number(orderId) }, { _id: orderId }] };
-        const order = await Order.findOneAndDelete(query);
-        if (!order) {
-            return res.status(404).json({ message: "Order not found" });
-        }
-        return res.status(200).json({
-            message: "Order deleted successfully"
-        });
-    } catch (error) {
-        console.error("Error deleting order:", error);
-        return res.status(500).json({ message: error.message || "Failed to delete order" });
-    }
-};
-
-
 const get_order_details = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -1222,6 +1204,5 @@ module.exports = {
     get_customer_orders,
     get_orders_by_fiscal_year,
     get_order_details,
-    update_order_status,
-    delete_order
+    update_order_status
 };
