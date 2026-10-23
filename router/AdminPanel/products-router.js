@@ -13,6 +13,7 @@ productsrouter.route("/UpdateItem/:itemid").put(authMiddleware, itemcontroller.u
 productsrouter.route("/DeleteItem/:itemid").delete(authMiddleware, itemcontroller.delete_item);
 productsrouter.route("/UpdateItemPrice/:itemid").put(authMiddleware, itemcontroller.update_item_price);
 productsrouter.route("/UpdateItemStatus/:itemid").put(authMiddleware, itemcontroller.update_item_status);
+productsrouter.route("/UpdateItemSeo/:itemid").put(authMiddleware, itemcontroller.update_item_seo);
 
 // Item Gallery routes
 productsrouter.route("/GetItemGalleryImages/:itemid").get(authMiddleware, itemcontroller.get_item_gallery_images);

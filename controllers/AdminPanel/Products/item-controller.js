@@ -1049,6 +1049,56 @@ const delete_item_video = async (req, res) => {
     }
 };
 
+
+const update_item_seo = async (req, res) => {
+    const { itemid } = req.params;
+    const {
+        metaTitle,
+        metaDescription,
+        metaKeywords,
+        slug,
+        canonicalUrl
+    } = req.body;
+
+    try {
+        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
+        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
+        const existingItem = await Item.findOne(query);
+
+        if (!existingItem) {
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        let formattedSlug = slug !== undefined ? String(slug).trim() : (existingItem.seo?.slug || "");
+        if (formattedSlug) {
+            formattedSlug = formattedSlug
+                .toLowerCase()
+                .replace(/[^a-z0-9-/]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+        }
+
+        existingItem.seo = {
+            metaTitle: metaTitle !== undefined ? String(metaTitle).trim() : (existingItem.seo?.metaTitle || ""),
+            metaDescription: metaDescription !== undefined ? String(metaDescription).trim() : (existingItem.seo?.metaDescription || ""),
+            metaKeywords: metaKeywords !== undefined ? String(metaKeywords).trim() : (existingItem.seo?.metaKeywords || ""),
+            slug: formattedSlug,
+            canonicalUrl: canonicalUrl !== undefined ? String(canonicalUrl).trim() : (existingItem.seo?.canonicalUrl || "")
+        };
+
+        existingItem.updatedAt = new Date().toISOString();
+        await existingItem.save();
+
+        return res.status(200).json({
+            message: "SEO Marketing content updated successfully",
+            item: existingItem
+        });
+    } catch (error) {
+        console.error("Error updating item SEO:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
 module.exports = {
     get_items,
     get_active_items,
@@ -1063,5 +1113,6 @@ module.exports = {
     delete_item_gallery_image,
     upload_item_video,
     delete_item_video,
-    upload_item_videos
+    upload_item_videos,
+    update_item_seo
 };

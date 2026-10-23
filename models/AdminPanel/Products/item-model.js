@@ -120,6 +120,13 @@ const itemSchema = new mongoose.Schema({
             createdAt: { type: String }
         }
     ],
+    seo: {
+        metaTitle: { type: String, default: "" },
+        metaDescription: { type: String, default: "" },
+        metaKeywords: { type: String, default: "" },
+        slug: { type: String, default: "" },
+        canonicalUrl: { type: String, default: "" }
+    },
     status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' },
     createdAt: { type: String, required: true },
     updatedAt: { type: String, required: true }
