@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PayPal REST API v2 Utility for Gemora Diam Atelier
  * Supports both Sandbox and Live environments
  */
@@ -58,7 +58,7 @@ const getPayPalAccessToken = async () => {
  * Create a PayPal Order with intent CAPTURE
  */
 const createPayPalOrder = async ({ amount, currency = "USD", description = "Gemora Diam Fine Jewelry" }) => {
-    const { baseUrl, mode } = getPayPalCredentials();
+    const { baseUrl } = getPayPalCredentials();
     const accessToken = await getPayPalAccessToken();
 
     const numericAmount = Number(amount);

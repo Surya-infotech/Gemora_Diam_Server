@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const supportrouter = express.Router();
 const contactuscontroller = require("../../controllers/AdminPanel/Support/contactus-controller");
 const subscribercontroller = require("../../controllers/AdminPanel/Support/subscriber-controller");
@@ -63,7 +63,6 @@ supportrouter.route("/DeleteCollectionBanner/:bannerid").delete(authMiddleware, 
 supportrouter.route("/GetAboutUs").get(authMiddleware, aboutuscontroller.get_about_us);
 supportrouter.route("/GetActiveAboutUs").get(aboutuscontroller.get_active_about_us);
 supportrouter.route("/UpdateAboutUs").put(authMiddleware, uploadToS3("aboutus"), aboutuscontroller.update_about_us);
-supportrouter.route("/AddAboutUs").post(authMiddleware, uploadToS3("aboutus"), aboutuscontroller.update_about_us);
 
 
 // Menu Routes (Dynamic Mega Menu)
