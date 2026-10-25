@@ -19,7 +19,6 @@ const menuColumnSchema = new mongoose.Schema({
 const menuSchema = new mongoose.Schema({
     menuid: { type: Number, required: true },
     title: { type: String, required: true },
-    slug: { type: String, required: true },
     order: { type: Number, default: 1 },
     status: { type: Boolean, default: true },
     column1: { type: menuColumnSchema, default: () => ({}) },

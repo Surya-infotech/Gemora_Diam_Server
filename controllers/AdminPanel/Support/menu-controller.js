@@ -34,7 +34,7 @@ const get_active_menus = async (_req, res) => {
 
 const add_menu = async (req, res) => {
     try {
-        const { title, slug, order, column1, column2, column3, banner, bottomBar } = req.body;
+        const { title, order, column1, column2, column3, banner, bottomBar } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({ message: "Menu title is required" });
@@ -42,8 +42,6 @@ const add_menu = async (req, res) => {
 
         const maxItem = await Menu.findOne().sort({ menuid: -1 });
         const nextId = maxItem ? parseInt(maxItem.menuid) + 1 : 1;
-
-        const resolvedSlug = slug && slug.trim() ? (slug.startsWith("/") ? slug.trim() : "/" + slug.trim()) : "/" + slugify(title);
 
         const bannerObj = typeof banner === "string" ? JSON.parse(banner) : (banner || {});
         if (req.file) {
@@ -59,7 +57,6 @@ const add_menu = async (req, res) => {
         const newMenu = new Menu({
             menuid: nextId,
             title: title.trim(),
-            slug: resolvedSlug,
             order: order ? Number(order) : nextId,
             status: true,
             column1: col1Obj,
@@ -97,7 +94,7 @@ const edit_menu = async (req, res) => {
 const update_menu = async (req, res) => {
     try {
         const { menuid } = req.params;
-        const { title, slug, order, status, column1, column2, column3, banner, bottomBar } = req.body;
+        const { title, order, status, column1, column2, column3, banner, bottomBar } = req.body;
 
         const query = isNaN(menuid) ? { _id: menuid } : { menuid: parseInt(menuid) };
         const existing = await Menu.findOne(query);
@@ -106,11 +103,6 @@ const update_menu = async (req, res) => {
         }
 
         if (title) existing.title = title.trim();
-        if (slug) {
-            existing.slug = slug.startsWith("/") ? slug.trim() : "/" + slug.trim();
-        } else if (title) {
-            existing.slug = "/" + slugify(title);
-        }
         if (order !== undefined) existing.order = Number(order);
         if (status !== undefined) existing.status = Boolean(status);
 
