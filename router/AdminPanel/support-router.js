@@ -10,7 +10,6 @@ const aboutuscontroller = require("../../controllers/AdminPanel/Support/aboutus-
 const menucontroller = require("../../controllers/AdminPanel/Support/menu-controller");
 const shapesectioncontroller = require("../../controllers/AdminPanel/Support/shapesection-controller");
 const couplesectioncontroller = require("../../controllers/AdminPanel/Support/couplesection-controller");
-const promisesectioncontroller = require("../../controllers/AdminPanel/Support/promisesection-controller");
 
 const { authMiddleware } = require("../../middlewares/auth-middleware");
 const { uploadToS3 } = require("../../utils/s3Config-admin");
@@ -88,10 +87,5 @@ supportrouter.route("/UpdateCoupleSection").put(authMiddleware, couplesectioncon
 supportrouter.route("/UploadCoupleAsset").post(authMiddleware, uploadToS3("couples"), couplesectioncontroller.upload_couple_asset);
 
 
-// Promise & Vow Section Routes (Two rings. One forever.)
-supportrouter.route("/GetPromiseSection").get(authMiddleware, promisesectioncontroller.get_promise_section);
-supportrouter.route("/GetActivePromiseSection").get(promisesectioncontroller.get_active_promise_section);
-supportrouter.route("/UpdatePromiseSection").put(authMiddleware, promisesectioncontroller.update_promise_section);
-supportrouter.route("/UploadPromiseAsset").post(authMiddleware, uploadToS3("promise"), promisesectioncontroller.upload_promise_asset);
 
 module.exports = supportrouter;
