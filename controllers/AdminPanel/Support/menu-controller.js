@@ -1,16 +1,6 @@
 const Menu = require("../../../models/AdminPanel/Support/menu-model");
 const { deleteImageFromS3 } = require("../../../utils/s3Config-admin");
 
-function slugify(text) {
-    if (!text) return "";
-    return text
-        .toString()
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w\-]+/g, "")
-        .replace(/\-\-+/g, "-");
-}
 
 const get_menus = async (_req, res) => {
     try {

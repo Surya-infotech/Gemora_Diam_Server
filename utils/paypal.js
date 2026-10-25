@@ -147,7 +147,6 @@ const capturePayPalOrder = async (paypalOrderId) => {
 
 module.exports = {
     getPayPalCredentials,
-    getPayPalAccessToken,
     createPayPalOrder,
     capturePayPalOrder
 };

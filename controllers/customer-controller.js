@@ -7,6 +7,7 @@ const MiscSetting = require("../models/AdminPanel/System/Setting/miscsetting-mod
 const Currency = require("../models/AdminPanel/System/currency-model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const paypalUtil = require("../utils/paypal");
 
 const signup = async (req, res) => {
     try {
@@ -1094,9 +1095,8 @@ const saveOrderDocument = async ({ req, orderData }) => {
 };
 
 // PayPal controller handlers
-const get_paypal_client_id = async (req, res) => {
+const get_paypal_client_id = async (_req, res) => {
     try {
-        const paypalUtil = require("../utils/paypal");
         const { clientId, mode } = paypalUtil.getPayPalCredentials();
         return res.status(200).json({
             success: true,
@@ -1112,7 +1112,6 @@ const get_paypal_client_id = async (req, res) => {
 const create_paypal_order = async (req, res) => {
     try {
         const { amount, currency = "USD", description } = req.body;
-        const paypalUtil = require("../utils/paypal");
         const order = await paypalUtil.createPayPalOrder({
             amount: Number(amount) || 0,
             currency: currency || "USD",
@@ -1141,7 +1140,6 @@ const capture_paypal_order = async (req, res) => {
             return res.status(400).json({ success: false, message: "Order data is required to finalize order" });
         }
 
-        const paypalUtil = require("../utils/paypal");
         const captureData = await paypalUtil.capturePayPalOrder(paypalOrderId);
 
         // Strict verification: only save order if PayPal status is COMPLETED

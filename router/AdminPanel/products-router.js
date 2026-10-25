@@ -2,7 +2,7 @@ const express = require("express");
 const productsrouter = express.Router();
 const itemcontroller = require("../../controllers/AdminPanel/Products/item-controller");
 const { authMiddleware } = require("../../middlewares/auth-middleware");
-const { multiuploadToS3, uploadVideoToS3, multiuploadVideoToS3 } = require("../../utils/s3Config-admin");
+const { multiuploadToS3, multiuploadVideoToS3 } = require("../../utils/s3Config-admin");
 
 productsrouter.route("/GetItems").get(authMiddleware, itemcontroller.get_items);
 productsrouter.route("/GetActiveItems").get(itemcontroller.get_active_items);
@@ -21,9 +21,7 @@ productsrouter.route("/UploadItemGalleryImages/:itemid").post(authMiddleware, mu
 productsrouter.route("/DeleteItemGalleryImage/:itemid/:imageId").delete(authMiddleware, itemcontroller.delete_item_gallery_image);
 
 // Item Video routes
-productsrouter.route("/UploadItemVideo/:itemid").post(authMiddleware, uploadVideoToS3("item-video"), itemcontroller.upload_item_video);
 productsrouter.route("/UploadItemVideos/:itemid").post(authMiddleware, multiuploadVideoToS3("item-video"), itemcontroller.upload_item_videos);
 productsrouter.route("/DeleteItemVideo/:itemid/:videoId").delete(authMiddleware, itemcontroller.delete_item_video);
-productsrouter.route("/DeleteItemVideo/:itemid").delete(authMiddleware, itemcontroller.delete_item_video);
 
 module.exports = productsrouter;

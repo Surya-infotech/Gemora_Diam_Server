@@ -887,44 +887,6 @@ const delete_item_gallery_image = async (req, res) => {
     }
 };
 
-const upload_item_video = async (req, res) => {
-    try {
-        const { itemid } = req.params;
-        if (!itemid) return res.status(400).json({ message: "Item ID is required" });
-        if (!req.file || !req.file.location) return res.status(400).json({ message: "No video file provided" });
-
-        const isObjectId = mongoose.Types.ObjectId.isValid(itemid);
-        const query = isObjectId ? { _id: itemid } : { itemid: Number(itemid) };
-        const item = await Item.findOne(query);
-
-        if (!item) {
-            if (req.file.location) {
-                await deleteImageFromS3(req.file.location, "item-video");
-            }
-            return res.status(404).json({ message: "Item not found" });
-        }
-
-        if (item.video) {
-            await deleteImageFromS3(item.video, "item-video");
-        }
-
-        item.video = req.file.location;
-        item.updatedAt = new Date().toISOString();
-        await item.save();
-
-        return res.status(200).json({
-            message: "Video uploaded successfully",
-            video: item.video
-        });
-    } catch (error) {
-        console.error("Error uploading item video:", error);
-        if (req.file && req.file.location) {
-            await deleteImageFromS3(req.file.location, "item-video");
-        }
-        return res.status(500).json({ message: "Server error" });
-    }
-};
-
 const upload_item_videos = async (req, res) => {
     try {
         const { itemid } = req.params;
@@ -1111,7 +1073,6 @@ module.exports = {
     get_item_gallery_images,
     upload_item_gallery_images,
     delete_item_gallery_image,
-    upload_item_video,
     delete_item_video,
     upload_item_videos,
     update_item_seo
