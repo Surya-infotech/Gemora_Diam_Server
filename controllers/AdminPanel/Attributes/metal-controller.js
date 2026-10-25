@@ -1,4 +1,5 @@
 const Metal = require("../../../models/AdminPanel/Attributes/metal-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_metals = async (_req, res) => {
@@ -136,6 +137,48 @@ const update_metal = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        // Sync metal update in Item table (both pricing.metalWisePrices and pricing.metalWithStoneDiamondCaratPrices)
+        const targetMetalId = existingSelf.metalid;
+        if (targetMetalId !== undefined && targetMetalId !== null) {
+            const idFilter = [Number(targetMetalId), String(targetMetalId)];
+            await Item.updateMany(
+                {
+                    "pricing.metalWisePrices.metalid": { $in: idFilter }
+                },
+                {
+                    $set: {
+                        "pricing.metalWisePrices.$[mElem].metalname": trimmedName,
+                        "pricing.metalWisePrices.$[mElem].metaltype": trimmedType,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        { "mElem.metalid": { $in: idFilter } }
+                    ]
+                }
+            );
+
+            await Item.updateMany(
+                {
+                    "pricing.metalWithStoneDiamondCaratPrices.metalid": { $in: idFilter }
+                },
+                {
+                    $set: {
+                        "pricing.metalWithStoneDiamondCaratPrices.$[msElem].metalname": trimmedName,
+                        "pricing.metalWithStoneDiamondCaratPrices.$[msElem].metaltype": trimmedType,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        { "msElem.metalid": { $in: idFilter } }
+                    ]
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Metal updated successfully", metal: existingSelf });
     } catch (error) {
         console.error("Error updating metal:", error);
@@ -152,6 +195,33 @@ const delete_metal = async (req, res) => {
 
         if (!deleted) {
             return res.status(404).json({ message: "Metal not found" });
+        }
+
+        // Remove metal details from all items containing this metal in metalWisePrices and metalWithStoneDiamondCaratPrices
+        const deletedMetalId = deleted.metalid;
+        if (deletedMetalId !== undefined && deletedMetalId !== null) {
+            const idFilter = [Number(deletedMetalId), String(deletedMetalId)];
+            await Item.updateMany(
+                {
+                    $or: [
+                        { "pricing.metalWisePrices.metalid": { $in: idFilter } },
+                        { "pricing.metalWithStoneDiamondCaratPrices.metalid": { $in: idFilter } }
+                    ]
+                },
+                {
+                    $pull: {
+                        "pricing.metalWisePrices": {
+                            metalid: { $in: idFilter }
+                        },
+                        "pricing.metalWithStoneDiamondCaratPrices": {
+                            metalid: { $in: idFilter }
+                        }
+                    },
+                    $set: {
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
         }
 
         return res.status(200).json({ message: "Metal deleted successfully" });

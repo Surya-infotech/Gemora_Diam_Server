@@ -134,13 +134,14 @@ const update_stone = async (req, res) => {
 
         await existingSelf.save();
 
-        // Update stone in Item table
+        // Update stone in Item table (both stones list and pricing.metalWithStoneDiamondCaratPrices)
         const targetStoneId = existingSelf.stoneid;
         if (targetStoneId !== undefined && targetStoneId !== null) {
+            const idFilter = [Number(targetStoneId), String(targetStoneId)];
             await Item.updateMany(
                 {
                     "stones.stoneid": {
-                        $in: [Number(targetStoneId), String(targetStoneId)]
+                        $in: idFilter
                     }
                 },
                 {
@@ -153,7 +154,30 @@ const update_stone = async (req, res) => {
                     arrayFilters: [
                         {
                             "elem.stoneid": {
-                                $in: [Number(targetStoneId), String(targetStoneId)]
+                                $in: idFilter
+                            }
+                        }
+                    ]
+                }
+            );
+
+            await Item.updateMany(
+                {
+                    "pricing.metalWithStoneDiamondCaratPrices.stoneid": {
+                        $in: idFilter
+                    }
+                },
+                {
+                    $set: {
+                        "pricing.metalWithStoneDiamondCaratPrices.$[sElem].stonename": trimmedName,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        {
+                            "sElem.stoneid": {
+                                $in: idFilter
                             }
                         }
                     ]
@@ -179,20 +203,27 @@ const delete_stone = async (req, res) => {
             return res.status(404).json({ message: "Stone not found" });
         }
 
-        // Remove stone details from all items containing this stone
+        // Remove stone details from all items containing this stone in stones and pricing
         const deletedStoneId = deleted.stoneid;
         if (deletedStoneId !== undefined && deletedStoneId !== null) {
+            const idFilter = [Number(deletedStoneId), String(deletedStoneId)];
             await Item.updateMany(
                 {
-                    "stones.stoneid": {
-                        $in: [Number(deletedStoneId), String(deletedStoneId)]
-                    }
+                    $or: [
+                        { "stones.stoneid": { $in: idFilter } },
+                        { "pricing.metalWithStoneDiamondCaratPrices.stoneid": { $in: idFilter } }
+                    ]
                 },
                 {
                     $pull: {
                         stones: {
                             stoneid: {
-                                $in: [Number(deletedStoneId), String(deletedStoneId)]
+                                $in: idFilter
+                            }
+                        },
+                        "pricing.metalWithStoneDiamondCaratPrices": {
+                            stoneid: {
+                                $in: idFilter
                             }
                         }
                     },

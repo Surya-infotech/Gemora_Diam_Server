@@ -1,4 +1,5 @@
 const DiamondSize = require("../../../models/AdminPanel/Attributes/diamondsize-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const get_diamond_sizes = async (_req, res) => {
@@ -132,6 +133,29 @@ const update_diamond_size = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        // Sync diamond size update in Item table pricing (pricing.metalWithStoneDiamondCaratPrices.caratPrices)
+        const targetSizeId = existingSelf.diamondsizeid;
+        if (targetSizeId !== undefined && targetSizeId !== null) {
+            const idFilter = [Number(targetSizeId), String(targetSizeId)];
+            await Item.updateMany(
+                {
+                    "pricing.metalWithStoneDiamondCaratPrices.caratPrices.diamondsizeid": { $in: idFilter }
+                },
+                {
+                    $set: {
+                        "pricing.metalWithStoneDiamondCaratPrices.$[].caratPrices.$[cElem].diamondsize": trimmedSize,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                {
+                    arrayFilters: [
+                        { "cElem.diamondsizeid": { $in: idFilter } }
+                    ]
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Diamond Size updated successfully", diamondSize: existingSelf });
     } catch (error) {
         console.error("Error updating diamond size:", error);
@@ -149,6 +173,28 @@ const delete_diamond_size = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Diamond Size not found" });
         }
+
+        // Remove diamond size details from all items containing this diamond size in caratPrices
+        const deletedSizeId = deleted.diamondsizeid;
+        if (deletedSizeId !== undefined && deletedSizeId !== null) {
+            const idFilter = [Number(deletedSizeId), String(deletedSizeId)];
+            await Item.updateMany(
+                {
+                    "pricing.metalWithStoneDiamondCaratPrices.caratPrices.diamondsizeid": { $in: idFilter }
+                },
+                {
+                    $pull: {
+                        "pricing.metalWithStoneDiamondCaratPrices.$[].caratPrices": {
+                            diamondsizeid: { $in: idFilter }
+                        }
+                    },
+                    $set: {
+                        updatedAt: new Date().toISOString()
+                    }
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Diamond Size deleted successfully" });
     } catch (error) {
         console.error("Error deleting diamond size:", error);
