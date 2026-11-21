@@ -1,5 +1,5 @@
 const ContactUs = require("../../../models/AdminPanel/Support/contactus-model");
-const { sendContactUsNotificationEmail } = require("../../../utils/emailService");
+const { sendContactUsNotificationEmail, sendContactUsReplyEmail } = require("../../../utils/emailService");
 
 const get_contactus = async (_req, res) => {
     try {
@@ -114,4 +114,31 @@ const add_contactus = async (req, res) => {
     }
 };
 
-module.exports = { get_contactus, add_contactus };
+const reply_contactus = async (req, res) => {
+    try {
+        const { toEmail, customerName, subject, replyMessage, originalMessage } = req.body;
+
+        if (!toEmail || typeof toEmail !== "string" || !toEmail.trim()) {
+            return res.status(400).json({ message: "Recipient email is required" });
+        }
+
+        if (!replyMessage || typeof replyMessage !== "string" || !replyMessage.trim()) {
+            return res.status(400).json({ message: "Reply message cannot be empty" });
+        }
+
+        await sendContactUsReplyEmail({
+            toEmail: toEmail.trim(),
+            customerName: (customerName || "").trim(),
+            subject: (subject || "Regarding your inquiry - Gemora Diam").trim(),
+            replyMessage: replyMessage.trim(),
+            originalMessage: (originalMessage || "").trim()
+        });
+
+        return res.status(200).json({ message: "Email sent successfully to customer" });
+    } catch (error) {
+        console.log("Error sending reply email:", error);
+        return res.status(500).json({ message: error.message || "Failed to send email" });
+    }
+};
+
+module.exports = { get_contactus, add_contactus, reply_contactus };

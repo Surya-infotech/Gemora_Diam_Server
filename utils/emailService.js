@@ -461,6 +461,61 @@ const sendSubscriberNotificationEmail = async (subscriber) => {
 };
 
 /**
+ * Sends a reply email from the admin to the customer who submitted a Contact Us form.
+ */
+const sendContactUsReplyEmail = async ({ toEmail, customerName, subject, replyMessage, originalMessage }) => {
+    try {
+        if (!toEmail) throw new Error("Recipient email is required");
+
+        const transporter = getTransporter();
+
+        const formattedReply = (replyMessage || "").replace(/\n/g, "<br/>");
+        const formattedOriginal = (originalMessage || "").replace(/\n/g, "<br/>");
+
+        const contentHtml = `
+            <div style="margin-bottom: 24px;">
+                <h2 style="margin: 0 0 6px; font-size: 18px; color: #f9fafb;">Response to Your Inquiry</h2>
+                <p style="margin: 0; font-size: 14px; color: #9ca3af;">Dear <strong>${customerName || "Valued Customer"}</strong>,</p>
+            </div>
+
+            <div class="card" style="background-color: #12151c; border-left: 3px solid #d4af37; padding: 18px 20px; margin-bottom: 24px; border-radius: 6px;">
+                <p style="margin: 0; font-size: 14.5px; line-height: 1.7; color: #f3f4f6;">${formattedReply}</p>
+            </div>
+
+            ${originalMessage ? `
+            <div style="margin-top: 24px; border-top: 1px solid #2d333f; padding-top: 18px;">
+                <p style="margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 600;">Your Original Inquiry:</p>
+                <div style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2d333f; border-radius: 6px; padding: 12px 16px;">
+                    <p style="margin: 0; font-size: 13px; color: #9ca3af; line-height: 1.6; font-style: italic;">${formattedOriginal}</p>
+                </div>
+            </div>
+            ` : ""}
+
+            <div style="margin-top: 30px; border-top: 1px solid #2d333f; padding-top: 20px; font-size: 13px; color: #9ca3af;">
+                <p style="margin: 0;">Warm regards,<br/><strong style="color: #d4af37;">Gemora Diam Customer Care Team</strong></p>
+            </div>
+        `;
+
+        const mailOptions = {
+            from: getSenderHeader(),
+            to: toEmail,
+            subject: subject || "Regarding your inquiry - Gemora Diam",
+            html: wrapEmailTemplate({
+                title: subject || "Regarding your inquiry - Gemora Diam",
+                preheader: replyMessage ? replyMessage.substring(0, 100) : "Gemora Diam Atelier Response",
+                contentHtml
+            })
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        return info;
+    } catch (error) {
+        console.error("Error in sendContactUsReplyEmail:", error);
+        throw error;
+    }
+};
+
+/**
  * Utility to verify SMTP connection configuration.
  */
 const verifyEmailConnection = async () => {
@@ -476,6 +531,7 @@ const verifyEmailConnection = async () => {
 module.exports = {
     sendOrderNotificationEmail,
     sendContactUsNotificationEmail,
+    sendContactUsReplyEmail,
     sendSubscriberNotificationEmail,
     verifyEmailConnection
 };

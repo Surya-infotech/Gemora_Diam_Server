@@ -17,6 +17,7 @@ const { uploadToS3 } = require("../../utils/s3Config-admin");
 // Contact Us Routes
 supportrouter.route("/GetContactUs").get(authMiddleware, contactuscontroller.get_contactus);
 supportrouter.route("/AddContactUs").post(contactuscontroller.add_contactus);
+supportrouter.route("/SendContactUsReply").post(authMiddleware, contactuscontroller.reply_contactus);
 
 // Newsletter Subscriber Routes
 supportrouter.route("/SubscribeNewsletter").post(subscribercontroller.subscribe_newsletter);
