@@ -561,10 +561,6 @@ const sendUnreadChatEmailToAdmin = async ({ conversation, unreadMessages, unread
                         <td class="label">Phone:</td>
                         <td class="value">${conversation.customerPhone}</td>
                     </tr>` : ""}
-                    <tr>
-                        <td class="label">Conversation ID:</td>
-                        <td class="value" style="font-family: monospace; font-size: 12px; color: #d4af37;">${conversation.conversationId}</td>
-                    </tr>
                 </table>
             </div>
 
@@ -585,7 +581,7 @@ const sendUnreadChatEmailToAdmin = async ({ conversation, unreadMessages, unread
         const mailOptions = {
             from: getSenderHeader(),
             to: adminEmail,
-            subject: `⏳ Unread Chat: ${customerName} has been waiting for 5 min (${conversation.conversationId})`,
+            subject: `⏳ Unread Chat: ${customerName} has been waiting for 5 min`,
             html: wrapEmailTemplate({
                 title: "Unread Customer Chat Alert",
                 preheader: `Customer ${customerName} is waiting for response: "${lastMsg.substring(0, 80)}"`,
