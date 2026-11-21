@@ -332,8 +332,7 @@ const sendContactUsNotificationEmail = async (contact) => {
 
         const contentHtml = `
             <div style="margin-bottom: 20px;">
-                <span class="badge badge-gold">Inquiry #${contact.contactusid || ""}</span>
-                <h2 style="margin: 8px 0 4px; font-size: 18px; color: #f9fafb;">📩 New Contact Us Message Received</h2>
+                <h2 style="margin: 0 0 4px; font-size: 18px; color: #f9fafb;">📩 New Contact Us Message Received</h2>
                 <p style="margin: 0; font-size: 13px; color: #9ca3af;">A new message was submitted via the website contact form.</p>
             </div>
 
