@@ -322,10 +322,9 @@ const sendOrderNotificationEmail = async (order) => {
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log(`[EmailService] Order notification email sent to ${adminEmail} (MsgId: ${info.messageId})`);
         return info;
     } catch (error) {
-        console.error("[EmailService] Failed to send order notification email:", error);
+        // Silent error handling to keep console logs clean
     }
 };
 
@@ -395,10 +394,9 @@ const sendContactUsNotificationEmail = async (contact) => {
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log(`[EmailService] Contact Us notification email sent to ${adminEmail} (MsgId: ${info.messageId})`);
         return info;
     } catch (error) {
-        console.error("[EmailService] Failed to send Contact Us notification email:", error);
+        // Silent error handling to keep console logs clean
     }
 };
 
@@ -456,10 +454,9 @@ const sendSubscriberNotificationEmail = async (subscriber) => {
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log(`[EmailService] Subscriber notification email sent to ${adminEmail} (MsgId: ${info.messageId})`);
         return info;
     } catch (error) {
-        console.error("[EmailService] Failed to send subscriber notification email:", error);
+        // Silent error handling to keep console logs clean
     }
 };
 

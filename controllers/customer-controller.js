@@ -704,9 +704,7 @@ const create_order = async (req, res) => {
         await newOrder.save();
 
         // Send email notification to admin asynchronously (non-blocking)
-        sendOrderNotificationEmail(newOrder).catch((err) =>
-            console.error("Failed to send Order notification email:", err)
-        );
+        sendOrderNotificationEmail(newOrder).catch(() => {});
 
         return res.status(201).json({
             message: "Order placed successfully",
@@ -1099,9 +1097,7 @@ const saveOrderDocument = async ({ req, orderData }) => {
     await newOrder.save();
 
     // Send email notification to admin asynchronously (non-blocking)
-    sendOrderNotificationEmail(newOrder).catch((err) =>
-        console.error("Failed to send Order notification email:", err)
-    );
+    sendOrderNotificationEmail(newOrder).catch(() => {});
 
     return newOrder;
 };

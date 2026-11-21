@@ -105,9 +105,7 @@ const add_contactus = async (req, res) => {
         await newContactUs.save();
 
         // Send email notification to admin asynchronously (non-blocking)
-        sendContactUsNotificationEmail(newContactUs).catch((err) =>
-            console.error("Failed to send Contact Us notification email:", err)
-        );
+        sendContactUsNotificationEmail(newContactUs).catch(() => {});
 
         return res.status(201).json({ message: "Contact us submitted successfully", contactus: newContactUs });
     } catch (error) {
