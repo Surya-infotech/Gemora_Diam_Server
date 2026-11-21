@@ -20,7 +20,7 @@ const initiate_conversation = async (req, res) => {
         let numericCustomerId = customer?.customerid;
         let customerDocId = customer?._id;
 
-        // Try to locate existing open conversation
+        // Try to locate existing conversation
         let conversation = null;
 
         if (customerDocId || numericCustomerId) {
@@ -28,17 +28,15 @@ const initiate_conversation = async (req, res) => {
                 $or: [
                     { customer: customerDocId },
                     { customerId: numericCustomerId }
-                ],
-                status: "open"
+                ]
             }).sort({ lastMessageAt: -1 });
         } else if (guestId) {
             conversation = await ChatConversation.findOne({
-                guestId: String(guestId).trim(),
-                status: "open"
+                guestId: String(guestId).trim()
             }).sort({ lastMessageAt: -1 });
         }
 
-        // If no open conversation, create a new one
+        // If no conversation, create a new one
         if (!conversation) {
             const finalName = name || customer?.fullname || "Visitor";
             const finalEmail = email || customer?.email || (guestId ? `guest_${guestId.substring(0, 8)}@gemoradiam.com` : "visitor@gemoradiam.com");
@@ -54,7 +52,6 @@ const initiate_conversation = async (req, res) => {
                 customerName: finalName,
                 customerEmail: finalEmail,
                 customerPhone: finalPhone,
-                status: "open",
                 lastMessage: initialMessage ? initialMessage.trim() : "Conversation started",
                 lastMessageAt: new Date(),
                 lastMessageSender: customerDocId || guestId ? "customer" : "system",
@@ -197,10 +194,6 @@ const send_message_http = async (req, res) => {
             $inc: isCustomerSide ? { unreadCountAdmin: 1 } : { unreadCountCustomer: 1 }
         };
 
-        if (isCustomerSide) {
-            updateQuery.$set.status = "open";
-        }
-
         const updatedConv = await ChatConversation.findOneAndUpdate(
             { conversationId },
             updateQuery,
@@ -268,16 +261,12 @@ const upload_attachment = async (req, res) => {
  */
 const get_admin_conversations = async (req, res) => {
     try {
-        const { status = "all", search = "" } = req.query;
+        const { search = "" } = req.query;
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
         const skip = (page - 1) * limit;
 
         const filter = {};
-
-        if (status && status !== "all") {
-            filter.status = status;
-        }
 
         if (search && search.trim()) {
             const regex = new RegExp(search.trim(), "i");
@@ -312,52 +301,15 @@ const get_admin_conversations = async (req, res) => {
 };
 
 /**
- * Toggle conversation status (open / closed).
+ * Toggle conversation status (kept for backwards compatibility).
  */
 const update_conversation_status = async (req, res) => {
     try {
-        const { conversationId } = req.params;
-        const { status } = req.body; // "open" | "closed"
-
-        if (!conversationId || !["open", "closed"].includes(status)) {
-            return res.status(400).json({ success: false, message: "Valid conversationId and status ('open' | 'closed') are required" });
-        }
-
-        const conversation = await ChatConversation.findOneAndUpdate(
-            { conversationId },
-            {
-                $set: {
-                    status,
-                    updatedAt: new Date().toISOString()
-                }
-            },
-            { new: true }
-        );
-
-        if (!conversation) {
-            return res.status(404).json({ success: false, message: "Conversation not found" });
-        }
-
-        // Notify room
-        const io = getIO();
-        if (io) {
-            io.to(`conversation_${conversationId}`).emit("conversation_status_changed", {
-                conversationId,
-                status
-            });
-            io.to("admin_support_channel").emit("admin_inbox_updated", {
-                conversationId,
-                status
-            });
-        }
-
         return res.status(200).json({
             success: true,
-            message: `Conversation marked as ${status}`,
-            conversation
+            message: "Status updated"
         });
     } catch (error) {
-        console.error("Error updating conversation status:", error);
         return res.status(500).json({ success: false, message: "Failed to update status" });
     }
 };
@@ -368,7 +320,6 @@ const update_conversation_status = async (req, res) => {
 const get_admin_unread_count = async (_req, res) => {
     try {
         const result = await ChatConversation.aggregate([
-            { $match: { status: "open" } },
             { $group: { _id: null, totalUnread: { $sum: "$unreadCountAdmin" } } }
         ]);
 

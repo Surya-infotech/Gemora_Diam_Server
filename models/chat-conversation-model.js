@@ -61,9 +61,7 @@ const chatConversationSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["open", "closed"],
-        default: "open",
-        index: true
+        default: ""
     },
     assignedAdmin: {
         type: mongoose.Schema.Types.ObjectId,
@@ -84,8 +82,8 @@ const chatConversationSchema = new mongoose.Schema({
     }
 });
 
-chatConversationSchema.index({ customerId: 1, status: 1 });
-chatConversationSchema.index({ guestId: 1, status: 1 });
+chatConversationSchema.index({ customerId: 1 });
+chatConversationSchema.index({ guestId: 1 });
 
 const ChatConversation = mongoose.models.ChatConversation || mongoose.model("ChatConversation", chatConversationSchema);
 

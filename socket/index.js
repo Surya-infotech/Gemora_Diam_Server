@@ -100,11 +100,6 @@ const initSocketServer = (httpServer, corsOptions) => {
                     $inc: isCustomerSide ? { unreadCountAdmin: 1 } : { unreadCountCustomer: 1 }
                 };
 
-                // If closed and customer speaks, reopen the conversation
-                if (isCustomerSide) {
-                    updateQuery.$set.status = "open";
-                }
-
                 const updatedConv = await ChatConversation.findOneAndUpdate(
                     { conversationId },
                     updateQuery,
