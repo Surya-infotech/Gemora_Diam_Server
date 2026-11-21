@@ -20,6 +20,46 @@ const resolveCountryFromCode = (code) => {
     }
 };
 
+const lookupCountryFromIp = async (ip) => {
+    // 1. Try BigDataCloud
+    try {
+        const cleanIp = ip && !["127.0.0.1", "::1", "localhost"].includes(ip) ? `&ip=${ip}` : "";
+        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en${cleanIp}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.countryName) {
+                return { countryname: data.countryName, countrycode: data.countryCode || "" };
+            }
+        }
+    } catch {}
+
+    // 2. Try ipwho.is
+    try {
+        const cleanIp = ip && !["127.0.0.1", "::1", "localhost"].includes(ip) ? ip : "";
+        const res = await fetch(cleanIp ? `https://ipwho.is/${cleanIp}` : "https://ipwho.is/");
+        if (res.ok) {
+            const data = await res.json();
+            if (data.country) {
+                return { countryname: data.country, countrycode: data.country_code || "" };
+            }
+        }
+    } catch {}
+
+    // 3. Try freeipapi
+    try {
+        const cleanIp = ip && !["127.0.0.1", "::1", "localhost"].includes(ip) ? cleanIp : "";
+        const res = await fetch(cleanIp ? `https://freeipapi.com/api/json/${cleanIp}` : "https://freeipapi.com/api/json/");
+        if (res.ok) {
+            const data = await res.json();
+            if (data.countryName) {
+                return { countryname: data.countryName, countrycode: data.countryCode || "" };
+            }
+        }
+    } catch {}
+
+    return null;
+};
+
 const add_contactus = async (req, res) => {
     try {
         const { name, email, message, countryname, countrycode, country } = req.body;
@@ -36,7 +76,7 @@ const add_contactus = async (req, res) => {
             resolvedCountryName = resolveCountryFromCode(resolvedCountryCode);
         }
 
-        // Server-side fallback: check Cloudflare or forwarder headers
+        // Server-side fallback: check Cloudflare, forwarder headers, or IP lookup
         if (!resolvedCountryName) {
             const cfCountry = req.headers["cf-ipcountry"];
             const headerCountry = req.headers["x-country-name"] || req.headers["x-country"];
@@ -45,6 +85,14 @@ const add_contactus = async (req, res) => {
                 resolvedCountryName = resolveCountryFromCode(cfCountry.trim());
             } else if (headerCountry) {
                 resolvedCountryName = String(headerCountry).trim();
+            } else {
+                const forwarded = req.headers["x-forwarded-for"];
+                const clientIp = forwarded ? forwarded.split(",")[0].trim() : (req.socket?.remoteAddress || "");
+                const lookup = await lookupCountryFromIp(clientIp);
+                if (lookup?.countryname) {
+                    resolvedCountryName = lookup.countryname;
+                    resolvedCountryCode = lookup.countrycode || resolvedCountryCode;
+                }
             }
         }
 
