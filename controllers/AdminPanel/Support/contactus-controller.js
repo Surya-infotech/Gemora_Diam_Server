@@ -28,7 +28,7 @@ const lookupCountryFromIp = async (ip) => {
         if (res.ok) {
             const data = await res.json();
             if (data.countryName) {
-                return { countryname: data.countryName, countrycode: data.countryCode || "" };
+                return data.countryName;
             }
         }
     } catch {}
@@ -40,7 +40,7 @@ const lookupCountryFromIp = async (ip) => {
         if (res.ok) {
             const data = await res.json();
             if (data.country) {
-                return { countryname: data.country, countrycode: data.country_code || "" };
+                return data.country;
             }
         }
     } catch {}
@@ -52,46 +52,38 @@ const lookupCountryFromIp = async (ip) => {
         if (res.ok) {
             const data = await res.json();
             if (data.countryName) {
-                return { countryname: data.countryName, countrycode: data.countryCode || "" };
+                return data.countryName;
             }
         }
     } catch {}
 
-    return null;
+    return "";
 };
 
 const add_contactus = async (req, res) => {
     try {
-        const { name, email, message, countryname, countrycode, country } = req.body;
+        const { name, email, message, countryname, country } = req.body;
 
         if (!name || !email || !message) {
             return res.status(400).json({ message: "Full name, email and message are required" });
         }
 
         let resolvedCountryName = (countryname || country || "").trim();
-        let resolvedCountryCode = (countrycode || "").trim();
-
-        // If code given but name empty, convert code to name
-        if (!resolvedCountryName && resolvedCountryCode) {
-            resolvedCountryName = resolveCountryFromCode(resolvedCountryCode);
-        }
 
         // Server-side fallback: check Cloudflare, forwarder headers, or IP lookup
         if (!resolvedCountryName) {
             const cfCountry = req.headers["cf-ipcountry"];
             const headerCountry = req.headers["x-country-name"] || req.headers["x-country"];
             if (cfCountry && cfCountry !== "XX" && cfCountry !== "T1") {
-                resolvedCountryCode = resolvedCountryCode || cfCountry.trim();
                 resolvedCountryName = resolveCountryFromCode(cfCountry.trim());
             } else if (headerCountry) {
                 resolvedCountryName = String(headerCountry).trim();
             } else {
                 const forwarded = req.headers["x-forwarded-for"];
                 const clientIp = forwarded ? forwarded.split(",")[0].trim() : (req.socket?.remoteAddress || "");
-                const lookup = await lookupCountryFromIp(clientIp);
-                if (lookup?.countryname) {
-                    resolvedCountryName = lookup.countryname;
-                    resolvedCountryCode = lookup.countrycode || resolvedCountryCode;
+                const lookupName = await lookupCountryFromIp(clientIp);
+                if (lookupName) {
+                    resolvedCountryName = lookupName;
                 }
             }
         }
@@ -105,7 +97,6 @@ const add_contactus = async (req, res) => {
             email: email.trim(),
             message: message.trim(),
             countryname: resolvedCountryName,
-            countrycode: resolvedCountryCode,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         });

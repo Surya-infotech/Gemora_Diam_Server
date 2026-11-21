@@ -6,7 +6,6 @@ const contactusSchema = new mongoose.Schema({
     email: { type: String, required: true },
     message: { type: String, required: true },
     countryname: { type: String, default: "" },
-    countrycode: { type: String, default: "" },
     createdAt: { type: String, required: true },
     updatedAt: { type: String, required: true }
 });
