@@ -423,10 +423,6 @@ const sendSubscriberNotificationEmail = async (subscriber) => {
             <div class="card">
                 <table class="data-table">
                     <tr>
-                        <td class="label">Subscriber ID:</td>
-                        <td class="value">#${subscriber.subscriberid || "N/A"}</td>
-                    </tr>
-                    <tr>
                         <td class="label">Subscriber Email:</td>
                         <td class="value">
                             <strong style="color: #d4af37; font-size: 14px;">${subscriber.email}</strong>
