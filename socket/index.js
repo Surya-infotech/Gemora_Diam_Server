@@ -1,6 +1,7 @@
 const { Server } = require("socket.io");
 const ChatConversation = require("../models/chat-conversation-model");
 const ChatMessage = require("../models/chat-message-model");
+const { scheduleUnreadCheck, cancelUnreadCheck } = require("../utils/chatNotificationScheduler");
 
 let io = null;
 
@@ -114,6 +115,12 @@ const initSocketServer = (httpServer, corsOptions) => {
                     conversationId
                 });
 
+                // Schedule email notification if recipient does not read within 5 minutes
+                scheduleUnreadCheck({
+                    conversationId,
+                    senderType: newMessage.senderType
+                });
+
                 // If sent by customer/guest, notify all admins on the support dashboard
                 if (isCustomerSide) {
                     io.to("admin_support_channel").emit("notify_admin_inbox", {
@@ -181,6 +188,9 @@ const initSocketServer = (httpServer, corsOptions) => {
                     { conversationId },
                     { $set: resetUnread }
                 );
+
+                // Cancel pending 5-minute unread email alert since recipient read the messages
+                cancelUnreadCheck(conversationId, readerType);
 
                 const roomName = `conversation_${conversationId}`;
                 io.to(roomName).emit("messages_read", {

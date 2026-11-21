@@ -2,6 +2,7 @@ const ChatConversation = require("../models/chat-conversation-model");
 const ChatMessage = require("../models/chat-message-model");
 const Customer = require("../models/customer-model");
 const { getIO } = require("../socket");
+const { scheduleUnreadCheck, cancelUnreadCheck } = require("../utils/chatNotificationScheduler");
 
 /**
  * Initiate or resume a conversation for a customer or guest visitor.
@@ -77,6 +78,12 @@ const initiate_conversation = async (req, res) => {
                     createdAt: new Date()
                 });
                 await firstMsg.save();
+
+                // Schedule 5-minute unread email alert
+                scheduleUnreadCheck({
+                    conversationId: conversation.conversationId,
+                    senderType: firstMsg.senderType
+                });
 
                 // Alert admin support room
                 const io = getIO();
@@ -245,6 +252,12 @@ const send_message_http = async (req, res) => {
         });
 
         await newMessage.save();
+
+        // Schedule 5-minute unread email alert
+        scheduleUnreadCheck({
+            conversationId,
+            senderType: newMessage.senderType
+        });
 
         const isCustomerSide = newMessage.senderType === "customer" || newMessage.senderType === "guest";
         const displayMsg = messageType === "image" ? "📷 Image" : message;

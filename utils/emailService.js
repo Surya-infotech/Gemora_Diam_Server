@@ -516,6 +516,160 @@ const sendContactUsReplyEmail = async ({ toEmail, customerName, subject, replyMe
 };
 
 /**
+ * Sends an email notification to Admin when a customer sent message(s) that remain unread after 5 minutes.
+ */
+const sendUnreadChatEmailToAdmin = async ({ conversation, unreadMessages, unreadCount }) => {
+    try {
+        if (!conversation) return;
+        const transporter = getTransporter();
+        const adminEmail = getAdminEmail();
+        const adminPanelUrl = process.env.ADMIN_PANEL_URL || "https://gemoraadminstone.gemoradiam.com";
+
+        const count = unreadCount || unreadMessages?.length || 1;
+        const customerName = conversation.customerName || "Customer";
+        const customerEmail = conversation.customerEmail || "Not provided";
+        const lastMsg = unreadMessages?.[unreadMessages.length - 1]?.message || conversation.lastMessage || "New message";
+
+        const messagesListHtml = (unreadMessages || []).map((m) => `
+            <div style="background-color: #12151c; border-left: 3px solid #d4af37; padding: 10px 14px; margin-bottom: 8px; border-radius: 4px;">
+                <p style="margin: 0; font-size: 13.5px; color: #f3f4f6;">${m.messageType === "image" ? "📷 [Photo Attachment]" : m.message}</p>
+                <span style="font-size: 11px; color: #6b7280;">Sent at ${new Date(m.createdAt || Date.now()).toLocaleTimeString()}</span>
+            </div>
+        `).join("");
+
+        const contentHtml = `
+            <div style="margin-bottom: 20px;">
+                <span class="badge badge-gold">Unread Live Chat Alert</span>
+                <h2 style="margin: 8px 0 4px; font-size: 18px; color: #f9fafb;">⏳ Customer Waiting on Live Chat (5+ min)</h2>
+                <p style="margin: 0; font-size: 13px; color: #9ca3af;">
+                    <strong>${customerName}</strong> sent ${count > 1 ? `${count} messages` : "a message"} that has not been read for more than 5 minutes.
+                </p>
+            </div>
+
+            <div class="card">
+                <table class="data-table">
+                    <tr>
+                        <td class="label">Customer Name:</td>
+                        <td class="value"><strong>${customerName}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Email:</td>
+                        <td class="value"><a href="mailto:${customerEmail}" style="color: #60a5fa; text-decoration: none;">${customerEmail}</a></td>
+                    </tr>
+                    ${conversation.customerPhone ? `
+                    <tr>
+                        <td class="label">Phone:</td>
+                        <td class="value">${conversation.customerPhone}</td>
+                    </tr>` : ""}
+                    <tr>
+                        <td class="label">Conversation ID:</td>
+                        <td class="value" style="font-family: monospace; font-size: 12px; color: #d4af37;">${conversation.conversationId}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3 style="margin: 16px 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #d4af37;">Unread Message(s)</h3>
+            ${messagesListHtml || `
+            <div style="background-color: #12151c; border-left: 3px solid #d4af37; padding: 12px 16px; border-radius: 4px;">
+                <p style="margin: 0; font-size: 13.5px; color: #f3f4f6;">${lastMsg}</p>
+            </div>`}
+
+            <div style="text-align: center; margin-top: 25px;">
+                <a href="${adminPanelUrl}/Support/LiveChat" 
+                   style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #aa8624 100%); color: #0d0f12; padding: 11px 26px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; letter-spacing: 0.5px;">
+                    Open Live Chat in Admin Panel &rarr;
+                </a>
+            </div>
+        `;
+
+        const mailOptions = {
+            from: getSenderHeader(),
+            to: adminEmail,
+            subject: `⏳ Unread Chat: ${customerName} has been waiting for 5 min (${conversation.conversationId})`,
+            html: wrapEmailTemplate({
+                title: "Unread Customer Chat Alert",
+                preheader: `Customer ${customerName} is waiting for response: "${lastMsg.substring(0, 80)}"`,
+                contentHtml
+            })
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        return info;
+    } catch (error) {
+        // Silent error handling
+    }
+};
+
+/**
+ * Sends an email notification to Customer when Admin sent a reply that remains unread after 5 minutes.
+ */
+const sendUnreadChatEmailToCustomer = async ({ conversation, unreadMessages }) => {
+    try {
+        if (!conversation || !conversation.customerEmail) return;
+
+        // Ensure it's a real customer email and not a placeholder guest email
+        const email = conversation.customerEmail.trim();
+        if (email.startsWith("guest_") && email.endsWith("@gemoradiam.com")) {
+            return;
+        }
+
+        const transporter = getTransporter();
+        const websiteUrl = process.env.WEBSITE_URL || "https://gemoradiam.com";
+        const customerName = conversation.customerName || "Valued Customer";
+        const lastMsg = unreadMessages?.[unreadMessages.length - 1]?.message || conversation.lastMessage || "We have responded to your inquiry.";
+
+        const messagesListHtml = (unreadMessages || []).map((m) => `
+            <div style="background-color: #12151c; border-left: 3px solid #d4af37; padding: 12px 16px; margin-bottom: 8px; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px; color: #f3f4f6; line-height: 1.6;">${m.messageType === "image" ? "📷 [Image Attached by Gemora Atelier]" : m.message}</p>
+                <span style="font-size: 11px; color: #9ca3af;">Sent at ${new Date(m.createdAt || Date.now()).toLocaleTimeString()}</span>
+            </div>
+        `).join("");
+
+        const contentHtml = `
+            <div style="margin-bottom: 22px;">
+                <h2 style="margin: 0 0 6px; font-size: 18px; color: #f9fafb;">You Have a New Message from Gemora Diam</h2>
+                <p style="margin: 0; font-size: 13.5px; color: #9ca3af;">
+                    Dear <strong>${customerName}</strong>, our live diamond concierge has replied to your inquiry.
+                </p>
+            </div>
+
+            <h3 style="margin: 16px 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #d4af37; font-weight: 600;">Message From Gemora Atelier:</h3>
+            ${messagesListHtml || `
+            <div style="background-color: #12151c; border-left: 3px solid #d4af37; padding: 12px 16px; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px; color: #f3f4f6; line-height: 1.6;">${lastMsg}</p>
+            </div>`}
+
+            <div style="text-align: center; margin-top: 28px; margin-bottom: 20px;">
+                <a href="${websiteUrl}" 
+                   style="display: inline-block; background: linear-gradient(135deg, #d4af37 0%, #aa8624 100%); color: #0d0f12; padding: 12px 28px; border-radius: 6px; font-size: 13.5px; font-weight: 600; text-decoration: none; letter-spacing: 0.5px;">
+                    Continue Live Chat &rarr;
+                </a>
+            </div>
+
+            <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;">
+                Click above to view your conversation or ask any additional questions about our diamond collections.
+            </p>
+        `;
+
+        const mailOptions = {
+            from: getSenderHeader(),
+            to: email,
+            subject: `💎 Gemora Diam Atelier has replied to your inquiry`,
+            html: wrapEmailTemplate({
+                title: "Gemora Diam Atelier Response",
+                preheader: `We've responded: "${lastMsg.substring(0, 80)}"`,
+                contentHtml
+            })
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        return info;
+    } catch (error) {
+        // Silent error handling
+    }
+};
+
+/**
  * Utility to verify SMTP connection configuration.
  */
 const verifyEmailConnection = async () => {
@@ -533,5 +687,7 @@ module.exports = {
     sendContactUsNotificationEmail,
     sendContactUsReplyEmail,
     sendSubscriberNotificationEmail,
+    sendUnreadChatEmailToAdmin,
+    sendUnreadChatEmailToCustomer,
     verifyEmailConnection
 };
