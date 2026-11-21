@@ -208,16 +208,26 @@ const sendOrderNotificationEmail = async (order) => {
 
             return `
                 <tr>
-                    <td style="width: 50px;">
-                        ${item.image ? `<img src="${item.image}" alt="" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #374151;" />` : `<div style="width: 44px; height: 44px; border-radius: 6px; background-color: #1f2937; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #9ca3af;">#${index + 1}</div>`}
+                    <td style="width: 35px; text-align: center; color: #9ca3af; font-size: 13px; font-weight: 600; vertical-align: middle;">
+                        ${index + 1}
                     </td>
-                    <td>
-                        <strong style="color: #f9fafb; font-size: 13px;">${item.itemname || "Jewelry Item"}</strong>
-                        ${specs ? `<br/><span style="font-size: 11px; color: #9ca3af;">${specs}</span>` : ""}
-                        ${item.specialinstruction ? `<br/><span style="font-size: 11px; color: #d4af37;">Note: ${item.specialinstruction}</span>` : ""}
+                    <td style="vertical-align: middle;">
+                        <table style="border-collapse: collapse; border: none; margin: 0; padding: 0;">
+                            <tr>
+                                ${item.image ? `
+                                <td style="padding: 0 12px 0 0; vertical-align: middle; border: none;">
+                                    <img src="${item.image}" alt="" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #374151; display: block;" />
+                                </td>` : ""}
+                                <td style="vertical-align: middle; border: none; padding: 0;">
+                                    <strong style="color: #f9fafb; font-size: 13px;">${item.itemname || "Jewelry Item"}</strong>
+                                    ${specs ? `<br/><span style="font-size: 11px; color: #9ca3af;">${specs}</span>` : ""}
+                                    ${item.specialinstruction ? `<br/><span style="font-size: 11px; color: #d4af37;">Note: ${item.specialinstruction}</span>` : ""}
+                                </td>
+                            </tr>
+                        </table>
                     </td>
-                    <td style="text-align: center; color: #e5e7eb;">${item.qty || 1}</td>
-                    <td style="text-align: right; color: #f3f4f6; font-weight: 600;">
+                    <td style="text-align: center; color: #e5e7eb; vertical-align: middle; width: 50px;">${item.qty || 1}</td>
+                    <td style="text-align: right; color: #f3f4f6; font-weight: 600; vertical-align: middle; width: 90px;">
                         ${symbol}${Number(item.totalprice || item.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                 </tr>
@@ -283,10 +293,10 @@ const sendOrderNotificationEmail = async (order) => {
                 <table class="items-table">
                     <thead>
                         <tr>
-                            <th>Item</th>
+                            <th style="width: 35px; text-align: center;">#</th>
                             <th>Description</th>
-                            <th style="text-align: center;">Qty</th>
-                            <th style="text-align: right;">Price</th>
+                            <th style="text-align: center; width: 50px;">Qty</th>
+                            <th style="text-align: right; width: 90px;">Price</th>
                         </tr>
                     </thead>
                     <tbody>
