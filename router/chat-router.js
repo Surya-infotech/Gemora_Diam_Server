@@ -44,6 +44,9 @@ chatRouter.get("/Admin/Messages/:conversationId", authMiddleware, chatController
 // Admin mark conversation as read
 chatRouter.put("/Admin/MarkRead/:conversationId", authMiddleware, chatController.mark_admin_read);
 
+// Admin get or create conversation for customer (e.g. from OrderDetails)
+chatRouter.post("/Admin/GetOrCreateConversation", authMiddleware, chatController.admin_get_or_create_conversation);
+
 // Toggle conversation status (open / closed)
 chatRouter.put("/Admin/ConversationStatus/:conversationId", authMiddleware, chatController.update_conversation_status);
 

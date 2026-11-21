@@ -221,6 +221,83 @@ const mark_admin_read = async (req, res) => {
 };
 
 /**
+ * Admin: Get or create conversation for a customer (e.g. from OrderDetails)
+ */
+const admin_get_or_create_conversation = async (req, res) => {
+    try {
+        const { conversationId, email, customerId, name, phone } = req.body || {};
+
+        if (!conversationId && !email && !customerId) {
+            return res.status(400).json({ success: false, message: "Customer email, ID, or conversationId is required" });
+        }
+
+        let conversation = null;
+
+        if (conversationId) {
+            conversation = await ChatConversation.findOne({ conversationId });
+        }
+
+        if (!conversation) {
+            const normalizedEmail = (email || "").trim().toLowerCase();
+            const orConditions = [];
+            if (normalizedEmail) {
+                orConditions.push({ customerEmail: normalizedEmail });
+            }
+            if (customerId) {
+                orConditions.push({ customerId: Number(customerId) });
+            }
+
+            if (orConditions.length > 0) {
+                conversation = await ChatConversation.findOne({ $or: orConditions }).sort({ lastMessageAt: -1 });
+            }
+
+            if (!conversation) {
+                let customerDoc = null;
+                if (customerId) {
+                    customerDoc = await Customer.findOne({ customerid: Number(customerId) });
+                } else if (normalizedEmail) {
+                    customerDoc = await Customer.findOne({ email: normalizedEmail });
+                }
+
+                const finalName = name || customerDoc?.fullname || "Customer";
+                const finalEmail = normalizedEmail || customerDoc?.email || "";
+                const finalPhone = phone || customerDoc?.phone || "";
+                const finalCustomerId = customerId || customerDoc?.customerid || null;
+                const customerDocId = customerDoc?._id || null;
+
+                const newConvId = `CONV_${Date.now()}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+                conversation = new ChatConversation({
+                    conversationId: newConvId,
+                    customer: customerDocId,
+                    customerId: finalCustomerId,
+                    customerName: finalName,
+                    customerEmail: finalEmail,
+                    customerPhone: finalPhone,
+                    lastMessage: "Chat initiated from Order Details",
+                    lastMessageAt: new Date(),
+                    lastMessageSender: "system",
+                    unreadCountAdmin: 0,
+                    unreadCountCustomer: 0,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+
+                await conversation.save();
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            conversation
+        });
+    } catch (error) {
+        console.error("Error in admin_get_or_create_conversation:", error);
+        return res.status(500).json({ success: false, message: "Failed to locate or start conversation" });
+    }
+};
+
+/**
  * HTTP fallback endpoint to send a message (or send with attachment).
  */
 const send_message_http = async (req, res) => {
@@ -421,5 +498,6 @@ module.exports = {
     get_admin_conversations,
     update_conversation_status,
     get_admin_unread_count,
-    mark_admin_read
+    mark_admin_read,
+    admin_get_or_create_conversation
 };
