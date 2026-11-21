@@ -1,4 +1,5 @@
 const ContactUs = require("../../../models/AdminPanel/Support/contactus-model");
+const { sendContactUsNotificationEmail } = require("../../../utils/emailService");
 
 const get_contactus = async (_req, res) => {
     try {
@@ -102,6 +103,12 @@ const add_contactus = async (req, res) => {
         });
 
         await newContactUs.save();
+
+        // Send email notification to admin asynchronously (non-blocking)
+        sendContactUsNotificationEmail(newContactUs).catch((err) =>
+            console.error("Failed to send Contact Us notification email:", err)
+        );
+
         return res.status(201).json({ message: "Contact us submitted successfully", contactus: newContactUs });
     } catch (error) {
         console.log("Error adding Contact Us:", error);

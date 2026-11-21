@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-   "start": "pm2-runtime start app.js --name gemora-diam-server",
+    "start": "pm2-runtime start app.js --name gemora-diam-server",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js",
     "server": "nodemon app.js",
@@ -28,6 +28,7 @@
     "mongoose": "^9.10.4",
     "multer": "^2.4.0",
     "multer-s3": "^3.0.1",
+    "nodemailer": "^10.6.1",
     "pm2": "^7.0.4"
   }
 }

@@ -8,6 +8,7 @@ const Currency = require("../models/AdminPanel/System/currency-model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const paypalUtil = require("../utils/paypal");
+const { sendOrderNotificationEmail } = require("../utils/emailService");
 
 const signup = async (req, res) => {
     try {
@@ -702,6 +703,11 @@ const create_order = async (req, res) => {
 
         await newOrder.save();
 
+        // Send email notification to admin asynchronously (non-blocking)
+        sendOrderNotificationEmail(newOrder).catch((err) =>
+            console.error("Failed to send Order notification email:", err)
+        );
+
         return res.status(201).json({
             message: "Order placed successfully",
             order: newOrder
@@ -1091,6 +1097,12 @@ const saveOrderDocument = async ({ req, orderData }) => {
     });
 
     await newOrder.save();
+
+    // Send email notification to admin asynchronously (non-blocking)
+    sendOrderNotificationEmail(newOrder).catch((err) =>
+        console.error("Failed to send Order notification email:", err)
+    );
+
     return newOrder;
 };
 

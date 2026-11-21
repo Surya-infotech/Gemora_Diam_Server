@@ -1,4 +1,5 @@
 const Subscriber = require("../../../models/AdminPanel/Support/subscriber-model");
+const { sendSubscriberNotificationEmail } = require("../../../utils/emailService");
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -49,6 +50,11 @@ const subscribe_newsletter = async (req, res) => {
         });
 
         await newSubscriber.save();
+
+        // Send email notification to admin asynchronously (non-blocking)
+        sendSubscriberNotificationEmail(newSubscriber).catch((err) =>
+            console.error("Failed to send Subscriber notification email:", err)
+        );
 
         return res.status(201).json({
             message: "Thank you for subscribing! You're all set to receive our industry insights.",
