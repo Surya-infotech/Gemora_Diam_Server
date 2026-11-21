@@ -4,8 +4,7 @@ const chatMessageSchema = new mongoose.Schema({
     messageId: {
         type: String,
         required: true,
-        unique: true,
-        index: true
+        unique: true
     },
     conversationId: {
         type: String,
