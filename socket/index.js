@@ -80,7 +80,7 @@ const initSocketServer = (httpServer, corsOptions) => {
                     messageType,
                     attachmentUrl,
                     isRead: false,
-                    createdAt: new Date()
+                    createdAt: new Date().toISOString()
                 });
 
                 await newMessage.save();
@@ -91,7 +91,7 @@ const initSocketServer = (httpServer, corsOptions) => {
 
                 const updateFields = {
                     lastMessage: displayMsg,
-                    lastMessageAt: new Date(),
+                    lastMessageAt: new Date().toISOString(),
                     lastMessageSender: senderType || "customer",
                     updatedAt: new Date().toISOString()
                 };
@@ -176,8 +176,9 @@ const initSocketServer = (httpServer, corsOptions) => {
                     filter.senderType = "admin";
                 }
 
+                const nowIso = new Date().toISOString();
                 await ChatMessage.updateMany(filter, {
-                    $set: { isRead: true, readAt: new Date() }
+                    $set: { isRead: true, readAt: nowIso }
                 });
 
                 const resetUnread = readerType === "admin"
@@ -196,7 +197,7 @@ const initSocketServer = (httpServer, corsOptions) => {
                 io.to(roomName).emit("messages_read", {
                     conversationId,
                     readerType,
-                    readAt: new Date()
+                    readAt: nowIso
                 });
 
                 if (readerType === "admin") {

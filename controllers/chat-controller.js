@@ -54,7 +54,7 @@ const initiate_conversation = async (req, res) => {
                 customerEmail: finalEmail,
                 customerPhone: finalPhone,
                 lastMessage: initialMessage ? initialMessage.trim() : "Conversation started",
-                lastMessageAt: new Date(),
+                lastMessageAt: new Date().toISOString(),
                 lastMessageSender: customerDocId || guestId ? "customer" : "system",
                 unreadCountAdmin: initialMessage ? 1 : 0,
                 unreadCountCustomer: 0,
@@ -75,7 +75,7 @@ const initiate_conversation = async (req, res) => {
                     senderName: finalName,
                     message: initialMessage.trim(),
                     messageType: "text",
-                    createdAt: new Date()
+                    createdAt: new Date().toISOString()
                 });
                 await firstMsg.save();
 
@@ -132,10 +132,11 @@ const get_messages = async (req, res) => {
         // If requested by admin, automatically mark customer messages as read
         const isAdmin = Boolean(req.user || req.originalUrl?.includes("/Admin/"));
         if (isAdmin) {
+            const nowIso = new Date().toISOString();
             await Promise.all([
                 ChatMessage.updateMany(
                     { conversationId, senderType: { $in: ["customer", "guest"] }, isRead: false },
-                    { $set: { isRead: true, readAt: new Date() } }
+                    { $set: { isRead: true, readAt: nowIso } }
                 ),
                 ChatConversation.findOneAndUpdate(
                     { conversationId },
@@ -148,7 +149,7 @@ const get_messages = async (req, res) => {
                 io.to(`conversation_${conversationId}`).emit("messages_read", {
                     conversationId,
                     readerType: "admin",
-                    readAt: new Date()
+                    readAt: nowIso
                 });
                 io.to("admin_support_channel").emit("admin_inbox_updated", {
                     conversationId
@@ -188,10 +189,11 @@ const mark_admin_read = async (req, res) => {
             return res.status(400).json({ success: false, message: "conversationId is required" });
         }
 
+        const nowIso = new Date().toISOString();
         await Promise.all([
             ChatMessage.updateMany(
                 { conversationId, senderType: { $in: ["customer", "guest"] }, isRead: false },
-                { $set: { isRead: true, readAt: new Date() } }
+                { $set: { isRead: true, readAt: nowIso } }
             ),
             ChatConversation.findOneAndUpdate(
                 { conversationId },
@@ -204,7 +206,7 @@ const mark_admin_read = async (req, res) => {
             io.to(`conversation_${conversationId}`).emit("messages_read", {
                 conversationId,
                 readerType: "admin",
-                readAt: new Date()
+                readAt: nowIso
             });
             io.to("admin_support_channel").emit("admin_inbox_updated", {
                 conversationId
@@ -248,7 +250,7 @@ const send_message_http = async (req, res) => {
             messageType,
             attachmentUrl,
             isRead: false,
-            createdAt: new Date()
+            createdAt: new Date().toISOString()
         });
 
         await newMessage.save();
@@ -264,7 +266,7 @@ const send_message_http = async (req, res) => {
 
         const updateFields = {
             lastMessage: displayMsg,
-            lastMessageAt: new Date(),
+            lastMessageAt: new Date().toISOString(),
             lastMessageSender: newMessage.senderType,
             updatedAt: new Date().toISOString()
         };

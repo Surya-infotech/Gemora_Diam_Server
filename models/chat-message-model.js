@@ -42,7 +42,7 @@ const chatMessageSchema = new mongoose.Schema({
         default: false
     },
     readAt: {
-        type: Date,
+        type: String,
         default: null
     },
     emailNotificationSent: {
@@ -50,8 +50,8 @@ const chatMessageSchema = new mongoose.Schema({
         default: false
     },
     createdAt: {
-        type: Date,
-        default: Date.now,
+        type: String,
+        default: () => new Date().toISOString(),
         index: true
     }
 });
