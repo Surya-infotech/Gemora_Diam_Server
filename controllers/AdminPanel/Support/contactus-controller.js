@@ -10,12 +10,42 @@ const get_contactus = async (_req, res) => {
     }
 };
 
+const resolveCountryFromCode = (code) => {
+    if (!code || typeof code !== "string") return "";
+    try {
+        const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+        return regionNames.of(code.toUpperCase().trim()) || code;
+    } catch {
+        return code;
+    }
+};
+
 const add_contactus = async (req, res) => {
     try {
-        const { name, email, message } = req.body;
+        const { name, email, message, countryname, countrycode, country } = req.body;
 
         if (!name || !email || !message) {
             return res.status(400).json({ message: "Full name, email and message are required" });
+        }
+
+        let resolvedCountryName = (countryname || country || "").trim();
+        let resolvedCountryCode = (countrycode || "").trim();
+
+        // If code given but name empty, convert code to name
+        if (!resolvedCountryName && resolvedCountryCode) {
+            resolvedCountryName = resolveCountryFromCode(resolvedCountryCode);
+        }
+
+        // Server-side fallback: check Cloudflare or forwarder headers
+        if (!resolvedCountryName) {
+            const cfCountry = req.headers["cf-ipcountry"];
+            const headerCountry = req.headers["x-country-name"] || req.headers["x-country"];
+            if (cfCountry && cfCountry !== "XX" && cfCountry !== "T1") {
+                resolvedCountryCode = resolvedCountryCode || cfCountry.trim();
+                resolvedCountryName = resolveCountryFromCode(cfCountry.trim());
+            } else if (headerCountry) {
+                resolvedCountryName = String(headerCountry).trim();
+            }
         }
 
         const maxContactUs = await ContactUs.findOne().sort({ contactusid: -1 });
@@ -26,6 +56,8 @@ const add_contactus = async (req, res) => {
             fullname: name.trim(),
             email: email.trim(),
             message: message.trim(),
+            countryname: resolvedCountryName,
+            countrycode: resolvedCountryCode,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         });
