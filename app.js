@@ -1,7 +1,9 @@
 require("dotenv").config();
+const http = require("http");
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./src/db");
+const { initSocketServer } = require("./socket");
 const adminRouter = require("./router/admin-router");
 const systemrouteradmin = require("./router/AdminPanel/system-router");
 const attributesrouteradmin = require("./router/AdminPanel/attributes-router");
@@ -10,8 +12,10 @@ const productsrouteradmin = require("./router/AdminPanel/products-router");
 const userrouteradmin = require("./router/AdminPanel/user-router");
 const customerRouter = require("./router/customer-router");
 const mainrouteradmin = require("./router/AdminPanel/main-router");
+const chatRouter = require("./router/chat-router");
 
 const app = express();
+const server = http.createServer(app);
 
 const corsOptions = {
     origin: (origin, callback) => {
@@ -36,6 +40,9 @@ const corsOptions = {
     optionsSuccessStatus: 204
 };
 
+// Initialize Socket.IO server with shared CORS configuration
+initSocketServer(server, corsOptions);
+
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -57,11 +64,12 @@ app.use("/Support", supportrouteradmin);
 app.use("/Products", productsrouteradmin);
 app.use("/User", userrouteradmin);
 app.use("/Customer", customerRouter);
+app.use("/Chat", chatRouter);
 
 const PORT = process.env.PORT;
 
 connectDB().then(() => {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`Gemora Diam Server running on port ${PORT}`);
         console.log(`Health Check: http://localhost:${PORT}/Status`);
     });
