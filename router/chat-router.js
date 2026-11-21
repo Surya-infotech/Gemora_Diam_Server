@@ -41,6 +41,9 @@ chatRouter.get("/Admin/Conversations", authMiddleware, chatController.get_admin_
 // Admin view messages for a conversation
 chatRouter.get("/Admin/Messages/:conversationId", authMiddleware, chatController.get_messages);
 
+// Admin mark conversation as read
+chatRouter.put("/Admin/MarkRead/:conversationId", authMiddleware, chatController.mark_admin_read);
+
 // Toggle conversation status (open / closed)
 chatRouter.put("/Admin/ConversationStatus/:conversationId", authMiddleware, chatController.update_conversation_status);
 

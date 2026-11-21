@@ -122,6 +122,33 @@ const get_messages = async (req, res) => {
             return res.status(400).json({ success: false, message: "conversationId is required" });
         }
 
+        // If requested by admin, automatically mark customer messages as read
+        const isAdmin = Boolean(req.user || req.originalUrl?.includes("/Admin/"));
+        if (isAdmin) {
+            await Promise.all([
+                ChatMessage.updateMany(
+                    { conversationId, senderType: { $in: ["customer", "guest"] }, isRead: false },
+                    { $set: { isRead: true, readAt: new Date() } }
+                ),
+                ChatConversation.findOneAndUpdate(
+                    { conversationId },
+                    { $set: { unreadCountAdmin: 0 } }
+                )
+            ]);
+
+            const io = getIO();
+            if (io) {
+                io.to(`conversation_${conversationId}`).emit("messages_read", {
+                    conversationId,
+                    readerType: "admin",
+                    readAt: new Date()
+                });
+                io.to("admin_support_channel").emit("admin_inbox_updated", {
+                    conversationId
+                });
+            }
+        }
+
         const [messages, total] = await Promise.all([
             ChatMessage.find({ conversationId })
                 .sort({ createdAt: -1 })
@@ -141,6 +168,46 @@ const get_messages = async (req, res) => {
     } catch (error) {
         console.error("Error fetching chat messages:", error);
         return res.status(500).json({ success: false, message: "Failed to fetch messages" });
+    }
+};
+
+/**
+ * Explicit endpoint to mark all messages in a conversation as read by Admin.
+ */
+const mark_admin_read = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        if (!conversationId) {
+            return res.status(400).json({ success: false, message: "conversationId is required" });
+        }
+
+        await Promise.all([
+            ChatMessage.updateMany(
+                { conversationId, senderType: { $in: ["customer", "guest"] }, isRead: false },
+                { $set: { isRead: true, readAt: new Date() } }
+            ),
+            ChatConversation.findOneAndUpdate(
+                { conversationId },
+                { $set: { unreadCountAdmin: 0 } }
+            )
+        ]);
+
+        const io = getIO();
+        if (io) {
+            io.to(`conversation_${conversationId}`).emit("messages_read", {
+                conversationId,
+                readerType: "admin",
+                readAt: new Date()
+            });
+            io.to("admin_support_channel").emit("admin_inbox_updated", {
+                conversationId
+            });
+        }
+
+        return res.status(200).json({ success: true, message: "Messages marked as read" });
+    } catch (error) {
+        console.error("Error marking admin read:", error);
+        return res.status(500).json({ success: false, message: "Failed to mark read" });
     }
 };
 
@@ -338,5 +405,6 @@ module.exports = {
     upload_attachment,
     get_admin_conversations,
     update_conversation_status,
-    get_admin_unread_count
+    get_admin_unread_count,
+    mark_admin_read
 };
