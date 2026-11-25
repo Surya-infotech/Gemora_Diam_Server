@@ -665,25 +665,11 @@ const sendUnreadChatEmailToCustomer = async ({ conversation, unreadMessages }) =
     }
 };
 
-/**
- * Utility to verify SMTP connection configuration.
- */
-const verifyEmailConnection = async () => {
-    try {
-        const transporter = getTransporter();
-        await transporter.verify();
-        return { success: true, message: "SMTP connection verified successfully" };
-    } catch (error) {
-        return { success: false, error: error.message };
-    }
-};
-
 module.exports = {
     sendOrderNotificationEmail,
     sendContactUsNotificationEmail,
     sendContactUsReplyEmail,
     sendSubscriberNotificationEmail,
     sendUnreadChatEmailToAdmin,
-    sendUnreadChatEmailToCustomer,
-    verifyEmailConnection
+    sendUnreadChatEmailToCustomer
 };

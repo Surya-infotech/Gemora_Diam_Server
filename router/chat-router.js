@@ -23,9 +23,6 @@ const optionalAuth = (req, res, next) => {
 // Initiate or resume conversation (supports logged-in customer or guest visitor)
 chatRouter.post("/Initiate", optionalAuth, chatController.initiate_conversation);
 
-// Get message history for a conversation
-chatRouter.get("/Messages/:conversationId", optionalAuth, chatController.get_messages);
-
 // HTTP send message fallback
 chatRouter.post("/SendMessage", optionalAuth, chatController.send_message_http);
 
@@ -46,9 +43,6 @@ chatRouter.put("/Admin/MarkRead/:conversationId", authMiddleware, chatController
 
 // Admin get or create conversation for customer (e.g. from OrderDetails)
 chatRouter.post("/Admin/GetOrCreateConversation", authMiddleware, chatController.admin_get_or_create_conversation);
-
-// Toggle conversation status (open / closed)
-chatRouter.put("/Admin/ConversationStatus/:conversationId", authMiddleware, chatController.update_conversation_status);
 
 // Global unread badge count for Admin navigation bar
 chatRouter.get("/Admin/UnreadCount", authMiddleware, chatController.get_admin_unread_count);

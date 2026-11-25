@@ -201,6 +201,9 @@ const mark_admin_read = async (req, res) => {
             )
         ]);
 
+        // Cancel pending 5-minute unread email alert since admin has read the conversation
+        cancelUnreadCheck(conversationId, "admin");
+
         const io = getIO();
         if (io) {
             io.to(`conversation_${conversationId}`).emit("messages_read", {
@@ -460,20 +463,6 @@ const get_admin_conversations = async (req, res) => {
 };
 
 /**
- * Toggle conversation status (kept for backwards compatibility).
- */
-const update_conversation_status = async (req, res) => {
-    try {
-        return res.status(200).json({
-            success: true,
-            message: "Status updated"
-        });
-    } catch (error) {
-        return res.status(500).json({ success: false, message: "Failed to update status" });
-    }
-};
-
-/**
  * Get total unread count for Admin badge (header icon).
  */
 const get_admin_unread_count = async (_req, res) => {
@@ -496,7 +485,6 @@ module.exports = {
     send_message_http,
     upload_attachment,
     get_admin_conversations,
-    update_conversation_status,
     get_admin_unread_count,
     mark_admin_read,
     admin_get_or_create_conversation
