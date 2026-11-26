@@ -475,6 +475,75 @@ const set_default_address = async (req, res) => {
 // ORDER CONTROLLER METHODS
 // ==========================================
 
+const isRingCategory = (category = "") => {
+    const cat = String(category || "").trim().toLowerCase();
+    if (!cat) return false;
+    if (/\bear+ings?\b/.test(cat) || cat.includes("earring") || cat.includes("earing")) return false;
+    return /\brings?\b/.test(cat);
+};
+
+const formatOrderItems = async (items = []) => {
+    return Promise.all(items.map(async (it) => {
+        const itemPrice = Number(it.price) || 0;
+        const itemQty = Number(it.qty) || 1;
+
+        let numericItemId = null;
+        if (it.itemid !== undefined && it.itemid !== null && it.itemid !== "" && !isNaN(it.itemid)) {
+            numericItemId = Number(it.itemid);
+        } else if (it.productId !== undefined && it.productId !== null && it.productId !== "" && !isNaN(it.productId)) {
+            numericItemId = Number(it.productId);
+        } else if (it.id !== undefined && it.id !== null && it.id !== "" && !isNaN(it.id)) {
+            numericItemId = Number(it.id);
+        }
+
+        let foundItem = null;
+        const lookupKey = it.productId || it.id || it.itemid;
+        if (lookupKey) {
+            try {
+                foundItem = await Item.findById(lookupKey).lean();
+            } catch {
+                // ignore invalid ObjectId lookup
+            }
+        }
+        if (!foundItem && numericItemId) {
+            try {
+                foundItem = await Item.findOne({ itemid: numericItemId }).lean();
+            } catch {
+                // ignore lookup error
+            }
+        }
+
+        if (!numericItemId && foundItem && foundItem.itemid !== undefined && foundItem.itemid !== null) {
+            numericItemId = Number(foundItem.itemid);
+        }
+        if (!numericItemId) {
+            numericItemId = 1;
+        }
+
+        const itemCategory = foundItem?.categoryname || it.categoryname || it.category || "";
+        const rawRingSize = it.ringsize || it.ringSize || it.size || "";
+        const ringsize = isRingCategory(itemCategory) ? String(rawRingSize) : "";
+
+        return {
+            itemid: numericItemId,
+            itemname: it.itemname || it.name || "Fine Jewelry Piece",
+            image: it.image || "",
+            metalname: it.metalname || it.metal || "",
+            stonename: it.stonename || it.stone || "",
+            diamondsize: it.diamondsize || it.carat || "",
+            shapename: it.shapename || it.shape || "",
+            clarityname: it.clarityname || it.clarity || "",
+            diamondcolor: it.diamondcolor || it.diamondColor || it.diamondcolorname || "",
+            bandcolor: it.bandcolor || it.bandColor || it.bandcolorname || "",
+            ringsize,
+            specialinstruction: it.specialinstruction || it.specialInstruction || it.specialinstructions || it.instructions || "",
+            price: itemPrice,
+            qty: itemQty,
+            totalprice: Number(it.totalprice) || (itemPrice * itemQty)
+        };
+    }));
+};
+
 const create_order = async (req, res) => {
     try {
         const {
@@ -574,52 +643,7 @@ const create_order = async (req, res) => {
 
         const ordernumber = nextOrderNumber;
 
-        const formattedItems = await Promise.all(items.map(async (it) => {
-            const itemPrice = Number(it.price) || 0;
-            const itemQty = Number(it.qty) || 1;
-
-            let numericItemId = null;
-            if (it.itemid !== undefined && it.itemid !== null && it.itemid !== "" && !isNaN(it.itemid)) {
-                numericItemId = Number(it.itemid);
-            } else if (it.productId !== undefined && it.productId !== null && it.productId !== "" && !isNaN(it.productId)) {
-                numericItemId = Number(it.productId);
-            } else if (it.id !== undefined && it.id !== null && it.id !== "" && !isNaN(it.id)) {
-                numericItemId = Number(it.id);
-            }
-
-            if (!numericItemId && (it.productId || it.id || it.itemid)) {
-                try {
-                    const lookupKey = it.productId || it.id || it.itemid;
-                    const foundItem = await Item.findById(lookupKey).lean();
-                    if (foundItem && foundItem.itemid !== undefined && foundItem.itemid !== null) {
-                        numericItemId = Number(foundItem.itemid);
-                    }
-                } catch {
-                    // ignore lookup error
-                }
-            }
-
-            if (!numericItemId) {
-                numericItemId = 1;
-            }
-
-            return {
-                itemid: numericItemId,
-                itemname: it.itemname || it.name || "Fine Jewelry Piece",
-                image: it.image || "",
-                metalname: it.metalname || it.metal || "",
-                stonename: it.stonename || it.stone || "",
-                diamondsize: it.diamondsize || it.carat || "",
-                shapename: it.shapename || it.shape || "",
-                clarityname: it.clarityname || it.clarity || "",
-                diamondcolor: it.diamondcolor || it.diamondColor || it.diamondcolorname || "",
-                bandcolor: it.bandcolor || it.bandColor || it.bandcolorname || "",
-                specialinstruction: it.specialinstruction || it.specialInstruction || it.specialinstructions || it.instructions || "",
-                price: itemPrice,
-                qty: itemQty,
-                totalprice: Number(it.totalprice) || (itemPrice * itemQty)
-            };
-        }));
+        const formattedItems = await formatOrderItems(items);
 
         const totalitems = formattedItems.reduce((acc, curr) => acc + curr.qty, 0);
 
@@ -965,52 +989,7 @@ const saveOrderDocument = async ({ req, orderData }) => {
         ? parseInt(maxOrderByFiscalYear.ordernumber) + 1
         : 1;
 
-    const formattedItems = await Promise.all(items.map(async (it) => {
-        const itemPrice = Number(it.price) || 0;
-        const itemQty = Number(it.qty) || 1;
-
-        let numericItemId = null;
-        if (it.itemid !== undefined && it.itemid !== null && it.itemid !== "" && !isNaN(it.itemid)) {
-            numericItemId = Number(it.itemid);
-        } else if (it.productId !== undefined && it.productId !== null && it.productId !== "" && !isNaN(it.productId)) {
-            numericItemId = Number(it.productId);
-        } else if (it.id !== undefined && it.id !== null && it.id !== "" && !isNaN(it.id)) {
-            numericItemId = Number(it.id);
-        }
-
-        if (!numericItemId && (it.productId || it.id || it.itemid)) {
-            try {
-                const lookupKey = it.productId || it.id || it.itemid;
-                const foundItem = await Item.findById(lookupKey).lean();
-                if (foundItem && foundItem.itemid !== undefined && foundItem.itemid !== null) {
-                    numericItemId = Number(foundItem.itemid);
-                }
-            } catch {
-                // ignore
-            }
-        }
-
-        if (!numericItemId) {
-            numericItemId = 1;
-        }
-
-        return {
-            itemid: numericItemId,
-            itemname: it.itemname || it.name || "Fine Jewelry Piece",
-            image: it.image || "",
-            metalname: it.metalname || it.metal || "",
-            stonename: it.stonename || it.stone || "",
-            diamondsize: it.diamondsize || it.carat || "",
-            shapename: it.shapename || it.shape || "",
-            clarityname: it.clarityname || it.clarity || "",
-            diamondcolor: it.diamondcolor || it.diamondColor || it.diamondcolorname || "",
-            bandcolor: it.bandcolor || it.bandColor || it.bandcolorname || "",
-            specialinstruction: it.specialinstruction || it.specialInstruction || it.specialinstructions || it.instructions || "",
-            price: itemPrice,
-            qty: itemQty,
-            totalprice: Number(it.totalprice) || (itemPrice * itemQty)
-        };
-    }));
+    const formattedItems = await formatOrderItems(items);
 
     const totalitems = formattedItems.reduce((acc, curr) => acc + curr.qty, 0);
 

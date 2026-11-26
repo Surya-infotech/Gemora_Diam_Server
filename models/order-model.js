@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const orderItemSchema = new mongoose.Schema({
     itemid: {
@@ -38,6 +38,10 @@ const orderItemSchema = new mongoose.Schema({
         default: ""
     },
     bandcolor: {
+        type: String,
+        default: ""
+    },
+    ringsize: {
         type: String,
         default: ""
     },
