@@ -5,6 +5,24 @@ const mongoose = require("mongoose");
 const { uploadToS3, deleteImageFromS3 } = require("../../../utils/s3Config-admin");
 const MiscSetting = require("../../../models/AdminPanel/System/Setting/miscsetting-model");
 
+const isRingCategoryName = categoryName => /\brings?\b/i.test(String(categoryName || "").trim());
+
+const parseRingSizes = raw => {
+    if (!raw) return [];
+    let parsed = [];
+    try {
+        parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch {
+        return [];
+    }
+    return Array.isArray(parsed)
+        ? parsed.map(r => ({
+            ringsizeid: Number(r.ringsizeid || r.value),
+            ringsize: String(r.ringsize || r.label || "")
+        }))
+        : [];
+};
+
 const get_items = async (_req, res) => {
     try {
         const items = await Item.find().sort({ updatedAt: -1 }).lean();
@@ -200,6 +218,9 @@ const add_item = async (req, res) => {
                 stylename: String(st.stylename || st.label || "")
             })) : [];
 
+            const isRingCategory = isRingCategoryName(categoryNameResolved);
+            const formattedRingSizes = isRingCategory ? parseRingSizes(req.body.ringsizes) : [];
+
             if (!formattedShapes || formattedShapes.length === 0) {
                 if (req.file && req.file.location) {
                     await deleteImageFromS3(req.file.location, "item");
@@ -242,6 +263,13 @@ const add_item = async (req, res) => {
                 return res.status(400).json({ message: "Band Color is required" });
             }
 
+            if (isRingCategory && formattedRingSizes.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Ring Size is required" });
+            }
+
             const now = new Date().toISOString();
             const imageUrl = req.file ? req.file.location : (req.body.image || "");
 
@@ -259,6 +287,7 @@ const add_item = async (req, res) => {
                 bandcolors: formattedBandColors,
                 stones: formattedStones,
                 styles: formattedStyles,
+                ringsizes: formattedRingSizes,
                 description: description ? description.trim() : "",
                 image: imageUrl,
                 createdAt: now,
@@ -494,6 +523,12 @@ const update_item = async (req, res) => {
 
                 existingItem.styles = formattedStyles;
             }
+            const isRingCategory = isRingCategoryName(existingItem.categoryname);
+            if (!isRingCategory) {
+                existingItem.ringsizes = [];
+            } else if (req.body.ringsizes !== undefined) {
+                existingItem.ringsizes = parseRingSizes(req.body.ringsizes);
+            }
 
             if (!existingItem.shapes || existingItem.shapes.length === 0) {
                 if (req.file && req.file.location) {
@@ -535,6 +570,13 @@ const update_item = async (req, res) => {
                     await deleteImageFromS3(req.file.location, "item");
                 }
                 return res.status(400).json({ message: "Band Color is required" });
+            }
+
+            if (isRingCategory && (!existingItem.ringsizes || existingItem.ringsizes.length === 0)) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Ring Size is required" });
             }
 
             if (req.file && req.file.location) {

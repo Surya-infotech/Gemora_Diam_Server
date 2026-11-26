@@ -62,6 +62,15 @@ const itemSchema = new mongoose.Schema({
         ],
         default: []
     },
+    ringsizes: {
+        type: [
+            {
+                ringsizeid: { type: Number },
+                ringsize: { type: String }
+            }
+        ],
+        default: []
+    },
     pricing: {
         priceType: {
             type: String,
@@ -79,7 +88,7 @@ const itemSchema = new mongoose.Schema({
             ],
             default: []
         },
-        
+
         metalWithStoneDiamondCaratPrices: {
             type: [
                 {

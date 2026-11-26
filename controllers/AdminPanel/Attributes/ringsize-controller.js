@@ -1,4 +1,5 @@
 const RingSize = require("../../../models/AdminPanel/Attributes/ringsize-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 const mongoose = require("mongoose");
 
 const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -131,6 +132,22 @@ const update_ring_size = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
 
         await existingSelf.save();
+
+        const targetRingSizeId = existingSelf.ringsizeid;
+        if (targetRingSizeId !== undefined && targetRingSizeId !== null) {
+            const idFilter = [Number(targetRingSizeId), String(targetRingSizeId)];
+            await Item.updateMany(
+                { "ringsizes.ringsizeid": { $in: idFilter } },
+                {
+                    $set: {
+                        "ringsizes.$[elem].ringsize": trimmedSize,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                { arrayFilters: [{ "elem.ringsizeid": { $in: idFilter } }] }
+            );
+        }
+
         return res.status(200).json({ message: "Ring Size updated successfully", ringSize: existingSelf });
     } catch (error) {
         console.error("Error updating ring size:", error);
@@ -145,6 +162,18 @@ const delete_ring_size = async (req, res) => {
 
         if (!deleted) {
             return res.status(404).json({ message: "Ring Size not found" });
+        }
+
+        const deletedRingSizeId = deleted.ringsizeid;
+        if (deletedRingSizeId !== undefined && deletedRingSizeId !== null) {
+            const idFilter = [Number(deletedRingSizeId), String(deletedRingSizeId)];
+            await Item.updateMany(
+                { "ringsizes.ringsizeid": { $in: idFilter } },
+                {
+                    $pull: { ringsizes: { ringsizeid: { $in: idFilter } } },
+                    $set: { updatedAt: new Date().toISOString() }
+                }
+            );
         }
 
         return res.status(200).json({ message: "Ring Size deleted successfully" });
