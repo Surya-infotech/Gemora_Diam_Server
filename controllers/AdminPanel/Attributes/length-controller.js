@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Length = require("../../../models/AdminPanel/Attributes/length-model");
+const Item = require("../../../models/AdminPanel/Products/item-model");
 
 const ALLOWED_LENGTH_TYPES = ["Bracelet", "Pendant"];
 
@@ -159,6 +160,22 @@ const update_length = async (req, res) => {
         existingSelf.updatedAt = new Date().toISOString();
         await existingSelf.save();
 
+        const targetLengthId = existingSelf.lengthid;
+        if (targetLengthId !== undefined && targetLengthId !== null) {
+            const idFilter = [Number(targetLengthId), String(targetLengthId)];
+            await Item.updateMany(
+                { "lengths.lengthid": { $in: idFilter } },
+                {
+                    $set: {
+                        "lengths.$[elem].lengthname": trimmedName,
+                        "lengths.$[elem].lengthtype": normalizedType,
+                        updatedAt: new Date().toISOString()
+                    }
+                },
+                { arrayFilters: [{ "elem.lengthid": { $in: idFilter } }] }
+            );
+        }
+
         return res.status(200).json({ message: "Length updated successfully", length: existingSelf });
     } catch (error) {
         console.error("Error updating length:", error);
@@ -173,6 +190,19 @@ const delete_length = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Length not found" });
         }
+
+        const deletedLengthId = deleted.lengthid;
+        if (deletedLengthId !== undefined && deletedLengthId !== null) {
+            const idFilter = [Number(deletedLengthId), String(deletedLengthId)];
+            await Item.updateMany(
+                { "lengths.lengthid": { $in: idFilter } },
+                {
+                    $pull: { lengths: { lengthid: { $in: idFilter } } },
+                    $set: { updatedAt: new Date().toISOString() }
+                }
+            );
+        }
+
         return res.status(200).json({ message: "Length deleted successfully" });
     } catch (error) {
         console.error("Error deleting length:", error);

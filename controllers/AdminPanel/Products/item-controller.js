@@ -9,6 +9,10 @@ const isRingCategoryName = categoryName => /\brings?\b/i.test(String(categoryNam
 
 const isEarringsCategoryName = categoryName => /\bearr?ings?\b/i.test(String(categoryName || "").trim());
 
+const isPendantCategoryName = categoryName => /\bpend[ae]nts?\b/i.test(String(categoryName || "").trim());
+
+const isBraceletCategoryName = categoryName => /\bb(?:ra|ar)celets?\b/i.test(String(categoryName || "").trim());
+
 const parseRingSizes = raw => {
     if (!raw) return [];
     let parsed = [];
@@ -21,6 +25,23 @@ const parseRingSizes = raw => {
         ? parsed.map(r => ({
             ringsizeid: Number(r.ringsizeid || r.value),
             ringsize: String(r.ringsize || r.label || "")
+        }))
+        : [];
+};
+
+const parseLengths = raw => {
+    if (!raw) return [];
+    let parsed = [];
+    try {
+        parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch {
+        return [];
+    }
+    return Array.isArray(parsed)
+        ? parsed.map(l => ({
+            lengthid: Number(l.lengthid || l.value),
+            lengthname: String(l.lengthname || l.label || ""),
+            lengthtype: String(l.lengthtype || "")
         }))
         : [];
 };
@@ -253,6 +274,8 @@ const add_item = async (req, res) => {
             const formattedClosureTypes = isEarringsCategory
                 ? parseClosureTypes(req.body.closuretypes ?? req.body.closuretype)
                 : [];
+            const isLengthCategory = isPendantCategoryName(categoryNameResolved) || isBraceletCategoryName(categoryNameResolved);
+            const formattedLengths = isLengthCategory ? parseLengths(req.body.lengths) : [];
 
             if (!formattedShapes || formattedShapes.length === 0) {
                 if (req.file && req.file.location) {
@@ -322,6 +345,7 @@ const add_item = async (req, res) => {
                 styles: formattedStyles,
                 ringsizes: formattedRingSizes,
                 closuretypes: formattedClosureTypes,
+                lengths: formattedLengths,
                 description: description ? description.trim() : "",
                 image: imageUrl,
                 createdAt: now,
@@ -568,6 +592,12 @@ const update_item = async (req, res) => {
                 existingItem.closuretypes = [];
             } else if (req.body.closuretypes !== undefined || req.body.closuretype !== undefined) {
                 existingItem.closuretypes = parseClosureTypes(req.body.closuretypes ?? req.body.closuretype);
+            }
+            const isLengthCategory = isPendantCategoryName(existingItem.categoryname) || isBraceletCategoryName(existingItem.categoryname);
+            if (!isLengthCategory) {
+                existingItem.lengths = [];
+            } else if (req.body.lengths !== undefined) {
+                existingItem.lengths = parseLengths(req.body.lengths);
             }
 
             if (!existingItem.shapes || existingItem.shapes.length === 0) {

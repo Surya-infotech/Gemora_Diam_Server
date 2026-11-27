@@ -75,6 +75,16 @@ const itemSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    lengths: {
+        type: [
+            {
+                lengthid: { type: Number },
+                lengthname: { type: String },
+                lengthtype: { type: String }
+            }
+        ],
+        default: []
+    },
     pricing: {
         priceType: {
             type: String,
