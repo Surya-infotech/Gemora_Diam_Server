@@ -49,6 +49,14 @@ const orderItemSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    braceletlength: {
+        type: String,
+        default: ""
+    },
+    pendantlength: {
+        type: String,
+        default: ""
+    },
     specialinstruction: {
         type: String,
         default: ""

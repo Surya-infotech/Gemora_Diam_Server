@@ -488,6 +488,18 @@ const isEarringsCategory = (category = "") => {
     return /\bearr?ings?\b/.test(cat);
 };
 
+const isBraceletCategory = (category = "") => {
+    const cat = String(category || "").trim().toLowerCase();
+    if (!cat) return false;
+    return /\bb(?:ra|ar)celets?\b/.test(cat);
+};
+
+const isPendantCategory = (category = "") => {
+    const cat = String(category || "").trim().toLowerCase();
+    if (!cat) return false;
+    return /\bpend[ae]nts?\b/.test(cat);
+};
+
 const formatOrderItems = async (items = []) => {
     return Promise.all(items.map(async (it) => {
         const itemPrice = Number(it.price) || 0;
@@ -531,6 +543,10 @@ const formatOrderItems = async (items = []) => {
         const ringsize = isRingCategory(itemCategory) ? String(rawRingSize) : "";
         const rawClosureType = it.closuretype || it.closureType || "";
         const closuretype = isEarringsCategory(itemCategory) ? String(rawClosureType) : "";
+        const rawBraceletLength = it.braceletlength || it.braceletLength || "";
+        const braceletlength = isBraceletCategory(itemCategory) ? String(rawBraceletLength) : "";
+        const rawPendantLength = it.pendantlength || it.pendantLength || "";
+        const pendantlength = isPendantCategory(itemCategory) ? String(rawPendantLength) : "";
 
         return {
             itemid: numericItemId,
@@ -545,6 +561,8 @@ const formatOrderItems = async (items = []) => {
             bandcolor: it.bandcolor || it.bandColor || it.bandcolorname || "",
             ringsize,
             closuretype,
+            braceletlength,
+            pendantlength,
             specialinstruction: it.specialinstruction || it.specialInstruction || it.specialinstructions || it.instructions || "",
             price: itemPrice,
             qty: itemQty,
@@ -737,7 +755,7 @@ const create_order = async (req, res) => {
         await newOrder.save();
 
         // Send email notification to admin asynchronously (non-blocking)
-        sendOrderNotificationEmail(newOrder).catch(() => {});
+        sendOrderNotificationEmail(newOrder).catch(() => { });
 
         return res.status(201).json({
             message: "Order placed successfully",
@@ -1085,7 +1103,7 @@ const saveOrderDocument = async ({ req, orderData }) => {
     await newOrder.save();
 
     // Send email notification to admin asynchronously (non-blocking)
-    sendOrderNotificationEmail(newOrder).catch(() => {});
+    sendOrderNotificationEmail(newOrder).catch(() => { });
 
     return newOrder;
 };
