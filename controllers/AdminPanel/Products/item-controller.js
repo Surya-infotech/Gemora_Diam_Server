@@ -303,13 +303,6 @@ const add_item = async (req, res) => {
                 return res.status(400).json({ message: "Ring Size is required" });
             }
 
-            if (isEarringsCategory && formattedClosureTypes.length === 0) {
-                if (req.file && req.file.location) {
-                    await deleteImageFromS3(req.file.location, "item");
-                }
-                return res.status(400).json({ message: "Closure Type is required" });
-            }
-
             const now = new Date().toISOString();
             const imageUrl = req.file ? req.file.location : (req.body.image || "");
 
@@ -624,13 +617,6 @@ const update_item = async (req, res) => {
                     await deleteImageFromS3(req.file.location, "item");
                 }
                 return res.status(400).json({ message: "Ring Size is required" });
-            }
-
-            if (isEarringsCategory && (!existingItem.closuretypes || existingItem.closuretypes.length === 0)) {
-                if (req.file && req.file.location) {
-                    await deleteImageFromS3(req.file.location, "item");
-                }
-                return res.status(400).json({ message: "Closure Type is required" });
             }
 
             if (req.file && req.file.location) {
