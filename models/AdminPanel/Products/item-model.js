@@ -71,6 +71,10 @@ const itemSchema = new mongoose.Schema({
         ],
         default: []
     },
+    closuretypes: {
+        type: [String],
+        default: []
+    },
     pricing: {
         priceType: {
             type: String,

@@ -7,6 +7,8 @@ const MiscSetting = require("../../../models/AdminPanel/System/Setting/miscsetti
 
 const isRingCategoryName = categoryName => /\brings?\b/i.test(String(categoryName || "").trim());
 
+const isEarringsCategoryName = categoryName => /\bearr?ings?\b/i.test(String(categoryName || "").trim());
+
 const parseRingSizes = raw => {
     if (!raw) return [];
     let parsed = [];
@@ -21,6 +23,33 @@ const parseRingSizes = raw => {
             ringsize: String(r.ringsize || r.label || "")
         }))
         : [];
+};
+
+const parseClosureTypes = raw => {
+    if (!raw) return [];
+    let parsed = raw;
+    if (typeof raw === "string") {
+        const trimmed = raw.trim();
+        if (!trimmed) return [];
+        try {
+            const json = JSON.parse(trimmed);
+            parsed = Array.isArray(json) ? json : [trimmed];
+        } catch {
+            parsed = [trimmed];
+        }
+    }
+    if (!Array.isArray(parsed)) return [];
+    const seen = new Set();
+    return parsed.reduce((acc, item) => {
+        const val = typeof item === "string"
+            ? item.trim()
+            : String(item?.label || item?.closuretype || item?.value || "").trim();
+        if (val && !seen.has(val)) {
+            seen.add(val);
+            acc.push(val);
+        }
+        return acc;
+    }, []);
 };
 
 const get_items = async (_req, res) => {
@@ -220,6 +249,10 @@ const add_item = async (req, res) => {
 
             const isRingCategory = isRingCategoryName(categoryNameResolved);
             const formattedRingSizes = isRingCategory ? parseRingSizes(req.body.ringsizes) : [];
+            const isEarringsCategory = isEarringsCategoryName(categoryNameResolved);
+            const formattedClosureTypes = isEarringsCategory
+                ? parseClosureTypes(req.body.closuretypes ?? req.body.closuretype)
+                : [];
 
             if (!formattedShapes || formattedShapes.length === 0) {
                 if (req.file && req.file.location) {
@@ -270,6 +303,13 @@ const add_item = async (req, res) => {
                 return res.status(400).json({ message: "Ring Size is required" });
             }
 
+            if (isEarringsCategory && formattedClosureTypes.length === 0) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Closure Type is required" });
+            }
+
             const now = new Date().toISOString();
             const imageUrl = req.file ? req.file.location : (req.body.image || "");
 
@@ -288,6 +328,7 @@ const add_item = async (req, res) => {
                 stones: formattedStones,
                 styles: formattedStyles,
                 ringsizes: formattedRingSizes,
+                closuretypes: formattedClosureTypes,
                 description: description ? description.trim() : "",
                 image: imageUrl,
                 createdAt: now,
@@ -529,6 +570,12 @@ const update_item = async (req, res) => {
             } else if (req.body.ringsizes !== undefined) {
                 existingItem.ringsizes = parseRingSizes(req.body.ringsizes);
             }
+            const isEarringsCategory = isEarringsCategoryName(existingItem.categoryname);
+            if (!isEarringsCategory) {
+                existingItem.closuretypes = [];
+            } else if (req.body.closuretypes !== undefined || req.body.closuretype !== undefined) {
+                existingItem.closuretypes = parseClosureTypes(req.body.closuretypes ?? req.body.closuretype);
+            }
 
             if (!existingItem.shapes || existingItem.shapes.length === 0) {
                 if (req.file && req.file.location) {
@@ -577,6 +624,13 @@ const update_item = async (req, res) => {
                     await deleteImageFromS3(req.file.location, "item");
                 }
                 return res.status(400).json({ message: "Ring Size is required" });
+            }
+
+            if (isEarringsCategory && (!existingItem.closuretypes || existingItem.closuretypes.length === 0)) {
+                if (req.file && req.file.location) {
+                    await deleteImageFromS3(req.file.location, "item");
+                }
+                return res.status(400).json({ message: "Closure Type is required" });
             }
 
             if (req.file && req.file.location) {
