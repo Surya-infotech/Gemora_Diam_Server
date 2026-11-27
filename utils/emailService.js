@@ -204,7 +204,8 @@ const sendOrderNotificationEmail = async (order) => {
                 item.clarityname,
                 item.diamondcolor,
                 item.bandcolor,
-                item.ringsize ? `Ring Size: ${item.ringsize}` : ""
+                item.ringsize ? `Ring Size: ${item.ringsize}` : "",
+                item.closuretype ? `Closure: ${item.closuretype}` : ""
             ].filter(Boolean).join(" • ");
 
             return `

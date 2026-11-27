@@ -45,6 +45,10 @@ const orderItemSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    closuretype: {
+        type: String,
+        default: ""
+    },
     specialinstruction: {
         type: String,
         default: ""

@@ -478,8 +478,14 @@ const set_default_address = async (req, res) => {
 const isRingCategory = (category = "") => {
     const cat = String(category || "").trim().toLowerCase();
     if (!cat) return false;
-    if (/\bear+ings?\b/.test(cat) || cat.includes("earring") || cat.includes("earing")) return false;
+    if (/\bearr?ings?\b/.test(cat)) return false;
     return /\brings?\b/.test(cat);
+};
+
+const isEarringsCategory = (category = "") => {
+    const cat = String(category || "").trim().toLowerCase();
+    if (!cat) return false;
+    return /\bearr?ings?\b/.test(cat);
 };
 
 const formatOrderItems = async (items = []) => {
@@ -523,6 +529,8 @@ const formatOrderItems = async (items = []) => {
         const itemCategory = foundItem?.categoryname || it.categoryname || it.category || "";
         const rawRingSize = it.ringsize || it.ringSize || it.size || "";
         const ringsize = isRingCategory(itemCategory) ? String(rawRingSize) : "";
+        const rawClosureType = it.closuretype || it.closureType || "";
+        const closuretype = isEarringsCategory(itemCategory) ? String(rawClosureType) : "";
 
         return {
             itemid: numericItemId,
@@ -536,6 +544,7 @@ const formatOrderItems = async (items = []) => {
             diamondcolor: it.diamondcolor || it.diamondColor || it.diamondcolorname || "",
             bandcolor: it.bandcolor || it.bandColor || it.bandcolorname || "",
             ringsize,
+            closuretype,
             specialinstruction: it.specialinstruction || it.specialInstruction || it.specialinstructions || it.instructions || "",
             price: itemPrice,
             qty: itemQty,
