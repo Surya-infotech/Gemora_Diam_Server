@@ -190,38 +190,4 @@ const multiuploadVideoToS3 = (uploadType) => (req, res, next) => {
     });
 };
 
-const uploadAllOrderFilesToS3 = (uploadType) => (req, res, next) => {
-    const upload = multer({
-        limits: { fileSize: 25 * 1024 * 1024 },
-        storage: multerS3({
-            s3: s3,
-            bucket: process.env.AWS_S3_BUCKET_NAME,
-            contentType: multerS3.AUTO_CONTENT_TYPE,
-            cacheControl: 'max-age=31536000',
-            key: (_req, file, cb) => {
-                cb(null, `${uploadType}/${Date.now()}_${file.originalname}`);
-            }
-        })
-    }).fields([
-        { name: "photoFile", maxCount: 1 },
-        { name: "cadFile", maxCount: 1 },
-        { name: "otherFile", maxCount: 1 }
-    ]);
-
-    upload(req, res, function (err) {
-        if (err instanceof multer.MulterError) {
-            if (err.code === 'LIMIT_FILE_SIZE') {
-                return res.status(400).json({ message: "File size exceeds the 25MB limit." });
-            }
-            return res.status(400).json({ message: err.message || "Error uploading files" });
-        }
-        if (err) {
-            return res.status(400).json({ message: err.message || "Error uploading files" });
-        }
-        if (typeof next === 'function') {
-            next();
-        }
-    });
-};
-
-module.exports = { multiuploadToS3, uploadToS3, multiuploadVideoToS3, uploadAllOrderFilesToS3, deleteImageFromS3 };
+module.exports = { multiuploadToS3, uploadToS3, multiuploadVideoToS3, deleteImageFromS3 };

@@ -1,12 +1,5 @@
 const mongoose = require("mongoose");
 
-const attachmentSchema = new mongoose.Schema({
-    name: { type: String, default: "" },
-    url: { type: String, default: "" },
-    type: { type: String, default: "" },
-    addedAt: { type: String, default: () => new Date().toISOString() }
-}, { _id: false });
-
 const allOrderSchema = new mongoose.Schema({
     allorderid: {
         type: Number,
@@ -46,52 +39,7 @@ const allOrderSchema = new mongoose.Schema({
         default: "",
         trim: true
     },
-    country: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    jewelryType: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    product: {
-        type: String,
-        default: "",
-        trim: true
-    },
     metal: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    ringSize: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    stoneType: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    stoneShape: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    centerCarat: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    sideStoneType: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    measurements: {
         type: String,
         default: "",
         trim: true
@@ -101,52 +49,14 @@ const allOrderSchema = new mongoose.Schema({
         default: "",
         trim: true
     },
-    stone: {
-        type: String,
-        default: "",
-        trim: true
-    },
     status: {
         type: String,
         default: "Order Received",
         trim: true
     },
-    targetDate: {
-        type: String,
-        default: ""
-    },
-    priority: {
-        type: String,
-        default: "Normal",
-        trim: true
-    },
-    productionNotes: {
-        type: String,
-        default: ""
-    },
     conversation: {
         type: String,
         default: ""
-    },
-    totalAmount: {
-        type: Number,
-        default: 0
-    },
-    paidAmount: {
-        type: Number,
-        default: 0
-    },
-    photoFile: {
-        type: attachmentSchema,
-        default: null
-    },
-    cadFile: {
-        type: attachmentSchema,
-        default: null
-    },
-    otherFile: {
-        type: attachmentSchema,
-        default: null
     },
     dispatchDate: {
         type: String,
@@ -166,14 +76,6 @@ const allOrderSchema = new mongoose.Schema({
         type: String,
         default: "",
         trim: true
-    },
-    deliveryDate: {
-        type: String,
-        default: ""
-    },
-    dispatchNotes: {
-        type: String,
-        default: ""
     },
     createdAt: {
         type: String,
