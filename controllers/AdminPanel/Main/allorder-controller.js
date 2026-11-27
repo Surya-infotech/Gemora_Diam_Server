@@ -2,7 +2,9 @@ const mongoose = require("mongoose");
 const AllOrder = require("../../../models/AdminPanel/Main/allorder-model");
 const FiscalYear = require("../../../models/AdminPanel/System/Setting/fiscalyear-model");
 const MiscSetting = require("../../../models/AdminPanel/System/Setting/miscsetting-model");
-const Currency = require("../../../models/AdminPanel/System/currency-model");
+const { uploadAllOrderFilesToS3, deleteImageFromS3 } = require("../../../utils/s3Config-admin");
+
+const UPLOAD_TYPE = "all-orders";
 
 const resolveFiscalYear = async (requestedFiscalYearId) => {
     if (requestedFiscalYearId != null && requestedFiscalYearId !== "" && !isNaN(requestedFiscalYearId)) {
@@ -42,88 +44,61 @@ const resolveFiscalYear = async (requestedFiscalYearId) => {
     return fy;
 };
 
-const resolveActiveCurrencyDetails = async (fallbackCurrency) => {
-    try {
-        const miscSetting = await MiscSetting.findOne().lean();
-        if (miscSetting && miscSetting.currencyid) {
-            const currDoc = await Currency.findOne({ currencyid: Number(miscSetting.currencyid) }).lean();
-            if (currDoc) {
-                return {
-                    currencyid: currDoc.currencyid,
-                    countryname: currDoc.countryname || "",
-                    currency: currDoc.currency || "USD",
-                    currencysymbol: currDoc.currencysymbol || "$",
-                    currencyposition: currDoc.currencyposition || "left",
-                    thousandseparator: currDoc.thousandseparator !== undefined && currDoc.thousandseparator !== null ? currDoc.thousandseparator : ",",
-                    decimalseparator: currDoc.decimalseparator || ".",
-                    decimal: currDoc.decimal !== undefined ? currDoc.decimal : 2
-                };
-            }
-        }
-    } catch (err) {
-        console.error("Error resolving active currency:", err);
-    }
-    if (fallbackCurrency && typeof fallbackCurrency === "object") {
-        return fallbackCurrency;
-    }
-    return {
-        currencyid: 1,
-        countryname: "United States",
-        currency: "USD",
-        currencysymbol: "$",
-        currencyposition: "left",
-        thousandseparator: ",",
-        decimalseparator: ".",
-        decimal: 2
-    };
-};
-
-const formatManualOrderItems = (items = []) => {
-    if (!Array.isArray(items)) return [];
-    return items
-        .map(item => {
-            const itemname = String(item.itemname || "").trim();
-            if (!itemname) return null;
-            const qty = Math.max(1, parseInt(item.qty, 10) || 1);
-            const price = Math.max(0, Number(item.price) || 0);
-            return {
-                itemid: item.itemid != null && item.itemid !== "" && !isNaN(item.itemid) ? Number(item.itemid) : null,
-                itemname,
-                sku: String(item.sku || "").trim(),
-                image: String(item.image || "").trim(),
-                metalname: String(item.metalname || "").trim(),
-                stonename: String(item.stonename || "").trim(),
-                diamondsize: String(item.diamondsize || "").trim(),
-                shapename: String(item.shapename || "").trim(),
-                clarityname: String(item.clarityname || "").trim(),
-                diamondcolor: String(item.diamondcolor || "").trim(),
-                bandcolor: String(item.bandcolor || "").trim(),
-                ringsize: String(item.ringsize || "").trim(),
-                closuretype: String(item.closuretype || "").trim(),
-                specialinstruction: String(item.specialinstruction || "").trim(),
-                price,
-                qty,
-                totalprice: Number((price * qty).toFixed(2))
-            };
-        })
-        .filter(Boolean);
-};
-
-const formatAddress = (addr = {}) => ({
-    address: String(addr?.address || "").trim(),
-    pincode: String(addr?.pincode || "").trim(),
-    countryname: String(addr?.countryname || "").trim(),
-    countrycode: String(addr?.countrycode || "").trim(),
-    statename: String(addr?.statename || "").trim(),
-    statecode: String(addr?.statecode || "").trim(),
-    cityname: String(addr?.cityname || "").trim()
-});
-
 const buildOrderQuery = (id) => (
     mongoose.Types.ObjectId.isValid(id)
         ? { _id: id }
         : { allorderid: Number(id) }
 );
+
+const cleanupUploadedFiles = async (files) => {
+    if (!files) return;
+    const all = [files.photoFile?.[0], files.cadFile?.[0], files.otherFile?.[0]].filter(Boolean);
+    await Promise.all(all.map(f => deleteImageFromS3(f.location, UPLOAD_TYPE)));
+};
+
+const extractFileAttachment = (files, fieldName, typeLabel) => {
+    const file = files?.[fieldName]?.[0];
+    if (!file) return null;
+    return {
+        name: file.originalname || fieldName,
+        url: file.location || "",
+        type: typeLabel,
+        addedAt: new Date().toISOString()
+    };
+};
+
+const pickOrderFields = (body = {}) => ({
+    orderId: String(body.orderId || "").trim(),
+    customer: String(body.customer || "").trim(),
+    orderDate: String(body.orderDate || "").trim(),
+    orderLink: String(body.orderLink || "").trim(),
+    shopName: String(body.shopName || "").trim(),
+    country: String(body.country || "").trim(),
+    jewelryType: String(body.jewelryType || "").trim(),
+    product: String(body.product || "").trim(),
+    metal: String(body.metal || "").trim(),
+    ringSize: String(body.ringSize || "").trim(),
+    stoneType: String(body.stoneType || "").trim(),
+    stoneShape: String(body.stoneShape || "").trim(),
+    centerCarat: String(body.centerCarat || "").trim(),
+    sideStoneType: String(body.sideStoneType || "").trim(),
+    measurements: String(body.measurements || "").trim(),
+    employee: String(body.employee || "").trim(),
+    stone: String(body.stone || "").trim(),
+    status: String(body.status || "Order Received").trim() || "Order Received",
+    targetDate: String(body.targetDate || "").trim(),
+    priority: String(body.priority || "Normal").trim() || "Normal",
+    productionNotes: String(body.productionNotes || ""),
+    conversation: String(body.conversation || ""),
+    totalAmount: Math.max(0, Number(body.totalAmount) || 0),
+    paidAmount: Math.max(0, Number(body.paidAmount) || 0),
+    dispatchDate: String(body.dispatchDate || "").trim(),
+    courier: String(body.courier || "").trim(),
+    tracking: String(body.tracking || "").trim(),
+    trackingLink: String(body.trackingLink || "").trim(),
+    deliveryDate: String(body.deliveryDate || "").trim(),
+    dispatchNotes: String(body.dispatchNotes || "")
+});
 
 const get_all_orders = async (req, res) => {
     try {
@@ -155,85 +130,55 @@ const get_all_orders = async (req, res) => {
     }
 };
 
-const add_all_order = async (req, res) => {
-    try {
-        const {
-            customerid,
-            customername,
-            customeremail,
-            customerphone,
-            items,
-            total,
-            shippingaddress,
-            orderstatus,
-            paymentstatus,
-            paymentmethod,
-            notes,
-            orderdate,
-            fiscalyearid,
-            currencydetails
-        } = req.body;
+const add_all_order = (req, res) => {
+    uploadAllOrderFilesToS3(UPLOAD_TYPE)(req, res, async () => {
+        try {
+            const fields = pickOrderFields(req.body);
+            if (!fields.orderId) {
+                await cleanupUploadedFiles(req.files);
+                return res.status(400).json({ message: "Etsy Order ID is required" });
+            }
+            if (!fields.customer) {
+                await cleanupUploadedFiles(req.files);
+                return res.status(400).json({ message: "Customer name is required" });
+            }
 
-        const trimmedName = String(customername || "").trim();
-        if (!trimmedName) {
-            return res.status(400).json({ message: "Customer Name is required" });
+            const currentFiscalYear = await resolveFiscalYear(req.body.fiscalyearid);
+            const resolvedFyId = currentFiscalYear ? currentFiscalYear.fiscalyearid : 1;
+
+            const [maxOrder, maxOrderByFy] = await Promise.all([
+                AllOrder.findOne().sort({ allorderid: -1 }).lean(),
+                AllOrder.findOne({ fiscalyearid: resolvedFyId }).sort({ ordernumber: -1 }).lean()
+            ]);
+
+            const nextAllOrderId = maxOrder && maxOrder.allorderid ? parseInt(maxOrder.allorderid, 10) + 1 : 1;
+            const nextOrderNumber = maxOrderByFy && maxOrderByFy.ordernumber ? parseInt(maxOrderByFy.ordernumber, 10) + 1 : 1;
+            const now = new Date().toISOString();
+
+            const newOrder = new AllOrder({
+                allorderid: nextAllOrderId,
+                fiscalyearid: resolvedFyId,
+                ordernumber: nextOrderNumber,
+                ...fields,
+                photoFile: extractFileAttachment(req.files, "photoFile", "Photo"),
+                cadFile: extractFileAttachment(req.files, "cadFile", "CAD"),
+                otherFile: extractFileAttachment(req.files, "otherFile", "Document"),
+                createdAt: now,
+                updatedAt: now
+            });
+
+            await newOrder.save();
+
+            return res.status(201).json({
+                message: "Order added successfully",
+                order: newOrder
+            });
+        } catch (error) {
+            console.error("Error adding manual order:", error);
+            await cleanupUploadedFiles(req.files);
+            return res.status(500).json({ message: error.message || "Server error" });
         }
-
-        const formattedItems = formatManualOrderItems(items);
-        if (formattedItems.length === 0) {
-            return res.status(400).json({ message: "Order must contain at least one item" });
-        }
-
-        const currentFiscalYear = await resolveFiscalYear(fiscalyearid);
-        const resolvedFyId = currentFiscalYear ? currentFiscalYear.fiscalyearid : 1;
-
-        const [maxOrder, maxOrderByFy, activeCurrency] = await Promise.all([
-            AllOrder.findOne().sort({ allorderid: -1 }).lean(),
-            AllOrder.findOne({ fiscalyearid: resolvedFyId }).sort({ ordernumber: -1 }).lean(),
-            resolveActiveCurrencyDetails(currencydetails)
-        ]);
-
-        const nextAllOrderId = maxOrder && maxOrder.allorderid ? parseInt(maxOrder.allorderid, 10) + 1 : 1;
-        const nextOrderNumber = maxOrderByFy && maxOrderByFy.ordernumber ? parseInt(maxOrderByFy.ordernumber, 10) + 1 : 1;
-
-        const totalitems = formattedItems.reduce((acc, item) => acc + item.qty, 0);
-        const subtotal = Number(formattedItems.reduce((acc, item) => acc + item.totalprice, 0).toFixed(2));
-        const finalTotal = total !== undefined && total !== "" && !isNaN(total) ? Math.max(0, Number(total)) : subtotal;
-        const now = new Date().toISOString();
-
-        const newOrder = new AllOrder({
-            allorderid: nextAllOrderId,
-            fiscalyearid: resolvedFyId,
-            ordernumber: nextOrderNumber,
-            customerid: customerid != null && customerid !== "" && !isNaN(customerid) ? Number(customerid) : null,
-            customername: trimmedName,
-            customeremail: String(customeremail || "").trim(),
-            customerphone: String(customerphone || "").trim(),
-            items: formattedItems,
-            totalitems,
-            subtotal,
-            total: finalTotal,
-            currencydetails: activeCurrency,
-            shippingaddress: formatAddress(shippingaddress),
-            orderstatus: orderstatus || "Confirmed",
-            paymentstatus: paymentstatus || "Paid",
-            paymentmethod: String(paymentmethod || "Cash").trim(),
-            notes: String(notes || "").trim(),
-            orderdate: orderdate || now,
-            createdAt: now,
-            updatedAt: now
-        });
-
-        await newOrder.save();
-
-        return res.status(201).json({
-            message: "Order added successfully",
-            order: newOrder
-        });
-    } catch (error) {
-        console.error("Error adding manual order:", error);
-        return res.status(500).json({ message: error.message || "Server error" });
-    }
+    });
 };
 
 const get_all_order_details = async (req, res) => {
@@ -250,72 +195,56 @@ const get_all_order_details = async (req, res) => {
     }
 };
 
-const update_all_order = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const order = await AllOrder.findOne(buildOrderQuery(id));
-        if (!order) {
-            return res.status(404).json({ message: "Order not found" });
-        }
-
-        const {
-            customerid,
-            customername,
-            customeremail,
-            customerphone,
-            items,
-            total,
-            shippingaddress,
-            orderstatus,
-            paymentstatus,
-            paymentmethod,
-            notes,
-            orderdate
-        } = req.body;
-
-        const trimmedName = String(customername !== undefined ? customername : order.customername).trim();
-        if (!trimmedName) {
-            return res.status(400).json({ message: "Customer Name is required" });
-        }
-
-        if (items !== undefined) {
-            const formattedItems = formatManualOrderItems(items);
-            if (formattedItems.length === 0) {
-                return res.status(400).json({ message: "Order must contain at least one item" });
+const update_all_order = (req, res) => {
+    uploadAllOrderFilesToS3(UPLOAD_TYPE)(req, res, async () => {
+        try {
+            const { id } = req.params;
+            const order = await AllOrder.findOne(buildOrderQuery(id));
+            if (!order) {
+                await cleanupUploadedFiles(req.files);
+                return res.status(404).json({ message: "Order not found" });
             }
-            order.items = formattedItems;
-            order.totalitems = formattedItems.reduce((acc, item) => acc + item.qty, 0);
-            order.subtotal = Number(formattedItems.reduce((acc, item) => acc + item.totalprice, 0).toFixed(2));
-        }
 
-        if (customerid !== undefined) {
-            order.customerid = customerid != null && customerid !== "" && !isNaN(customerid) ? Number(customerid) : null;
-        }
-        order.customername = trimmedName;
-        if (customeremail !== undefined) order.customeremail = String(customeremail || "").trim();
-        if (customerphone !== undefined) order.customerphone = String(customerphone || "").trim();
-        if (total !== undefined && total !== "" && !isNaN(total)) {
-            order.total = Math.max(0, Number(total));
-        } else if (items !== undefined) {
-            order.total = order.subtotal;
-        }
-        if (shippingaddress !== undefined) order.shippingaddress = formatAddress(shippingaddress);
-        if (orderstatus !== undefined) order.orderstatus = orderstatus;
-        if (paymentstatus !== undefined) order.paymentstatus = paymentstatus;
-        if (paymentmethod !== undefined) order.paymentmethod = String(paymentmethod || "Cash").trim();
-        if (notes !== undefined) order.notes = String(notes || "").trim();
-        if (orderdate !== undefined && orderdate) order.orderdate = orderdate;
-        order.updatedAt = new Date().toISOString();
+            const fields = pickOrderFields(req.body);
+            if (!fields.orderId) {
+                await cleanupUploadedFiles(req.files);
+                return res.status(400).json({ message: "Etsy Order ID is required" });
+            }
+            if (!fields.customer) {
+                await cleanupUploadedFiles(req.files);
+                return res.status(400).json({ message: "Customer name is required" });
+            }
 
-        await order.save();
-        return res.status(200).json({
-            message: "Order updated successfully",
-            order
-        });
-    } catch (error) {
-        console.error("Error updating order:", error);
-        return res.status(500).json({ message: error.message || "Server error" });
-    }
+            Object.assign(order, fields);
+
+            const fileConfigs = [
+                { field: "photoFile", type: "Photo" },
+                { field: "cadFile", type: "CAD" },
+                { field: "otherFile", type: "Document" }
+            ];
+            for (const cfg of fileConfigs) {
+                const uploaded = extractFileAttachment(req.files, cfg.field, cfg.type);
+                if (uploaded) {
+                    if (order[cfg.field]?.url) {
+                        await deleteImageFromS3(order[cfg.field].url, UPLOAD_TYPE);
+                    }
+                    order[cfg.field] = uploaded;
+                }
+            }
+
+            order.updatedAt = new Date().toISOString();
+            await order.save();
+
+            return res.status(200).json({
+                message: "Order updated successfully",
+                order
+            });
+        } catch (error) {
+            console.error("Error updating order:", error);
+            await cleanupUploadedFiles(req.files);
+            return res.status(500).json({ message: error.message || "Server error" });
+        }
+    });
 };
 
 const delete_all_order = async (req, res) => {
@@ -325,6 +254,9 @@ const delete_all_order = async (req, res) => {
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
+        const urls = [order.photoFile?.url, order.cadFile?.url, order.otherFile?.url].filter(Boolean);
+        await Promise.all(urls.map(u => deleteImageFromS3(u, UPLOAD_TYPE)));
+
         return res.status(200).json({ message: "Order deleted successfully" });
     } catch (error) {
         console.error("Error deleting order:", error);

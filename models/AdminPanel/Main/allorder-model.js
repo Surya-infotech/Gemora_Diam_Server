@@ -1,149 +1,10 @@
 const mongoose = require("mongoose");
 
-const allOrderItemSchema = new mongoose.Schema({
-    itemid: {
-        type: Number,
-        default: null
-    },
-    itemname: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    sku: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    image: {
-        type: String,
-        default: ""
-    },
-    metalname: {
-        type: String,
-        default: ""
-    },
-    stonename: {
-        type: String,
-        default: ""
-    },
-    diamondsize: {
-        type: String,
-        default: ""
-    },
-    shapename: {
-        type: String,
-        default: ""
-    },
-    clarityname: {
-        type: String,
-        default: ""
-    },
-    diamondcolor: {
-        type: String,
-        default: ""
-    },
-    bandcolor: {
-        type: String,
-        default: ""
-    },
-    ringsize: {
-        type: String,
-        default: ""
-    },
-    closuretype: {
-        type: String,
-        default: ""
-    },
-    specialinstruction: {
-        type: String,
-        default: ""
-    },
-    price: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    qty: {
-        type: Number,
-        required: true,
-        default: 1
-    },
-    totalprice: {
-        type: Number,
-        default: 0
-    }
-}, { _id: false });
-
-const allOrderAddressSchema = new mongoose.Schema({
-    address: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    pincode: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    countryname: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    countrycode: {
-        type: String,
-        default: ""
-    },
-    statename: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    statecode: {
-        type: String,
-        default: ""
-    },
-    cityname: {
-        type: String,
-        default: "",
-        trim: true
-    }
-}, { _id: false });
-
-const allOrderCurrencySchema = new mongoose.Schema({
-    currencyid: {
-        type: Number,
-        default: null
-    },
-    countryname: {
-        type: String,
-        default: ""
-    },
-    currency: {
-        type: String,
-        default: "USD"
-    },
-    currencysymbol: {
-        type: String,
-        default: "$"
-    },
-    currencyposition: {
-        type: String,
-        default: "left"
-    },
-    thousandseparator: {
-        type: String,
-        default: ","
-    },
-    decimalseparator: {
-        type: String,
-        default: "."
-    },
-    decimal: {
-        type: Number,
-        default: 2
-    }
+const attachmentSchema = new mongoose.Schema({
+    name: { type: String, default: "" },
+    url: { type: String, default: "" },
+    type: { type: String, default: "" },
+    addedAt: { type: String, default: () => new Date().toISOString() }
 }, { _id: false });
 
 const allOrderSchema = new mongoose.Schema({
@@ -161,74 +22,158 @@ const allOrderSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    customerid: {
-        type: Number,
-        default: null,
-        index: true
-    },
-    customername: {
+    orderId: {
         type: String,
         required: true,
         trim: true
     },
-    customeremail: {
+    customer: {
         type: String,
-        default: "",
-        trim: true
-    },
-    customerphone: {
-        type: String,
-        default: "",
-        trim: true
-    },
-    items: {
-        type: [allOrderItemSchema],
-        default: []
-    },
-    totalitems: {
-        type: Number,
-        default: 0
-    },
-    subtotal: {
-        type: Number,
         required: true,
-        default: 0
+        trim: true
     },
-    total: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    currencydetails: {
-        type: allOrderCurrencySchema,
-        default: () => ({})
-    },
-    shippingaddress: {
-        type: allOrderAddressSchema,
-        default: () => ({})
-    },
-    orderstatus: {
+    orderDate: {
         type: String,
-        enum: ["Pending", "Confirmed", "Processing", "Shipped", "Delivered", "Cancelled"],
-        default: "Confirmed"
+        default: ""
     },
-    paymentstatus: {
-        type: String,
-        enum: ["Pending", "Paid", "Failed", "Refunded"],
-        default: "Paid"
-    },
-    paymentmethod: {
-        type: String,
-        default: "Cash"
-    },
-    notes: {
+    orderLink: {
         type: String,
         default: "",
         trim: true
     },
-    orderdate: {
+    shopName: {
         type: String,
-        default: () => new Date().toISOString()
+        default: "",
+        trim: true
+    },
+    country: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    jewelryType: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    product: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    metal: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    ringSize: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    stoneType: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    stoneShape: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    centerCarat: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    sideStoneType: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    measurements: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    employee: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    stone: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    status: {
+        type: String,
+        default: "Order Received",
+        trim: true
+    },
+    targetDate: {
+        type: String,
+        default: ""
+    },
+    priority: {
+        type: String,
+        default: "Normal",
+        trim: true
+    },
+    productionNotes: {
+        type: String,
+        default: ""
+    },
+    conversation: {
+        type: String,
+        default: ""
+    },
+    totalAmount: {
+        type: Number,
+        default: 0
+    },
+    paidAmount: {
+        type: Number,
+        default: 0
+    },
+    photoFile: {
+        type: attachmentSchema,
+        default: null
+    },
+    cadFile: {
+        type: attachmentSchema,
+        default: null
+    },
+    otherFile: {
+        type: attachmentSchema,
+        default: null
+    },
+    dispatchDate: {
+        type: String,
+        default: ""
+    },
+    courier: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    tracking: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    trackingLink: {
+        type: String,
+        default: "",
+        trim: true
+    },
+    deliveryDate: {
+        type: String,
+        default: ""
+    },
+    dispatchNotes: {
+        type: String,
+        default: ""
     },
     createdAt: {
         type: String,
