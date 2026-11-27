@@ -6,6 +6,7 @@ const ringsizecontroller = require("../../controllers/AdminPanel/Attributes/ring
 const shapecontroller = require("../../controllers/AdminPanel/Attributes/shape-controller");
 const claritycontroller = require("../../controllers/AdminPanel/Attributes/clarity-controller");
 const colorcontroller = require("../../controllers/AdminPanel/Attributes/color-controller");
+const lengthcontroller = require("../../controllers/AdminPanel/Attributes/length-controller");
 const stonecontroller = require("../../controllers/AdminPanel/Attributes/stone-controller");
 const stylecontroller = require("../../controllers/AdminPanel/Attributes/style-controller");
 const categorycontroller = require("../../controllers/AdminPanel/Attributes/category-controller");
@@ -71,6 +72,15 @@ attributesRouter.route("/EditColor/:colorid").get(authMiddleware, colorcontrolle
 attributesRouter.route("/UpdateColorStatus/:colorid").put(authMiddleware, colorcontroller.update_color_status);
 attributesRouter.route("/UpdateColor/:colorid").put(authMiddleware, colorcontroller.update_color);
 attributesRouter.route("/DeleteColor/:colorid").delete(authMiddleware, colorcontroller.delete_color);
+
+// Length Routes
+attributesRouter.route("/GetLengths").get(authMiddleware, lengthcontroller.get_lengths);
+attributesRouter.route("/GetActiveLengths").get(lengthcontroller.get_active_lengths);
+attributesRouter.route("/AddLength").post(authMiddleware, lengthcontroller.add_length);
+attributesRouter.route("/EditLength/:lengthid").get(authMiddleware, lengthcontroller.edit_length);
+attributesRouter.route("/UpdateLengthStatus/:lengthid").put(authMiddleware, lengthcontroller.update_length_status);
+attributesRouter.route("/UpdateLength/:lengthid").put(authMiddleware, lengthcontroller.update_length);
+attributesRouter.route("/DeleteLength/:lengthid").delete(authMiddleware, lengthcontroller.delete_length);
 
 
 // Stone Routes
